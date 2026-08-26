@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#090909">
+  <title>Pong</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at center, #252525 0%, #0d0d0d 55%, #030303 100%);
+  font-family: Arial, Helvetica, sans-serif;
+  touch-action: none;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game {
+  position: relative;
+  width: min(96vw, calc(96vh * 1.7142857));
+  height: min(96vh, calc(96vw / 1.7142857));
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  border-radius: 26px;
+  overflow: hidden;
+  background: #050505;
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.65),
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    inset 0 0 50px rgba(255, 255, 255, 0.04);
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.card {
+  width: min(520px, 88%);
+  padding: 38px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(40, 40, 40, 0.98),
+      rgba(15, 15, 15, 0.98)
+    );
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: white;
+  text-align: center;
+}
+
+.logo {
+  margin-bottom: 30px;
+  font-size: clamp(50px, 9vw, 85px);
+  font-weight: 900;
+  letter-spacing: 12px;
+  text-shadow:
+    4px 4px 0 #444,
+    0 0 25px rgba(255, 255, 255, 0.2);
+}
+
+h2 {
+  margin: 0 0 18px;
+  font-size: 22px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+button {
+  border: 2px solid white;
+  border-radius: 12px;
+  padding: 14px 24px;
+  background: #111;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.12s,
+    background 0.12s,
+    color 0.12s;
+}
+
+button:hover {
+  background: white;
+  color: black;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(2px);
+}
+
+.difficultyButtons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.difficultyButtons button {
+  padding: 11px 5px;
+  font-size: 12px;
+}
+
+.difficultyButtons button.active {
+  background: white;
+  color: black;
+}
+
+.difficultyInfo {
+  min-height: 25px;
+  margin: 15px 0;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.startButton {
+  width: 100%;
+  background: white;
+  color: black;
+  font-size: 18px;
+  padding: 15px;
+}
+
+#directionScreen {
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.directionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  text-align: center;
+}
+
+.readyText {
+  font-size: clamp(35px, 7vw, 65px);
+  font-weight: 900;
+  letter-spacing: 8px;
+}
+
+#directionArrow {
+  margin: 25px;
+  font-size: clamp(80px, 15vw, 150px);
+  line-height: 1;
+  transform-origin: center;
+  filter:
+    drop-shadow(0 0 10px rgba(255,255,255,0.5))
+    drop-shadow(0 0 25px rgba(255,255,255,0.25));
+}
+
+.directionText {
+  font-size: 15px;
+  letter-spacing: 5px;
+  color: #aaa;
+}
+
+#scoreBoard {
+  position: absolute;
+  z-index: 4;
+  top: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 35px;
+  color: white;
+  font-size: clamp(40px, 7vw, 75px);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow:
+    3px 3px 0 #000,
+    0 0 20px rgba(255,255,255,0.25);
+  pointer-events: none;
+}
+
+.scoreLine {
+  width: 3px;
+  height: 45px;
+  background: rgba(255,255,255,0.45);
+}
+
+#winner {
+  margin-bottom: 30px;
+  font-size: clamp(35px, 7vw, 65px);
+  font-weight: 900;
+}
+
+.finalScores {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  margin-bottom: 25px;
+}
+
+.finalScores div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.finalScores span {
+  color: #999;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.finalScores strong {
+  font-size: 45px;
+}
+
+#gameOver button {
+  margin: 5px;
+}
+
+#mobileControls {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#leftControl,
+#rightControl {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  pointer-events: auto;
+}
+
+#leftControl {
+  left: 0;
+}
+
+#rightControl {
+  right: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #mobileControls {
+    display: none;
+  }
+}
+
+@media (max-width: 650px) {
+  #game {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    border-width: 0;
+  }
+
+  .card {
+    padding: 28px 20px;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+
+  .buttons button {
+    width: 100%;
+  }
+
+  .difficultyButtons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+    </style>
+</head>
+<body>
+  <div id="game">
+    <canvas id="canvas" width="1200" height="700"></canvas>
+
+    <div id="menu" class="screen">
+      <div class="card">
+        <div class="logo">PONG</div>
+
+        <div id="modeSelection">
+          <h2>Game Mode</h2>
+          <div class="buttons">
+            <button id="onePlayer">1 PLAYER</button>
+            <button id="twoPlayers">2 PLAYERS</button>
+          </div>
+        </div>
+
+        <div id="difficultySelection" class="hidden">
+          <h2>Difficulty</h2>
+
+          <div class="difficultyButtons">
+            <button data-difficulty="1">EASY</button>
+            <button data-difficulty="2" class="active">NORMAL</button>
+            <button data-difficulty="3">HARD</button>
+            <button data-difficulty="4">INSANE</button>
+          </div>
+
+          <div class="difficultyInfo">
+            <span id="difficultyText">Balanced speed and reaction</span>
+          </div>
+
+          <button id="startButton" class="startButton">START</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="directionScreen" class="screen hidden">
+      <div class="directionCard">
+        <div class="readyText">READY</div>
+        <div id="directionArrow">➤</div>
+        <div class="directionText">BALL DIRECTION</div>
+      </div>
+    </div>
+
+    <div id="scoreBoard">
+      <div id="player1Score">0</div>
+      <div class="scoreLine"></div>
+      <div id="player2Score">0</div>
+    </div>
+
+    <div id="gameOver" class="screen hidden">
+      <div class="card">
+        <div id="winner">PLAYER 1 WINS</div>
+
+        <div class="finalScores">
+          <div>
+            <span>PLAYER 1</span>
+            <strong id="finalP1">0</strong>
+          </div>
+
+          <div>
+            <span>PLAYER 2</span>
+            <strong id="finalP2">0</strong>
+          </div>
+        </div>
+
+        <button id="againButton">PLAY AGAIN</button>
+        <button id="menuButton">MAIN MENU</button>
+      </div>
+    </div>
+
+    <div id="mobileControls">
+      <div id="leftControl"></div>
+      <div id="rightControl"></div>
+    </div>
+  </div>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const menu = document.getElementById("menu");
+const directionScreen = document.getElementById("directionScreen");
+const gameOver = document.getElementById("gameOver");
+
+const modeSelection = document.getElementById("modeSelection");
+const difficultySelection = document.getElementById("difficultySelection");
+
+const onePlayer = document.getElementById("onePlayer");
+const twoPlayers = document.getElementById("twoPlayers");
+const startButton = document.getElementById("startButton");
+const againButton = document.getElementById("againButton");
+const menuButton = document.getElementById("menuButton");
+
+const directionArrow = document.getElementById("directionArrow");
+const difficultyText = document.getElementById("difficultyText");
+
+const player1Score = document.getElementById("player1Score");
+const player2Score = document.getElementById("player2Score");
+
+const winner = document.getElementById("winner");
+const finalP1 = document.getElementById("finalP1");
+const finalP2 = document.getElementById("finalP2");
+
+const leftControl = document.getElementById("leftControl");
+const rightControl = document.getElementById("rightControl");
+
+const W = canvas.width;
+const H = canvas.height;
+
+const settings = {
+    1: {
+        name: "Easy",
+        startSpeed: 300,
+        maxSpeed: 560,
+        acceleration: 0.32,
+        playerSpeed: 720,
+        botSpeed: 190,
+        reaction: 0.28,
+        deadZone: 38
+    },
+
+    2: {
+        name: "Normal",
+        startSpeed: 350,
+        maxSpeed: 680,
+        acceleration: 0.34,
+        playerSpeed: 730,
+        botSpeed: 330,
+        reaction: 0.16,
+        deadZone: 25
+    },
+
+    3: {
+        name: "Hard",
+        startSpeed: 390,
+        maxSpeed: 800,
+        acceleration: 0.38,
+        playerSpeed: 750,
+        botSpeed: 410,
+        reaction: 0.08,
+        deadZone: 13
+    },
+
+    4: {
+        name: "Insane",
+        startSpeed: 420,
+        maxSpeed: 880,
+        acceleration: 0.42,
+        playerSpeed: 790,
+        botSpeed:550,
+        reaction: 0.035,
+        deadZone: 5
+    }
+};
+
+let difficulty = 2;
+let mode = 2;
+
+let running = false;
+let selectingDirection = false;
+
+let directionStart = 0;
+let lastTime = 0;
+let animationFrame = 0;
+
+let keys = {};
+
+let touchLeftY = null;
+let touchRightY = null;
+
+let bounces = 0;
+
+let botReactionTimer = 0;
+let botDirection = 0;
+
+const player1 = {
+    x: 55,
+    y: H / 2 - 75,
+    width: 22,
+    height: 150,
+    speed: 730,
+    score: 0
+};
+
+const player2 = {
+    x: W - 77,
+    y: H / 2 - 75,
+    width: 22,
+    height: 150,
+    speed: 570,
+    score: 0
+};
+
+const ball = {
+    x: W / 2,
+    y: H / 2,
+    radius: 15,
+    angle: 0,
+    speed: 350
+};
+
+function getRandomAngle() {
+    let angle;
+
+    do {
+        angle =
+            Math.random() *
+            Math.PI *
+            2;
+    } while (
+        Math.abs(
+            Math.sin(angle)
+        ) < 0.25
+    );
+
+    return angle;
+}
+
+function resetRound(direction = null) {
+    const config =
+        settings[difficulty];
+
+    ball.x = W / 2;
+    ball.y = H / 2;
+
+    ball.speed =
+        config.startSpeed;
+
+    bounces = 0;
+
+    botReactionTimer = 0;
+    botDirection = 0;
+
+    if (direction === 1) {
+        ball.angle =
+            (
+                Math.random() *
+                0.9
+            ) - 0.45;
+    } else if (direction === -1) {
+        ball.angle =
+            Math.PI +
+            (
+                Math.random() *
+                0.9
+            ) - 0.45;
+    } else {
+        ball.angle =
+            getRandomAngle();
+    }
+
+    player1.y =
+        H / 2 -
+        player1.height / 2;
+
+    player2.y =
+        H / 2 -
+        player2.height / 2;
+
+    player1.speed =
+        config.playerSpeed;
+
+    player2.speed =
+        config.botSpeed;
+
+    updateScore();
+}
+
+function updateScore() {
+    player1Score.textContent =
+        player1.score;
+
+    player2Score.textContent =
+        player2.score;
+}
+
+onePlayer.addEventListener(
+    "click",
+    () => {
+        mode = 1;
+
+        modeSelection.classList.add(
+            "hidden"
+        );
+
+        difficultySelection.classList.remove(
+            "hidden"
+        );
+    }
+);
+
+twoPlayers.addEventListener(
+    "click",
+    () => {
+        mode = 2;
+
+        modeSelection.classList.add(
+            "hidden"
+        );
+
+        difficultySelection.classList.remove(
+            "hidden"
+        );
+    }
+);
+
+document
+    .querySelectorAll(
+        "[data-difficulty]"
+    )
+    .forEach(button => {
+        button.addEventListener(
+            "click",
+            () => {
+                difficulty =
+                    Number(
+                        button.dataset.difficulty
+                    );
+
+                document
+                    .querySelectorAll(
+                        "[data-difficulty]"
+                    )
+                    .forEach(
+                        item =>
+                            item.classList.remove(
+                                "active"
+                            )
+                    );
+
+                button.classList.add(
+                    "active"
+                );
+
+                const descriptions = {
+                    1: "Slow acceleration and forgiving bot",
+                    2: "Balanced acceleration and reactive bot",
+                    3: "Fast acceleration and fast bot",
+                    4: "Extreme speed and extremely fast bot"
+                };
+
+                difficultyText.textContent =
+                    descriptions[
+                        difficulty
+                    ];
+            }
+        );
+    });
+
+startButton.addEventListener(
+    "click",
+    startRound
+);
+
+function startRound() {
+    player1.score = 0;
+    player2.score = 0;
+
+    updateScore();
+
+    menu.classList.add(
+        "hidden"
+    );
+
+    gameOver.classList.add(
+        "hidden"
+    );
+
+    directionScreen.classList.remove(
+        "hidden"
+    );
+
+    selectingDirection = true;
+    running = false;
+
+    resetRound();
+
+    directionStart =
+        performance.now();
+
+    cancelAnimationFrame(
+        animationFrame
+    );
+
+    animationFrame =
+        requestAnimationFrame(
+            directionLoop
+        );
+}
+
+function directionLoop(time) {
+    if (!selectingDirection) {
+        return;
+    }
+
+    const elapsed =
+        time -
+        directionStart;
+
+    const progress =
+        Math.min(
+            elapsed / 1800,
+            1
+        );
+
+    const eased =
+        1 -
+        Math.pow(
+            1 - progress,
+            3
+        );
+
+    const startAngle =
+        ball.angle -
+        Math.PI * 2;
+
+    const angle =
+        startAngle +
+        Math.PI *
+        2 *
+        eased;
+
+    directionArrow.style.transform =
+        `rotate(${angle}rad)`;
+
+    draw();
+
+    if (progress < 1) {
+        animationFrame =
+            requestAnimationFrame(
+                directionLoop
+            );
+    } else {
+        directionArrow.style.transform =
+            `rotate(${ball.angle}rad)`;
+
+        selectingDirection = false;
+
+        directionScreen.classList.add(
+            "hidden"
+        );
+
+        running = true;
+
+        lastTime =
+            performance.now();
+
+        animationFrame =
+            requestAnimationFrame(
+                gameLoop
+            );
+    }
+}
+
+function movePlayer(
+    player,
+    direction,
+    dt
+) {
+    player.y +=
+        direction *
+        player.speed *
+        dt;
+
+    player.y =
+        Math.max(
+            0,
+            Math.min(
+                H -
+                player.height,
+                player.y
+            )
+        );
+}
+
+function updatePlayer1(dt) {
+    let direction = 0;
+
+    if (keys["w"]) {
+        direction -= 1;
+    }
+
+    if (keys["s"]) {
+        direction += 1;
+    }
+
+    if (touchLeftY !== null) {
+        const center =
+            player1.y +
+            player1.height / 2;
+
+        if (
+            touchLeftY <
+            center - 10
+        ) {
+            direction = -1;
+        } else if (
+            touchLeftY >
+            center + 10
+        ) {
+            direction = 1;
+        }
+    }
+
+    movePlayer(
+        player1,
+        direction,
+        dt
+    );
+}
+
+function updatePlayer2(dt) {
+    if (mode === 1) {
+        updateBot(dt);
+        return;
+    }
+
+    let direction = 0;
+
+    if (keys["arrowup"]) {
+        direction -= 1;
+    }
+
+    if (keys["arrowdown"]) {
+        direction += 1;
+    }
+
+    if (touchRightY !== null) {
+        const center =
+            player2.y +
+            player2.height / 2;
+
+        if (
+            touchRightY <
+            center - 10
+        ) {
+            direction = -1;
+        } else if (
+            touchRightY >
+            center + 10
+        ) {
+            direction = 1;
+        }
+    }
+
+    movePlayer(
+        player2,
+        direction,
+        dt
+    );
+}
+
+function updateBot(dt) {
+    const config =
+        settings[difficulty];
+
+    const ballVelocityX =
+        Math.cos(
+            ball.angle
+        );
+
+    const ballIsComing =
+        ballVelocityX > 0;
+
+    if (!ballIsComing) {
+        botDirection = 0;
+
+        const botCenter =
+            player2.y +
+            player2.height / 2;
+
+        const centerDifference =
+            H / 2 -
+            botCenter;
+
+        if (
+            Math.abs(
+                centerDifference
+            ) > 8
+        ) {
+            botDirection =
+                Math.sign(
+                    centerDifference
+                );
+        }
+
+        player2.y +=
+            botDirection *
+            config.botSpeed *
+            0.35 *
+            dt;
+
+        player2.y =
+            Math.max(
+                0,
+                Math.min(
+                    H -
+                    player2.height,
+                    player2.y
+                )
+            );
+
+        return;
+    }
+
+    botReactionTimer -= dt;
+
+    if (
+        botReactionTimer > 0
+    ) {
+        player2.y +=
+            botDirection *
+            config.botSpeed *
+            dt;
+
+        player2.y =
+            Math.max(
+                0,
+                Math.min(
+                    H -
+                    player2.height,
+                    player2.y
+                )
+            );
+
+        return;
+    }
+
+    botReactionTimer =
+        config.reaction;
+
+    const botCenter =
+        player2.y +
+        player2.height / 2;
+
+    const ballCenter =
+        ball.y;
+
+    const difference =
+        ballCenter -
+        botCenter;
+
+    if (
+        Math.abs(
+            difference
+        ) <=
+        config.deadZone
+    ) {
+        botDirection = 0;
+    } else {
+        botDirection =
+            Math.sign(
+                difference
+            );
+    }
+
+    player2.y +=
+        botDirection *
+        config.botSpeed *
+        dt;
+
+    player2.y =
+        Math.max(
+            0,
+            Math.min(
+                H -
+                player2.height,
+                player2.y
+            )
+        );
+}
+
+function increaseSpeed() {
+    const config =
+        settings[difficulty];
+
+    bounces++;
+
+    const maxIncrease =
+        config.maxSpeed -
+        config.startSpeed;
+
+    const growth =
+        1 -
+        Math.exp(
+            -config.acceleration *
+            bounces
+        );
+
+    ball.speed =
+        config.startSpeed +
+        maxIncrease *
+        growth;
+}
+
+function collideWithPaddle(
+    paddle,
+    isLeft
+) {
+    const closestX =
+        Math.max(
+            paddle.x,
+            Math.min(
+                ball.x,
+                paddle.x +
+                paddle.width
+            )
+        );
+
+    const closestY =
+        Math.max(
+            paddle.y,
+            Math.min(
+                ball.y,
+                paddle.y +
+                paddle.height
+            )
+        );
+
+    const dx =
+        ball.x -
+        closestX;
+
+    const dy =
+        ball.y -
+        closestY;
+
+    if (
+        dx * dx +
+        dy * dy >
+        ball.radius *
+        ball.radius
+    ) {
+        return;
+    }
+
+    const velocityX =
+        Math.cos(
+            ball.angle
+        );
+
+    const movingToward =
+        isLeft
+            ? velocityX < 0
+            : velocityX > 0;
+
+    if (!movingToward) {
+        return;
+    }
+
+    const paddleCenter =
+        paddle.y +
+        paddle.height / 2;
+
+    const relative =
+        (
+            ball.y -
+            paddleCenter
+        ) /
+        (
+            paddle.height / 2
+        );
+
+    const clamped =
+        Math.max(
+            -1,
+            Math.min(
+                1,
+                relative
+            )
+        );
+
+    const maxBounceAngle =
+        Math.PI / 3;
+
+    const bounceAngle =
+        clamped *
+        maxBounceAngle;
+
+    increaseSpeed();
+
+    if (isLeft) {
+        ball.angle =
+            bounceAngle;
+
+        ball.x =
+            paddle.x +
+            paddle.width +
+            ball.radius +
+            1;
+    } else {
+        ball.angle =
+            Math.PI -
+            bounceAngle;
+
+        ball.x =
+            paddle.x -
+            ball.radius -
+            1;
+    }
+
+    botReactionTimer = 0;
+}
+
+function updateBall(dt) {
+    ball.x +=
+        Math.cos(
+            ball.angle
+        ) *
+        ball.speed *
+        dt;
+
+    ball.y +=
+        Math.sin(
+            ball.angle
+        ) *
+        ball.speed *
+        dt;
+
+    if (
+        ball.y -
+        ball.radius <=
+        0
+    ) {
+        ball.y =
+            ball.radius;
+
+        ball.angle =
+            -ball.angle;
+
+        increaseSpeed();
+    }
+
+    if (
+        ball.y +
+        ball.radius >=
+        H
+    ) {
+        ball.y =
+            H -
+            ball.radius;
+
+        ball.angle =
+            -ball.angle;
+
+        increaseSpeed();
+    }
+
+    collideWithPaddle(
+        player1,
+        true
+    );
+
+    collideWithPaddle(
+        player2,
+        false
+    );
+
+    if (
+        ball.x +
+        ball.radius <
+        0
+    ) {
+        player2.score++;
+
+        updateScore();
+
+        if (
+            player2.score >= 7
+        ) {
+            finishGame(
+                mode === 1
+                    ? "BOT WINS"
+                    : "PLAYER 2 WINS"
+            );
+
+            return;
+        }
+
+        prepareNextRound(1);
+
+        return;
+    }
+
+    if (
+        ball.x -
+        ball.radius >
+        W
+    ) {
+        player1.score++;
+
+        updateScore();
+
+        if (
+            player1.score >= 7
+        ) {
+            finishGame(
+                "PLAYER 1 WINS"
+            );
+
+            return;
+        }
+
+        prepareNextRound(-1);
+    }
+}
+
+function prepareNextRound(
+    direction
+) {
+    running = false;
+
+    selectingDirection = true;
+
+    resetRound(
+        direction
+    );
+
+    directionStart =
+        performance.now();
+
+    directionScreen.classList.remove(
+        "hidden"
+    );
+
+    animationFrame =
+        requestAnimationFrame(
+            directionLoop
+        );
+}
+
+function finishGame(text) {
+    running = false;
+
+    selectingDirection = false;
+
+    winner.textContent =
+        text;
+
+    finalP1.textContent =
+        player1.score;
+
+    finalP2.textContent =
+        player2.score;
+
+    gameOver.classList.remove(
+        "hidden"
+    );
+}
+
+function drawBackground() {
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            H
+        );
+
+    gradient.addColorStop(
+        0,
+        "#111111"
+    );
+
+    gradient.addColorStop(
+        0.5,
+        "#070707"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#020202"
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.025)";
+
+    ctx.lineWidth = 1;
+
+    for (
+        let x = 0;
+        x < W;
+        x += 60
+    ) {
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            0
+        );
+
+        ctx.lineTo(
+            x,
+            H
+        );
+
+        ctx.stroke();
+    }
+
+    for (
+        let y = 0;
+        y < H;
+        y += 60
+    ) {
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            W,
+            y
+        );
+
+        ctx.stroke();
+    }
+}
+
+function drawCenterLine() {
+    ctx.fillStyle =
+        "rgba(255,255,255,0.32)";
+
+    for (
+        let y = 20;
+        y < H;
+        y += 40
+    ) {
+        ctx.fillRect(
+            W / 2 - 2,
+            y,
+            4,
+            22
+        );
+    }
+}
+
+function drawPaddle(
+    paddle
+) {
+    const gradient =
+        ctx.createLinearGradient(
+            paddle.x,
+            0,
+            paddle.x +
+            paddle.width,
+            0
+        );
+
+    gradient.addColorStop(
+        0,
+        "#ffffff"
+    );
+
+    gradient.addColorStop(
+        0.5,
+        "#dddddd"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#888888"
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.beginPath();
+
+    ctx.roundRect(
+        paddle.x,
+        paddle.y,
+        paddle.width,
+        paddle.height,
+        9
+    );
+
+    ctx.fill();
+
+    ctx.shadowColor =
+        "rgba(255,255,255,0.5)";
+
+    ctx.shadowBlur = 18;
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+}
+
+function drawBall() {
+    ctx.save();
+
+    ctx.shadowColor =
+        "rgba(255,255,255,0.8)";
+
+    ctx.shadowBlur = 22;
+
+    const gradient =
+        ctx.createRadialGradient(
+            ball.x - 5,
+            ball.y - 5,
+            2,
+            ball.x,
+            ball.y,
+            ball.radius
+        );
+
+    gradient.addColorStop(
+        0,
+        "#ffffff"
+    );
+
+    gradient.addColorStop(
+        0.65,
+        "#e8e8e8"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#777777"
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        ball.x,
+        ball.y,
+        ball.radius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function draw() {
+    ctx.clearRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+    drawBackground();
+
+    drawCenterLine();
+
+    drawPaddle(
+        player1
+    );
+
+    drawPaddle(
+        player2
+    );
+
+    drawBall();
+}
+
+function gameLoop(time) {
+    if (!running) {
+        draw();
+        return;
+    }
+
+    let dt =
+        (
+            time -
+            lastTime
+        ) / 1000;
+
+    lastTime = time;
+
+    dt =
+        Math.min(
+            dt,
+            0.05
+        );
+
+    updatePlayer1(dt);
+
+    updatePlayer2(dt);
+
+    updateBall(dt);
+
+    draw();
+
+    animationFrame =
+        requestAnimationFrame(
+            gameLoop
+        );
+}
+
+document.addEventListener(
+    "keydown",
+    event => {
+        const key =
+            event.key.toLowerCase();
+
+        keys[key] = true;
+
+        if (
+            event.key === " " ||
+            event.key === "ArrowUp" ||
+            event.key === "ArrowDown"
+        ) {
+            event.preventDefault();
+        }
+    }
+);
+
+document.addEventListener(
+    "keyup",
+    event => {
+        keys[
+            event.key.toLowerCase()
+        ] = false;
+    }
+);
+
+function setupTouch(
+    element,
+    side
+) {
+    const update =
+        event => {
+            const touch =
+                event.touches[0] ||
+                event.changedTouches[0];
+
+            if (!touch) {
+                return;
+            }
+
+            const rect =
+                canvas.getBoundingClientRect();
+
+            const y =
+                (
+                    touch.clientY -
+                    rect.top
+                ) *
+                H /
+                rect.height;
+
+            if (
+                side === "left"
+            ) {
+                touchLeftY = y;
+            } else {
+                touchRightY = y;
+            }
+        };
+
+    const end = () => {
+        if (
+            side === "left"
+        ) {
+            touchLeftY = null;
+        } else {
+            touchRightY = null;
+        }
+    };
+
+    element.addEventListener(
+        "touchstart",
+        event => {
+            event.preventDefault();
+            update(event);
+        },
+        {
+            passive: false
+        }
+    );
+
+    element.addEventListener(
+        "touchmove",
+        event => {
+            event.preventDefault();
+            update(event);
+        },
+        {
+            passive: false
+        }
+    );
+
+    element.addEventListener(
+        "touchend",
+        end
+    );
+
+    element.addEventListener(
+        "touchcancel",
+        end
+    );
+}
+
+setupTouch(
+    leftControl,
+    "left"
+);
+
+setupTouch(
+    rightControl,
+    "right"
+);
+
+againButton.addEventListener(
+    "click",
+    startRound
+);
+
+menuButton.addEventListener(
+    "click",
+    () => {
+        running = false;
+        selectingDirection = false;
+
+        showModeSelection();
+    }
+);
+
+function showModeSelection() {
+    menu.classList.remove(
+        "hidden"
+    );
+
+    modeSelection.classList.remove(
+        "hidden"
+    );
+
+    difficultySelection.classList.add(
+        "hidden"
+    );
+
+    gameOver.classList.add(
+        "hidden"
+    );
+
+    directionScreen.classList.add(
+        "hidden"
+    );
+}
+
+if (
+    "serviceWorker" in
+    navigator
+) {
+    navigator.serviceWorker.register(
+        "./sw.js"
+    );
+}
+
+resetRound();
+
+draw();
+  <script>
+
+  </script>
+</body>
+</html>
