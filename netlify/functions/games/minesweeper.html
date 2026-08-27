@@ -286,6 +286,7 @@
     let timerInterval = null;
     let isGameOver = false;
     let isFirstClick = true;
+    let suppressNextClick = false;
 
     function initGame() {
         board = [];
@@ -315,10 +316,31 @@
 
                 let cellDiv = document.createElement('div');
                 cellDiv.classList.add('cell');
-                cellDiv.addEventListener('click', () => handleLeftClick(cellData));
+                cellDiv.addEventListener('click', () => {
+                    if (suppressNextClick) {
+                        suppressNextClick = false;
+                        return;
+                    }
+                    handleLeftClick(cellData);
+                });
                 cellDiv.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     handleRightClick(cellData);
+                });
+
+                let longPressTimer;
+                cellDiv.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    longPressTimer = setTimeout(() => {
+                        handleRightClick(cellData);
+                        suppressNextClick = true;
+                    }, 500);
+                }, { passive: false });
+                cellDiv.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+                cellDiv.addEventListener('touchcancel', () => {
+                    clearTimeout(longPressTimer);
                 });
 
                 boardElement.appendChild(cellDiv);

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pac-Man Clean Arcade Edition</title>
     <style>
         * {
@@ -41,7 +41,7 @@
         #game-container {
             position: relative;
             width: min(100vw, 440px);
-            height: min(100dvh, 720px);
+            height: min(100dvh, 760px);
             overflow: hidden;
             border-radius: clamp(0px, 1.2vw, 24px);
             border: clamp(0px, 0.2vw, 4px) solid rgba(255,255,255,0.18);
@@ -72,6 +72,7 @@
             border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
             text-shadow: 0 3px 6px rgba(0,0,0,0.45);
+            min-width: 80px;
         }
 
         .hud-label {
@@ -96,12 +97,55 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: auto 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         #pacmanCanvas {
             display: block;
             background: #0f131a;
+        }
+
+        /* Controles en Pantalla (D-Pad en Cruz) */
+        .gamepad {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: auto;
+            margin-bottom: 5px;
+            gap: 2px;
+        }
+
+        .d-pad-middle {
+            display: flex;
+            gap: clamp(50px, 15vw, 65px);
+            margin: -5px 0;
+        }
+
+        .btn-pad {
+            width: clamp(55px, 16vw, 68px);
+            height: clamp(55px, 16vw, 68px);
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a3441, #1b232d);
+            border: 2px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.8);
+            font-size: clamp(20px, 5vw, 26px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.4), inset 0 2px 2px rgba(255,255,255,0.1);
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-pad:active {
+            transform: scale(0.92);
+            background: #1b232d;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            border-color: rgba(255,255,255,0.2);
+            color: white;
         }
 
         .overlay {
@@ -157,7 +201,7 @@
             font-size: clamp(12px, 1.4vw, 16px);
         }
 
-        button {
+        button.menu-btn {
             width: 100%;
             border: 0;
             border-radius: 14px;
@@ -171,12 +215,12 @@
             transition: transform 0.15s, box-shadow 0.15s;
         }
 
-        button:hover {
+        button.menu-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 25px rgba(0,0,0,0.4);
         }
 
-        button:active {
+        button.menu-btn:active {
             transform: translateY(1px) scale(0.98);
         }
 
@@ -213,14 +257,24 @@
             <canvas id="pacmanCanvas" width="380" height="380"></canvas>
         </div>
 
+        <!-- Controles Táctiles (Gamepad) -->
+        <div class="gamepad">
+            <div class="btn-pad" id="btn-up">▲</div>
+            <div class="d-pad-middle">
+                <div class="btn-pad" id="btn-left">◀</div>
+                <div class="btn-pad" id="btn-right">▶</div>
+            </div>
+            <div class="btn-pad" id="btn-down">▼</div>
+        </div>
+
         <!-- Panel de Inicio -->
         <div id="start-overlay" class="overlay">
             <div class="panel">
                 <div class="bird-preview">🟡</div>
                 <h1>PAC-MAN</h1>
                 <p class="subtitle">Smooth arcade control & zero bugs!</p>
-                <button id="start-btn">START GAME</button>
-                <div class="controls">ARROW KEYS / W-A-S-D</div>
+                <button id="start-btn" class="menu-btn">START GAME</button>
+                <div class="controls">TOUCH CONTROLS / ARROWS</div>
             </div>
         </div>
 
@@ -229,7 +283,7 @@
             <div class="panel">
                 <h2 id="modal-title">GAME OVER</h2>
                 <p class="subtitle" id="modal-subtitle">The ghosts caught you!</p>
-                <button id="restart-btn">PLAY AGAIN</button>
+                <button id="restart-btn" class="menu-btn">PLAY AGAIN</button>
             </div>
         </div>
     </div>
@@ -246,6 +300,9 @@
     const restartBtn = document.getElementById('restart-btn');
     const modalTitle = document.getElementById('modal-title');
     const modalSubtitle = document.getElementById('modal-subtitle');
+
+    let touchStartX = 0;
+    let touchStartY = 0;
 
     const TILE_SIZE = 20;
     const MAP = [
@@ -346,7 +403,6 @@
     function update() {
         if (frightenedTimer > 0) frightenedTimer--;
 
-        // Sistema clásico de buffers y alineación estricta a celdas
         let atCenterX = pacman.x % TILE_SIZE === 0;
         let atCenterY = pacman.y % TILE_SIZE === 0;
 
@@ -354,7 +410,6 @@
             let currentTileX = pacman.x / TILE_SIZE;
             let currentTileY = pacman.y / TILE_SIZE;
 
-            // Intentar girar hacia la dirección solicitada (next)
             if (pacman.nextDx !== 0 || pacman.nextDy !== 0) {
                 let nextT = getTile(currentTileX * TILE_SIZE + pacman.nextDx * TILE_SIZE, currentTileY * TILE_SIZE + pacman.nextDy * TILE_SIZE);
                 if (nextT !== 1) {
@@ -363,7 +418,6 @@
                 }
             }
 
-            // Comprobar si la dirección actual está bloqueada por un muro
             let frontT = getTile(currentTileX * TILE_SIZE + Math.sign(pacman.dx) * TILE_SIZE, currentTileY * TILE_SIZE + Math.sign(pacman.dy) * TILE_SIZE);
             if (frontT === 1) {
                 pacman.dx = 0;
@@ -374,11 +428,9 @@
         pacman.x += pacman.dx;
         pacman.y += pacman.dy;
 
-        // Túneles laterales
         if (pacman.x < 0) pacman.x = canvas.width - TILE_SIZE;
         else if (pacman.x >= canvas.width) pacman.x = 0;
 
-        // Comer puntos exactamente en el centro de la celda
         if (pacman.x % TILE_SIZE === 0 && pacman.y % TILE_SIZE === 0) {
             let tx = pacman.x / TILE_SIZE;
             let ty = pacman.y / TILE_SIZE;
@@ -396,7 +448,6 @@
             }
         }
 
-        // Comprobar victoria
         let dotsLeft = false;
         for (let r = 0; r < currentMap.length; r++) {
             for (let c = 0; c < currentMap[r].length; c++) {
@@ -408,7 +459,6 @@
             return;
         }
 
-        // Movimiento de fantasmas basado en cuadrícula limpia
         ghosts.forEach(ghost => {
             if (ghost.x % TILE_SIZE === 0 && ghost.y % TILE_SIZE === 0) {
                 let gx = ghost.x / TILE_SIZE;
@@ -434,7 +484,6 @@
             ghost.x += ghost.dx;
             ghost.y += ghost.dy;
 
-            // Colisión Pac-Man vs Fantasma
             let distX = Math.abs(pacman.x - ghost.x);
             let distY = Math.abs(pacman.y - ghost.y);
             if (distX < TILE_SIZE / 2 && distY < TILE_SIZE / 2) {
@@ -460,7 +509,6 @@
         ctx.fillStyle = '#0f131a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Dibujar mapa
         for (let r = 0; r < currentMap.length; r++) {
             for (let c = 0; c < currentMap[r].length; c++) {
                 if (currentMap[r][c] === 1) {
@@ -482,13 +530,11 @@
             }
         }
 
-        // Animación de la boca
         pacman.mouthAngle += pacman.mouthSpeed;
         if (pacman.mouthAngle > 0.4 || pacman.mouthAngle < 0.05) {
             pacman.mouthSpeed = -pacman.mouthSpeed;
         }
 
-        // Dibujar Pac-Man
         ctx.fillStyle = '#eab308';
         ctx.beginPath();
         let px = pacman.x + TILE_SIZE/2;
@@ -504,7 +550,6 @@
         ctx.lineTo(px, py);
         ctx.fill();
 
-        // Dibujar Fantasmas
         ghosts.forEach(ghost => {
             ctx.fillStyle = frightenedTimer > 0 ? '#3b82f6' : ghost.color;
             let gx = ghost.x + TILE_SIZE/2;
@@ -546,8 +591,63 @@
         }
     });
 
+    // Enlace de los botones en pantalla (D-Pad)
+    function bindButton(id, dx, dy) {
+        const btn = document.getElementById(id);
+        
+        // Prevenir menú contextual en pulsaciones largas móviles
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+        
+        // pointerdown para respuesta instantánea
+        btn.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            if (!gameOver) {
+                pacman.nextDx = dx;
+                pacman.nextDy = dy;
+            }
+        });
+    }
+
+    bindButton('btn-up', 0, -1);
+    bindButton('btn-down', 0, 1);
+    bindButton('btn-left', -1, 0);
+    bindButton('btn-right', 1, 0);
+
+    // Controles por deslizamiento (Swipe) mantenidos como alternativa
+    canvas.addEventListener('touchstart', e => {
+        if (!e.touches[0]) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+        if (!e.changedTouches[0]) return;
+
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 25) return;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            pacman.nextDx = dx > 0 ? 1 : -1;
+            pacman.nextDy = 0;
+        } else {
+            pacman.nextDx = 0;
+            pacman.nextDy = dy > 0 ? 1 : -1;
+        }
+
+        e.preventDefault();
+    }, { passive: false });
+
     startBtn.addEventListener('click', initGame);
     restartBtn.addEventListener('click', initGame);
+
+    currentMap = MAP.map(row => [...row]);
+    draw();
 </script>
 </body>
 </html>

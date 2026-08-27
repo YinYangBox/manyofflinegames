@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2048 Dark Edition</title>
     <style>
         * {
@@ -90,7 +90,6 @@
             line-height: 1.2;
         }
 
-        /* Tablero 2048 */
         .grid-container {
             position: relative;
             width: 100%;
@@ -103,6 +102,7 @@
             grid-template-rows: repeat(4, 1fr);
             gap: 10px;
             margin: auto 0;
+            touch-action: none;
         }
 
         .grid-cell {
@@ -122,7 +122,6 @@
             z-index: 2;
         }
 
-        /* Colores dinámicos para las fichas de 2048 */
         .tile-2 { background: #eee4da; color: #776e65; }
         .tile-4 { background: #ede0c8; color: #776e65; }
         .tile-8 { background: #f2b179; color: #f9f6f2; }
@@ -211,13 +210,6 @@
             transform: translateY(1px) scale(0.98);
         }
 
-        .secondary-button {
-            margin-top: 10px;
-            color: white;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-
         .controls {
             margin-top: 18px;
             display: flex;
@@ -258,7 +250,6 @@
 
 <div class="game-wrapper">
     <div id="game-container">
-        <!-- HUD -->
         <div id="hud">
             <div class="score-container">
                 <span class="hud-label">SCORE</span>
@@ -270,27 +261,23 @@
             </div>
         </div>
 
-        <!-- Tablero de juego -->
         <div class="grid-container" id="grid-container">
-            <!-- 16 celdas de fondo -->
             <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
             <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
             <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
             <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
         </div>
 
-        <!-- Panel de Inicio -->
         <div id="start-overlay" class="overlay">
             <div class="panel">
                 <div class="bird-preview">🧊</div>
                 <h1>2048</h1>
                 <p class="subtitle">Join the numbers and get to the 2048 tile!</p>
                 <button id="start-btn">START GAME</button>
-                <div class="controls">ARROWS • WASD • SWIPE</div>
+                <div class="controls">ARROWS • WASD • MOUSE DRAG</div>
             </div>
         </div>
 
-        <!-- Panel de Game Over -->
         <div id="gameover-overlay" class="overlay hidden">
             <div class="panel">
                 <h2>GAME OVER</h2>
@@ -324,8 +311,7 @@
 
     let board = [];
     let score = 0;
-    let best = localStorage.getItem('2048_best') || 0;
-    bestElement.textContent = best;
+    let best = 0;
 
     function initGame() {
         board = [
@@ -357,11 +343,8 @@
     }
 
     function renderBoard() {
-        // Limpiar fichas anteriores en pantalla
         const existingTiles = gridContainer.querySelectorAll('.tile');
         existingTiles.forEach(t => t.remove());
-
-        const cellSize = gridContainer.clientWidth / 4;
 
         for (let r = 0; r < 4; r++) {
             for (let c = 0; c < 4; c++) {
@@ -371,13 +354,10 @@
                     tile.classList.add('tile', `tile-${val}`);
                     tile.textContent = val;
                     
-                    // Calcular posición exacta en base al grid CSS
                     tile.style.width = `calc(25% - 7.5px)`;
                     tile.style.height = `calc(25% - 7.5px)`;
-                    tile.style.top = `${r * (100 / 4)}%`;
-                    tile.style.left = `${c * (100 / 4)}%`;
-                    
-                    // Ajustar padding proporcional usando márgenes internos
+                    tile.style.top = `${r * 25}%`;
+                    tile.style.left = `${c * 25}%`;
                     tile.style.position = 'absolute';
                     
                     gridContainer.appendChild(tile);
@@ -464,7 +444,6 @@
         if (score > best) {
             best = score;
             bestElement.textContent = best;
-            localStorage.setItem('2048_best', best);
         }
     }
 
@@ -499,7 +478,6 @@
         }
     }
 
-    // Controles por teclado
     window.addEventListener('keydown', e => {
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
             e.preventDefault();
@@ -507,38 +485,46 @@
         }
     });
 
-    // Controles táctiles (Swipe)
-    let touchStartX = 0;
-    let touchStartY = 0;
+    let startX = 0;
+    let startY = 0;
+    let isDragging = false;
 
-    window.addEventListener('touchstart', e => {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    }, {passive: false});
+    // Mouse / Touch Start
+    function dragStart(x, y) {
+        isDragging = true;
+        startX = x;
+        startY = y;
+    }
 
-    window.addEventListener('touchmove', e => {
-        e.preventDefault();
-    }, {passive: false});
+    // Mouse / Touch End
+    function dragEnd(x, y) {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        let diffX = x - startX;
+        let diffY = y - startY;
+
+        if (Math.abs(diffX) > 25 || Math.abs(diffY) > 25) {
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0) handleInput('ArrowRight');
+                else handleInput('ArrowLeft');
+            } else {
+                if (diffY > 0) handleInput('ArrowDown');
+                else handleInput('ArrowUp');
+            }
+        }
+    }
+
+    gridContainer.addEventListener('mousedown', e => dragStart(e.clientX, e.clientY));
+    window.addEventListener('mouseup', e => dragEnd(e.clientX, e.clientY));
+
+    gridContainer.addEventListener('touchstart', e => {
+        if (e.touches[0]) dragStart(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
 
     window.addEventListener('touchend', e => {
-        if (!touchStartX || !touchStartY) return;
-        let touchEndX = e.changedTouches[0].clientX;
-        let touchEndY = e.changedTouches[0].clientY;
-
-        let diffX = touchEndX - touchStartX;
-        let diffY = touchEndY - touchStartY;
-
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            if (diffX > 30) handleInput('ArrowRight');
-            else if (diffX < -30) handleInput('ArrowLeft');
-        } else {
-            if (diffY > 30) handleInput('ArrowDown');
-            else if (diffY < -30) handleInput('ArrowUp');
-        }
-
-        touchStartX = 0;
-        touchStartY = 0;
-    }, {passive: false});
+        if (e.changedTouches[0]) dragEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    }, { passive: true });
 
     startBtn.addEventListener('click', initGame);
     restartBtn.addEventListener('click', initGame);

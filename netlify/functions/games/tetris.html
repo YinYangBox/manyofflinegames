@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tetris Dark Edition</title>
     <style>
         * {
@@ -42,7 +42,7 @@
         #game-container {
             position: relative;
             width: min(100vw, 420px);
-            height: min(100dvh, 720px);
+            height: min(100dvh, 760px);
             overflow: hidden;
             border-radius: clamp(0px, 1.2vw, 24px);
             border: clamp(0px, 0.2vw, 4px) solid rgba(255,255,255,0.18);
@@ -59,7 +59,7 @@
             display: flex;
             justify-content: space-around;
             margin-top: 5px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             pointer-events: none;
             z-index: 5;
         }
@@ -73,6 +73,7 @@
             border-radius: 10px;
             border: 1px solid rgba(255,255,255,0.1);
             text-shadow: 0 3px 6px rgba(0,0,0,0.45);
+            min-width: 70px;
         }
 
         .hud-label {
@@ -98,11 +99,54 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         #tetrisCanvas {
             display: block;
             background: #0f131a;
+        }
+
+        /* Controles en Pantalla */
+        .gamepad {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: auto;
+            margin-bottom: 5px;
+            padding: 0 10px;
+        }
+
+        .pad-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-pad {
+            width: clamp(50px, 15vw, 65px);
+            height: clamp(50px, 15vw, 65px);
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a3441, #1b232d);
+            border: 2px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.8);
+            font-size: clamp(20px, 5vw, 26px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.4), inset 0 2px 2px rgba(255,255,255,0.1);
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-pad:active {
+            transform: scale(0.92);
+            background: #1b232d;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            border-color: rgba(255,255,255,0.2);
+            color: white;
         }
 
         .overlay {
@@ -158,7 +202,7 @@
             font-size: clamp(12px, 1.4vw, 16px);
         }
 
-        button {
+        button.menu-btn {
             width: 100%;
             border: 0;
             border-radius: 14px;
@@ -172,12 +216,12 @@
             transition: transform 0.15s, box-shadow 0.15s;
         }
 
-        button:hover {
+        button.menu-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 25px rgba(0,0,0,0.4);
         }
 
-        button:active {
+        button.menu-btn:active {
             transform: translateY(1px) scale(0.98);
         }
 
@@ -242,14 +286,26 @@
             <canvas id="tetrisCanvas" width="240" height="480"></canvas>
         </div>
 
+        <!-- Controles Táctiles (Gamepad) -->
+        <div class="gamepad">
+            <div class="pad-group">
+                <div class="btn-pad" id="btn-left">◀</div>
+                <div class="btn-pad" id="btn-right">▶</div>
+            </div>
+            <div class="pad-group">
+                <div class="btn-pad" id="btn-down">▼</div>
+                <div class="btn-pad" id="btn-rotate">↻</div>
+            </div>
+        </div>
+
         <!-- Panel de Inicio -->
         <div id="start-overlay" class="overlay">
             <div class="panel">
                 <div class="bird-preview">🧱</div>
                 <h1>TETRIS</h1>
                 <p class="subtitle">Clear lines and stack blocks!</p>
-                <button id="start-btn">START GAME</button>
-                <div class="controls">ARROW KEYS / A-D-S</div>
+                <button id="start-btn" class="menu-btn">START GAME</button>
+                <div class="controls">TOUCH CONTROLS / ARROWS</div>
             </div>
         </div>
 
@@ -268,7 +324,7 @@
                         <strong id="final-lines">0</strong>
                     </div>
                 </div>
-                <button id="restart-btn">PLAY AGAIN</button>
+                <button id="restart-btn" class="menu-btn">PLAY AGAIN</button>
             </div>
         </div>
     </div>
@@ -299,6 +355,7 @@
     let dropInterval = 1000;
     let dropCounter = 0;
     let lastTime = 0;
+    let animationId = null;
 
     const SHAPES = [
         [],
@@ -484,7 +541,7 @@
         }
 
         draw();
-        requestAnimationFrame(update);
+        animationId = requestAnimationFrame(update);
     }
 
     function initGame() {
@@ -502,26 +559,55 @@
         gameoverOverlay.classList.add('hidden');
 
         playerReset();
+        if(animationId) cancelAnimationFrame(animationId);
         lastTime = performance.now();
-        requestAnimationFrame(update);
+        update();
     }
 
-    // Controles por teclado
+    // Controles por teclado (PC)
     window.addEventListener('keydown', e => {
         if (gameOver) return;
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
             playerMove(-1);
+            draw();
         } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
             playerMove(1);
+            draw();
         } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
             playerDrop();
+            draw();
         } else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') {
             playerRotate();
+            draw();
         }
     });
 
+    // Enlace de los botones táctiles en pantalla
+    function bindButton(id, action) {
+        const btn = document.getElementById(id);
+        
+        // Prevenir menú contextual de largo click en móviles
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+        
+        // pointerdown funciona instantáneo en móvil (touch) y pc (clic)
+        btn.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            if (!gameOver) {
+                action();
+                draw(); // Forzar dibujado instantáneo sin esperar el próximo frame
+            }
+        });
+    }
+
+    bindButton('btn-left', () => playerMove(-1));
+    bindButton('btn-right', () => playerMove(1));
+    bindButton('btn-down', () => playerDrop());
+    bindButton('btn-rotate', () => playerRotate());
+
     startBtn.addEventListener('click', initGame);
     restartBtn.addEventListener('click', initGame);
+    
+    draw();
 </script>
 </body>
 </html>
