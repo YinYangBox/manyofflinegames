@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>99 Balls - Ring Edition</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #1e293b, #0f172a);
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #f8fafc;
+      touch-action: none;
+    }
+
+    .game-wrapper {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+
+    #game-container {
+      position: relative;
+      width: min(100%, 500px);
+      height: min(100%, 800px);
+      background: #0b1120;
+      border-radius: 24px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        inset 0 0 30px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* =========================
+       HUD
+       ========================= */
+
+    #hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      z-index: 10;
+    }
+
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 900;
+      color: #38bdf8;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* =========================
+       PANTALLAS
+       ========================= */
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background: rgba(2, 6, 23, 0.82);
+      backdrop-filter: blur(10px);
+    }
+
+    .screen.show {
+      display: flex;
+    }
+
+    .screen-card {
+      width: min(88%, 350px);
+      padding: 30px 25px;
+      border-radius: 30px;
+      text-align: center;
+      background: linear-gradient(180deg, #1e293b, #111827);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6);
+      animation: screenIn 0.3s ease-out;
+    }
+
+    @keyframes screenIn {
+      from {
+        opacity: 0;
+        transform: scale(.9) translateY(15px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* =========================
+       START
+       ========================= */
+
+    .start-icon {
+      font-size: 50px;
+      margin-bottom: 5px;
+    }
+
+    .start-title {
+      margin: 0;
+      font-size: 38px;
+      font-weight: 1000;
+      letter-spacing: -1px;
+      color: #38bdf8;
+      text-shadow: 0 0 20px rgba(56, 189, 248, .3);
+    }
+
+    .start-subtitle {
+      margin-top: 5px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .speed-title {
+      margin-top: 28px;
+      font-size: 13px;
+      color: #cbd5e1;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #speed-value {
+      margin-top: 7px;
+      font-size: 28px;
+      font-weight: 1000;
+      color: #38bdf8;
+    }
+
+    .speed-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    #speed-slider {
+      width: 100%;
+      margin-top: 13px;
+      appearance: none;
+      height: 7px;
+      border-radius: 10px;
+      background: #334155;
+      outline: none;
+      cursor: pointer;
+    }
+
+    #speed-slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #38bdf8;
+      border: 3px solid #0f172a;
+      box-shadow: 0 0 15px rgba(56, 189, 248, .5);
+    }
+
+    #speed-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #38bdf8;
+      border: 3px solid #0f172a;
+      box-shadow: 0 0 15px rgba(56, 189, 248, .5);
+    }
+
+    .main-button {
+      width: 100%;
+      margin-top: 25px;
+      padding: 15px 20px;
+      border: none;
+      border-radius: 17px;
+      background: #38bdf8;
+      color: #082f49;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .main-button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    .main-button:active {
+      transform: scale(.97);
+    }
+
+    /* =========================
+       DERROTA
+       ========================= */
+
+    .game-over-icon {
+      font-size: 48px;
+      margin-bottom: 4px;
+    }
+
+    .game-over-title {
+      font-size: 38px;
+      font-weight: 1000;
+      letter-spacing: 2px;
+      color: #f87171;
+      text-shadow: 0 0 20px rgba(248, 113, 113, 0.35);
+    }
+
+    .game-over-level {
+      margin-top: 8px;
+      color: #94a3b8;
+      font-size: 15px;
+    }
+
+    .game-over-level strong {
+      color: #f8fafc;
+    }
+
+    .secondary-button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 14px 20px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 16px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .secondary-button:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game-wrapper">
+
+    <div id="game-container">
+
+      <!-- =========================
+           HUD
+           ========================= -->
+
+      <div id="hud">
+
+        <div class="stat-box">
+          <span class="stat-label">Nivel</span>
+          <span class="stat-value" id="level-display">1</span>
+        </div>
+
+        <div class="stat-box">
+          <span class="stat-label">Récord</span>
+          <span
+            class="stat-value"
+            id="record-display"
+            style="color:#ffd700;"
+          >1</span>
+        </div>
+
+        <div class="stat-box">
+          <span class="stat-label">Bolas</span>
+          <span class="stat-value" id="balls-display">1</span>
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           CANVAS
+           ========================= -->
+
+      <div id="canvas-container">
+        <canvas id="gameCanvas"></canvas>
+      </div>
+
+
+      <!-- =========================
+           PANTALLA DE INICIO
+           ========================= -->
+
+      <div
+        id="start-screen"
+        class="screen show"
+      >
+
+        <div class="screen-card">
+
+          <div class="start-icon">🎯</div>
+
+          <h1 class="start-title">
+            99 BALLS
+          </h1>
+
+          <div class="start-subtitle">
+            Ring Edition
+          </div>
+
+
+          <div class="speed-title">
+            Velocidad de la bola
+          </div>
+
+          <div id="speed-value">
+            7.0
+          </div>
+
+          <input
+            id="speed-slider"
+            type="range"
+            min="3"
+            max="15"
+            step="0.5"
+            value="7"
+          >
+
+          <div class="speed-labels">
+            <span>🐢 Lenta</span>
+            <span>🚀 Rápida</span>
+          </div>
+
+
+          <button
+            id="start-button"
+            class="main-button"
+          >
+            JUGAR
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           PANTALLA DE DERROTA
+           ========================= -->
+
+      <div
+        id="game-over"
+        class="screen"
+      >
+
+        <div class="screen-card">
+
+          <div class="game-over-icon">
+            💥
+          </div>
+
+          <div class="game-over-title">
+            DERROTA
+          </div>
+
+          <div class="game-over-level">
+            Llegaste al nivel
+            <strong id="final-level">1</strong>
+          </div>
+
+
+          <button
+            id="restart-button"
+            class="main-button"
+          >
+            JUGAR DE NUEVO
+          </button>
+
+          <button
+            id="menu-button"
+            class="secondary-button"
+          >
+            CAMBIAR VELOCIDAD
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    /* =========================
+       ELEMENTOS
+       ========================= */
+
+    const canvas =
+      document.getElementById('gameCanvas');
+
+    const ctx =
+      canvas.getContext('2d', {
+        alpha: false
+      });
+
+
+    const levelDisplay =
+      document.getElementById('level-display');
+
+    const recordDisplay =
+      document.getElementById('record-display');
+
+    const ballsDisplay =
+      document.getElementById('balls-display');
+
+
+    const startScreen =
+      document.getElementById('start-screen');
+
+    const gameOverScreen =
+      document.getElementById('game-over');
+
+
+    const startButton =
+      document.getElementById('start-button');
+
+    const restartButton =
+      document.getElementById('restart-button');
+
+    const menuButton =
+      document.getElementById('menu-button');
+
+
+    const speedSlider =
+      document.getElementById('speed-slider');
+
+    const speedValue =
+      document.getElementById('speed-value');
+
+
+    const finalLevelDisplay =
+      document.getElementById('final-level');
+
+
+    /* =========================
+       CONFIGURACIÓN
+       ========================= */
+
+    const COLS = 7;
+
+    const BALL_RADIUS = 12;
+
+    /*
+      Ahora NO es constante.
+
+      El jugador puede modificar
+      la velocidad desde el menú.
+    */
+
+    let BALL_SPEED = 7;
+
+    let ROW_HEIGHT = 0;
+
+    let COL_WIDTH = 0;
+
+
+    /* =========================
+       ESTADO
+       ========================= */
+
+    let level = 1;
+
+    let maxRecordLevel = 1;
+
+    let totalBalls = 1;
+
+
+    let blocks = [];
+
+    let extraBalls = [];
+
+    let activeBalls = [];
+
+
+    let startX = 0;
+
+    let startY = 0;
+
+    let nextStartX = 0;
+
+    let firstBallLanded = false;
+
+
+    /*
+      Estados:
+
+      START
+      IDLE
+      AIMING
+      SHOOTING
+      GAME_OVER
+    */
+
+    let state = 'START';
+
+
+    let aimEndX = 0;
+
+    let aimEndY = 0;
+
+    let ballsToShoot = 0;
+
+    let shootTimer = 0;
+
+
+    let shootVelocity = {
+      x: 0,
+      y: 0
+    };
+
+
+    const COLOR_PALETTE = [
+
+      '#ef4444',
+      '#f97316',
+      '#eab308',
+      '#22c55e',
+      '#06b6d4',
+      '#3b82f6',
+      '#8b5cf6',
+      '#ec4899',
+      '#f43f5e'
+
+    ];
+
+
+    /* =========================
+       SLIDER DE VELOCIDAD
+       ========================= */
+
+    speedSlider.addEventListener(
+      'input',
+      () => {
+
+        BALL_SPEED =
+          parseFloat(
+            speedSlider.value
+          );
+
+        speedValue.textContent =
+          BALL_SPEED.toFixed(1);
+
+      }
+    );
+
+
+    /* =========================
+       RESIZE
+       ========================= */
+
+    function resizeCanvas() {
+
+      const container =
+        document.getElementById(
+          'canvas-container'
+        );
+
+
+      canvas.width =
+        container.clientWidth;
+
+
+      canvas.height =
+        container.clientHeight;
+
+
+      COL_WIDTH =
+        canvas.width / COLS;
+
+
+      ROW_HEIGHT =
+        COL_WIDTH;
+
+
+      startY =
+        canvas.height -
+        BALL_RADIUS -
+        6;
+
+
+      if (startX === 0) {
+
+        startX =
+          canvas.width / 2;
+
+      }
+
+    }
+
+
+    window.addEventListener(
+      'resize',
+      () => {
+
+        resizeCanvas();
+
+        draw();
+
+      }
+    );
+
+
+    /* =========================
+       PREPARAR PARTIDA
+       ========================= */
+
+    function prepareGame() {
+
+      level = 1;
+
+      totalBalls = 1;
+
+      blocks = [];
+
+      extraBalls = [];
+
+      activeBalls = [];
+
+
+      firstBallLanded = false;
+
+
+      resizeCanvas();
+
+
+      startX =
+        canvas.width / 2;
+
+
+      startY =
+        canvas.height -
+        BALL_RADIUS -
+        6;
+
+
+      nextStartX =
+        startX;
+
+
+      updateHUD();
+
+
+      spawnRow();
+
+    }
+
+
+    /* =========================
+       COMENZAR
+       ========================= */
+
+    function startGame() {
+
+      /*
+        Guardamos la velocidad
+        seleccionada actualmente.
+      */
+
+      BALL_SPEED =
+        parseFloat(
+          speedSlider.value
+        );
+
+
+      prepareGame();
+
+
+      startScreen.classList.remove(
+        'show'
+      );
+
+
+      gameOverScreen.classList.remove(
+        'show'
+      );
+
+
+      state = 'IDLE';
+
+    }
+
+
+    startButton.addEventListener(
+      'click',
+      startGame
+    );
+
+
+    /* =========================
+       VOLVER AL MENÚ
+       ========================= */
+
+    menuButton.addEventListener(
+      'click',
+      () => {
+
+        gameOverScreen.classList.remove(
+          'show'
+        );
+
+        startScreen.classList.add(
+          'show'
+        );
+
+        state = 'START';
+
+      }
+    );
+
+
+    /* =========================
+       JUGAR DE NUEVO
+       ========================= */
+
+    restartButton.addEventListener(
+      'click',
+      () => {
+
+        prepareGame();
+
+        gameOverScreen.classList.remove(
+          'show'
+        );
+
+        state = 'IDLE';
+
+      }
+    );
+
+
+    /* =========================
+       CREAR FILA
+       ========================= */
+
+    function spawnRow() {
+
+      /*
+        Mover todo hacia abajo.
+      */
+
+      for (
+        let b of blocks
+      ) {
+
+        b.row++;
+
+      }
+
+
+      for (
+        let e of extraBalls
+      ) {
+
+        e.row++;
+
+      }
+
+
+      const availableHeight =
+        canvas.height;
+
+
+      const maxGridRows =
+        Math.floor(
+          availableHeight /
+          ROW_HEIGHT
+        );
+
+
+      const dangerLine =
+        Math.max(
+          0,
+          maxGridRows
+        );
+
+
+      /*
+        IMPORTANTE:
+
+        Ya no hacemos:
+
+        blocks = blocks.filter(...)
+
+        Los bloques permanecen.
+
+        Si llegan a la zona inferior,
+        perdemos.
+      */
+
+      const danger =
+        blocks.some(
+          b =>
+            b.row >=
+            dangerLine - 1
+        );
+
+
+      if (danger) {
+
+        gameOver();
+
+        return;
+
+      }
+
+
+      let occupiedCols =
+        new Set();
+
+
+      /* =========================
+         NUEVOS BLOQUES
+         ========================= */
+
+      for (
+        let c = 0;
+        c < COLS;
+        c++
+      ) {
+
+        const rand =
+          Math.random();
+
+
+        if (rand > 0.45) {
+
+          const val =
+            Math.random() > 0.8
+              ? level * 2
+              : level;
+
+
+          const color =
+            COLOR_PALETTE[
+              Math.floor(
+                Math.random() *
+                COLOR_PALETTE.length
+              )
+            ];
+
+
+          blocks.push({
+
+            col: c,
+
+            row: 0,
+
+            value: val,
+
+            color: color
+
+          });
+
+
+          occupiedCols.add(c);
+
+        }
+
+      }
+
+
+      /*
+        Siempre crear al menos
+        un bloque.
+      */
+
+      if (
+        blocks.filter(
+          b => b.row === 0
+        ).length === 0
+      ) {
+
+        const c =
+          Math.floor(
+            Math.random() *
+            COLS
+          );
+
+
+        const color =
+          COLOR_PALETTE[
+            Math.floor(
+              Math.random() *
+              COLOR_PALETTE.length
+            )
+          ];
+
+
+        blocks.push({
+
+          col: c,
+
+          row: 0,
+
+          value: level,
+
+          color: color
+
+        });
+
+
+        occupiedCols.add(c);
+
+      }
+
+
+      /* =========================
+         BOLA EXTRA
+         ========================= */
+
+      let freeCols = [];
+
+
+      for (
+        let c = 0;
+        c < COLS;
+        c++
+      ) {
+
+        if (
+          !occupiedCols.has(c)
+        ) {
+
+          freeCols.push(c);
+
+        }
+
+      }
+
+
+      if (
+        freeCols.length > 0 &&
+        Math.random() < 0.4
+      ) {
+
+        const randomCol =
+          freeCols[
+            Math.floor(
+              Math.random() *
+              freeCols.length
+            )
+          ];
+
+
+        extraBalls.push({
+
+          col: randomCol,
+
+          row: 0
+
+        });
+
+      }
+
+    }
+
+
+    /* =========================
+       GAME OVER
+       ========================= */
+
+    function gameOver() {
+
+      state = 'GAME_OVER';
+
+
+      ballsToShoot = 0;
+
+      activeBalls = [];
+
+
+      finalLevelDisplay.textContent =
+        level;
+
+
+      gameOverScreen.classList.add(
+        'show'
+      );
+
+    }
+
+
+    /* =========================
+       HUD
+       ========================= */
+
+    function updateHUD() {
+
+      levelDisplay.textContent =
+        level;
+
+
+      if (
+        level >
+        maxRecordLevel
+      ) {
+
+        maxRecordLevel =
+          level;
+
+      }
+
+
+      recordDisplay.textContent =
+        maxRecordLevel;
+
+
+      ballsDisplay.textContent =
+        totalBalls;
+
+    }
+
+
+    /* =========================
+       APUNTAR
+       ========================= */
+
+    canvas.addEventListener(
+      'pointerdown',
+      (e) => {
+
+        if (
+          state !== 'IDLE'
+        ) {
+
+          return;
+
+        }
+
+
+        state = 'AIMING';
+
+
+        updateAim(e);
+
+      }
+    );
+
+
+    canvas.addEventListener(
+      'pointermove',
+      (e) => {
+
+        if (
+          state !== 'AIMING'
+        ) {
+
+          return;
+
+        }
+
+
+        updateAim(e);
+
+      }
+    );
+
+
+    canvas.addEventListener(
+      'pointerup',
+      (e) => {
+
+        if (
+          state !== 'AIMING'
+        ) {
+
+          return;
+
+        }
+
+
+        const rect =
+          canvas.getBoundingClientRect();
+
+
+        const x =
+          e.clientX -
+          rect.left;
+
+
+        const y =
+          e.clientY -
+          rect.top;
+
+
+        let dx =
+          x - startX;
+
+
+        let dy =
+          y - startY;
+
+
+        let angle =
+          Math.atan2(
+            dy,
+            dx
+          );
+
+
+        /*
+          Limitar ángulo.
+        */
+
+        if (
+          angle > -0.1
+        ) {
+
+          angle = -0.1;
+
+        }
+
+
+        if (
+          angle <
+          -Math.PI + 0.1
+        ) {
+
+          angle =
+            -Math.PI + 0.1;
+
+        }
+
+
+        /*
+          AQUÍ SE APLICA
+          LA VELOCIDAD ELEGIDA.
+        */
+
+        shootVelocity = {
+
+          x:
+            Math.cos(angle) *
+            BALL_SPEED,
+
+          y:
+            Math.sin(angle) *
+            BALL_SPEED
+
+        };
+
+
+        state =
+          'SHOOTING';
+
+
+        ballsToShoot =
+          totalBalls;
+
+
+        shootTimer = 0;
+
+
+        firstBallLanded =
+          false;
+
+
+        activeBalls = [];
+
+      }
+    );
+
+
+    function updateAim(e) {
+
+      const rect =
+        canvas.getBoundingClientRect();
+
+
+      aimEndX =
+        e.clientX -
+        rect.left;
+
+
+      aimEndY =
+        e.clientY -
+        rect.top;
+
+    }
+
+
+    /* =========================
+       UPDATE
+       ========================= */
+
+    function update() {
+
+      if (
+        state !== 'SHOOTING'
+      ) {
+
+        return;
+
+      }
+
+
+      /* =========================
+         DISPARAR BOLAS
+         ========================= */
+
+      if (
+        ballsToShoot > 0
+      ) {
+
+        shootTimer++;
+
+
+        if (
+          shootTimer > 6
+        ) {
+
+          activeBalls.push({
+
+            x: startX,
+
+            y: startY,
+
+            vx:
+              shootVelocity.x,
+
+            vy:
+              shootVelocity.y
+
+          });
+
+
+          ballsToShoot--;
+
+          shootTimer = 0;
+
+        }
+
+      }
+
+
+      /* =========================
+         MOVER BOLAS
+         ========================= */
+
+      for (
+        let i =
+          activeBalls.length - 1;
+
+        i >= 0;
+
+        i--
+      ) {
+
+        let ball =
+          activeBalls[i];
+
+
+        ball.x += ball.vx;
+
+        ball.y += ball.vy;
+
+
+        /* =========================
+           PAREDES
+           ========================= */
+
+        if (
+          ball.x -
+          BALL_RADIUS <
+          0
+        ) {
+
+          ball.x =
+            BALL_RADIUS;
+
+          ball.vx *= -1;
+
+        }
+
+        else if (
+          ball.x +
+          BALL_RADIUS >
+          canvas.width
+        ) {
+
+          ball.x =
+            canvas.width -
+            BALL_RADIUS;
+
+          ball.vx *= -1;
+
+        }
+
+
+        /* =========================
+           TECHO
+           ========================= */
+
+        if (
+          ball.y -
+          BALL_RADIUS <
+          0
+        ) {
+
+          ball.y =
+            BALL_RADIUS;
+
+          ball.vy *= -1;
+
+        }
+
+
+        /* =========================
+           BLOQUES
+           ========================= */
+
+        for (
+          let j =
+            blocks.length - 1;
+
+          j >= 0;
+
+          j--
+        ) {
+
+          let b =
+            blocks[j];
+
+
+          let bx =
+            b.col *
+            COL_WIDTH +
+            COL_WIDTH / 2;
+
+
+          let by =
+            b.row *
+            ROW_HEIGHT +
+            ROW_HEIGHT / 2;
+
+
+          let radius =
+            COL_WIDTH / 2 - 4;
+
+
+          let dx =
+            ball.x - bx;
+
+
+          let dy =
+            ball.y - by;
+
+
+          let distance =
+            Math.sqrt(
+              dx * dx +
+              dy * dy
+            );
+
+
+          if (
+            distance <=
+            BALL_RADIUS +
+            radius
+          ) {
+
+            let angle =
+              Math.atan2(
+                dy,
+                dx
+              );
+
+
+            /*
+              Usamos BALL_SPEED,
+              por lo que los rebotes
+              también respetan la
+              velocidad elegida.
+            */
+
+            ball.vx =
+              Math.cos(angle) *
+              BALL_SPEED;
+
+
+            ball.vy =
+              Math.sin(angle) *
+              BALL_SPEED;
+
+
+            b.value--;
+
+
+            if (
+              b.value <= 0
+            ) {
+
+              blocks.splice(
+                j,
+                1
+              );
+
+            }
+
+          }
+
+        }
+
+
+        /* =========================
+           BOLAS EXTRA
+           ========================= */
+
+        for (
+          let j =
+            extraBalls.length - 1;
+
+          j >= 0;
+
+          j--
+        ) {
+
+          let e =
+            extraBalls[j];
+
+
+          let ex =
+            e.col *
+            COL_WIDTH +
+            COL_WIDTH / 2;
+
+
+          let ey =
+            e.row *
+            ROW_HEIGHT +
+            ROW_HEIGHT / 2;
+
+
+          let dx =
+            ball.x - ex;
+
+
+          let dy =
+            ball.y - ey;
+
+
+          if (
+            Math.sqrt(
+              dx * dx +
+              dy * dy
+            ) <
+            BALL_RADIUS + 14
+          ) {
+
+            totalBalls++;
+
+
+            updateHUD();
+
+
+            extraBalls.splice(
+              j,
+              1
+            );
+
+          }
+
+        }
+
+
+        /* =========================
+           BOLA LLEGA ABAJO
+           ========================= */
+
+        if (
+          ball.y +
+          BALL_RADIUS >=
+          canvas.height
+        ) {
+
+          if (
+            !firstBallLanded
+          ) {
+
+            firstBallLanded =
+              true;
+
+
+            nextStartX =
+              Math.max(
+                BALL_RADIUS,
+
+                Math.min(
+                  canvas.width -
+                  BALL_RADIUS,
+
+                  ball.x
+                )
+              );
+
+          }
+
+
+          activeBalls.splice(
+            i,
+            1
+          );
+
+        }
+
+      }
+
+
+      /* =========================
+         SIGUIENTE NIVEL
+         ========================= */
+
+      if (
+        ballsToShoot === 0 &&
+        activeBalls.length === 0
+      ) {
+
+        startX =
+          nextStartX;
+
+
+        level++;
+
+
+        updateHUD();
+
+
+        spawnRow();
+
+
+        /*
+          spawnRow() puede provocar
+          GAME OVER.
+        */
+
+        if (
+          state !== 'GAME_OVER'
+        ) {
+
+          state = 'IDLE';
+
+        }
+
+      }
+
+    }
+
+
+    /* =========================
+       DRAW
+       ========================= */
+
+    function draw() {
+
+      ctx.fillStyle =
+        '#0b1120';
+
+
+      ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      /* =========================
+         BLOQUES
+         ========================= */
+
+      for (
+        let b of blocks
+      ) {
+
+        let x =
+          b.col *
+          COL_WIDTH +
+          COL_WIDTH / 2;
+
+
+        let y =
+          b.row *
+          ROW_HEIGHT +
+          ROW_HEIGHT / 2;
+
+
+        let radius =
+          COL_WIDTH / 2 - 4;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          x,
+          y,
+          radius,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.fillStyle =
+          b.color;
+
+
+        ctx.shadowColor =
+          b.color;
+
+
+        ctx.shadowBlur = 8;
+
+
+        ctx.fill();
+
+
+        ctx.shadowBlur = 0;
+
+
+        ctx.fillStyle =
+          '#ffffff';
+
+
+        ctx.font =
+          'bold 16px system-ui';
+
+
+        ctx.textAlign =
+          'center';
+
+
+        ctx.textBaseline =
+          'middle';
+
+
+        ctx.fillText(
+          b.value,
+          x,
+          y
+        );
+
+      }
+
+
+      /* =========================
+         BOLAS EXTRA
+         ========================= */
+
+      for (
+        let e of extraBalls
+      ) {
+
+        let x =
+          e.col *
+          COL_WIDTH +
+          COL_WIDTH / 2;
+
+
+        let y =
+          e.row *
+          ROW_HEIGHT +
+          ROW_HEIGHT / 2;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          x,
+          y,
+          5,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.fillStyle =
+          '#ffd700';
+
+
+        ctx.fill();
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          x,
+          y,
+          13,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.strokeStyle =
+          '#ffd700';
+
+
+        ctx.shadowColor =
+          '#ffd700';
+
+
+        ctx.shadowBlur = 8;
+
+
+        ctx.lineWidth = 3;
+
+
+        ctx.stroke();
+
+
+        ctx.shadowBlur = 0;
+
+      }
+
+
+      /* =========================
+         LÍNEA DE APUNTADO
+         ========================= */
+
+      if (
+        state === 'AIMING'
+      ) {
+
+        let dx =
+          aimEndX -
+          startX;
+
+
+        let dy =
+          aimEndY -
+          startY;
+
+
+        let angle =
+          Math.atan2(
+            dy,
+            dx
+          );
+
+
+        if (
+          angle > -0.1
+        ) {
+
+          angle = -0.1;
+
+        }
+
+
+        if (
+          angle <
+          -Math.PI + 0.1
+        ) {
+
+          angle =
+            -Math.PI + 0.1;
+
+        }
+
+
+        ctx.beginPath();
+
+
+        let tx =
+          startX +
+          Math.cos(angle) *
+          2000;
+
+
+        let ty =
+          startY +
+          Math.sin(angle) *
+          2000;
+
+
+        ctx.setLineDash([
+          8,
+          12
+        ]);
+
+
+        ctx.moveTo(
+          startX,
+          startY
+        );
+
+
+        ctx.lineTo(
+          tx,
+          ty
+        );
+
+
+        ctx.strokeStyle =
+          'rgba(255,255,255,.4)';
+
+
+        ctx.lineWidth = 2;
+
+
+        ctx.stroke();
+
+
+        ctx.setLineDash([]);
+
+      }
+
+
+      /* =========================
+         BOLAS EN VUELO
+         ========================= */
+
+      for (
+        let ball of activeBalls
+      ) {
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          ball.x,
+          ball.y,
+          BALL_RADIUS,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.strokeStyle =
+          '#38bdf8';
+
+
+        ctx.lineWidth = 3;
+
+
+        ctx.shadowColor =
+          '#38bdf8';
+
+
+        ctx.shadowBlur = 10;
+
+
+        ctx.stroke();
+
+
+        ctx.shadowBlur = 0;
+
+      }
+
+
+      /* =========================
+         BOLA DE INICIO
+         ========================= */
+
+      if (
+        state === 'IDLE' ||
+        state === 'AIMING'
+      ) {
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          startX,
+          startY,
+          BALL_RADIUS,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.strokeStyle =
+          '#38bdf8';
+
+
+        ctx.lineWidth = 3;
+
+
+        ctx.stroke();
+
+
+        ctx.shadowBlur = 0;
+
+
+        ctx.fillStyle =
+          '#94a3b8';
+
+
+        ctx.font =
+          'bold 14px system-ui';
+
+
+        ctx.textAlign =
+          'center';
+
+
+        ctx.fillText(
+          'x' + totalBalls,
+          startX,
+          startY - 24
+        );
+
+      }
+
+
+      ctx.shadowBlur = 0;
+
+    }
+
+
+    /* =========================
+       GAME LOOP
+       ========================= */
+
+    function gameLoop() {
+
+      update();
+
+      draw();
+
+      requestAnimationFrame(
+        gameLoop
+      );
+
+    }
+
+
+    /* =========================
+       INICIALIZACIÓN
+       ========================= */
+
+    resizeCanvas();
+
+    speedValue.textContent =
+      parseFloat(
+        speedSlider.value
+      ).toFixed(1);
+
+    updateHUD();
+
+    gameLoop();
+
+  </script>
+
+</body>
+</html>
