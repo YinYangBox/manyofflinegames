@@ -1,26 +1,37 @@
-import fs from "fs";
-import path from "path";
+const fs = require("fs");
+const path = require("path");
 
 export async function handler(event) {
-  const gameName = event.queryStringParameters.game;
+	const gameName = event.queryStringParameters?.game;
+	if (!gameName) return { statusCode: 400, body: "Missing ?game=" };
 
-  if (!gameName) {
-    return { statusCode: 400, body: "Missing ?game=name" };
+	const ref = event.headers.referer || "";
+	if (!ref.includes("itch.io") && !ref.includes("localhost")) {
+		return { statusCode: 403, body: "Only from itch.io" };
+	}
+
+	if (gameName.includes("..") || gameName.includes("/")) {
+		return { statusCode: 400, body: "Invalid name" };
+	}
+
+  const gamesDir = fs.readdirSync(path.join(process.cwd(), "games"));
+
+  if (!gamesDir.includes(`${gameName}.html`)) {
+    return { statusCode: 404, body: "Game not found" };
   }
 
-  try {
-    const filePath = path.join(__dirname, `games/${gameName}.html`);
-    const gameHtml = fs.readFileSync(filePath, "utf8");
-
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "https://itch.io",
-        "Content-Type": "text/html",
-      },
-      body: gameHtml,
-    };
-  } catch {
-    return { statusCode: 404, body: "Game not found: " + gameName };
-  }
+	try {
+		const p = path.join(process.cwd(), `games/${gameName}.html`);
+		const html = fs.readFileSync(p, "utf8");
+		return {
+			statusCode: 200,
+			headers: {
+				"Content-Type": "text/html",
+				"Access-Control-Allow-Origin": "https://itch.io"
+			},
+			body: html
+		};
+	} catch (e) {
+		return { statusCode: 404, body: "Not found" };
+	}
 }
