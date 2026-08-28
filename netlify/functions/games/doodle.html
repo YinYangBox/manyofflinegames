@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Doodle Jump - Dark Edition</title>
+  <style>
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: radial-gradient(circle at center, #202938, #080b10);
+        font-family: Arial, Helvetica, sans-serif;
+        color: white;
+        user-select: none;
+        touch-action: none;
+    }
+
+    .game-wrapper {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100dvh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #game-container {
+        position: relative;
+        width: min(100vw, 480px);
+        height: min(100dvh, 720px);
+        overflow: hidden;
+        border-radius: clamp(0px, 1.2vw, 24px);
+        border: clamp(0px, 0.2vw, 4px) solid rgba(255, 255, 255, 0.18);
+        background: #121822;
+        box-shadow: 0 25px 80px rgba(0,0,0,0.55), inset 0 0 40px rgba(0,0,0,0.15);
+    }
+
+    #gameCanvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    #hud {
+        position: absolute;
+        top: clamp(15px, 3vh, 30px);
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: clamp(35px, 6vw, 100px);
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .score-container, .best-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-shadow: 0 3px 6px rgba(0,0,0,0.45);
+        background: rgba(0, 0, 0, 0.35);
+        padding: 6px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .hud-label {
+        font-size: clamp(10px, 1vw, 14px);
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    #score, #best {
+        font-size: clamp(24px, 3vw, 42px);
+        font-weight: 900;
+        line-height: 1.1;
+    }
+
+    .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 10;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    .panel {
+        width: min(90%, 420px);
+        padding: clamp(25px, 4vw, 35px);
+        border-radius: 26px;
+        border: 2px solid rgba(255, 255, 255, 0.16);
+        background: linear-gradient(145deg, rgba(30,38,52,0.96), rgba(9,13,20,0.96));
+        box-shadow: 0 25px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+        text-align: center;
+    }
+
+    .doodle-preview-box {
+        width: 90px;
+        height: 90px;
+        margin: 0 auto 10px auto;
+        animation: doodleFloat 1.8s ease-in-out infinite;
+        filter: drop-shadow(0 8px 12px rgba(0,0,0,0.5));
+    }
+
+    @keyframes doodleFloat {
+        0%, 100% { transform: translateY(0) rotate(-3deg); }
+        50% { transform: translateY(-12px) rotate(3deg); }
+    }
+
+    h1, h2 {
+        margin: 0 0 8px;
+        font-weight: 1000;
+        letter-spacing: 1px;
+    }
+
+    h1 { font-size: clamp(32px, 4vw, 56px); color: #a8e038; }
+    h2 { font-size: clamp(30px, 4vw, 48px); color: #ff3366; }
+
+    .subtitle {
+        margin: 0 0 24px;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: clamp(13px, 1.5vw, 17px);
+    }
+
+    button {
+        width: 100%;
+        border: 0;
+        border-radius: 14px;
+        padding: clamp(13px, 1.5vw, 18px);
+        font-size: clamp(16px, 1.5vw, 20px);
+        font-weight: 900;
+        color: #10151d;
+        background: linear-gradient(135deg, #a8e038, #7bb31e);
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(168, 224, 56, 0.25);
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(168, 224, 56, 0.35);
+    }
+
+    button:active {
+        transform: translateY(1px) scale(0.98);
+    }
+
+    .controls {
+        margin-top: 18px;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        color: rgba(255, 255, 255, 0.45);
+        font-size: clamp(9px, 1vw, 12px);
+        font-weight: 800;
+        letter-spacing: 1px;
+    }
+
+    .results {
+        display: flex;
+        justify-content: center;
+        gap: clamp(35px, 6vw, 70px);
+        margin: 22px 0;
+    }
+
+    .results div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .results span {
+        font-size: 11px;
+        letter-spacing: 2px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .results strong {
+        margin-top: 4px;
+        font-size: clamp(28px, 4vw, 48px);
+    }
+  </style>
+</head>
+<body>
+  <main class="game-wrapper">
+    <section id="game-container">
+      <canvas id="gameCanvas"></canvas>
+
+      <div id="hud">
+        <div class="score-container">
+          <span class="hud-label">SCORE</span>
+          <span id="score">0</span>
+        </div>
+        <div class="best-container">
+          <span class="hud-label">BEST</span>
+          <span id="best">0</span>
+        </div>
+      </div>
+
+      <!-- Start Overlay -->
+      <div id="start-screen" class="overlay">
+        <div class="panel">
+          <canvas id="previewCanvas" class="doodle-preview-box" width="90" height="90"></canvas>
+          <h1>DOODLE</h1>
+          <p class="subtitle">Jump up as high as possible!</p>
+
+          <button id="start-button">START GAME</button>
+
+          <div class="controls">
+            <span>ARROWS</span> • <span>WASD</span> • <span>MOUSE / TOUCH</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="game-over-screen" class="overlay hidden">
+        <div class="panel">
+          <h2>GAME OVER</h2>
+
+          <div class="results">
+            <div>
+              <span>SCORE</span>
+              <strong id="final-score">0</strong>
+            </div>
+            <div>
+              <span>BEST</span>
+              <strong id="final-best">0</strong>
+            </div>
+          </div>
+
+          <button id="restart-button">PLAY AGAIN</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const container = document.getElementById("game-container");
+
+    const scoreElement = document.getElementById("score");
+    const bestElement = document.getElementById("best");
+    const finalScoreElement = document.getElementById("final-score");
+    const finalBestElement = document.getElementById("final-best");
+
+    const startScreen = document.getElementById("start-screen");
+    const gameOverScreen = document.getElementById("game-over-screen");
+    const startButton = document.getElementById("start-button");
+    const restartButton = document.getElementById("restart-button");
+
+    let cw = 440;
+    let ch = 720;
+
+    let score = 0;
+    let best = 0;
+    let running = false;
+    let animationFrame = null;
+
+    // Physics constants guaranteed for 100% solvability
+    const gravity = 0.42;
+    const jumpStrength = -11.5;
+    const springJumpStrength = -17.5;
+    const maxJumpHeight = (jumpStrength * jumpStrength) / (2 * gravity); // ~157px max vertical reach
+
+    // Player Object
+    const player = {
+        x: 0,
+        y: 0,
+        width: 44,
+        height: 48,
+        vx: 0,
+        vy: 0,
+        speed: 5.5,
+        facingLeft: true
+    };
+
+    let platforms = [];
+    const platformWidth = 72;
+    const platformHeight = 15;
+
+    // Detailed Character Renderer
+    function drawDetailedDoodle(targetCtx, x, y, width, height, facingLeft) {
+        targetCtx.save();
+        targetCtx.translate(x + width / 2, y + height / 2);
+        if (!facingLeft) targetCtx.scale(-1, 1);
+
+        // Legs (4 detailed curved limbs)
+        targetCtx.strokeStyle = '#1d2712';
+        targetCtx.lineWidth = 3.5;
+        targetCtx.lineCap = 'round';
+        targetCtx.lineJoin = 'round';
+
+        const legY = height / 2 - 10;
+        targetCtx.beginPath();
+        targetCtx.moveTo(-12, legY); targetCtx.lineTo(-14, legY + 10);
+        targetCtx.moveTo(-4, legY); targetCtx.lineTo(-5, legY + 11);
+        targetCtx.moveTo(4, legY); targetCtx.lineTo(3, legY + 11);
+        targetCtx.moveTo(12, legY); targetCtx.lineTo(14, legY + 10);
+        targetCtx.stroke();
+
+        // Main Body (Lime Green with smooth top)
+        let bodyGradient = targetCtx.createLinearGradient(0, -height/2, 0, height/2);
+        bodyGradient.addColorStop(0, '#b5f533');
+        bodyGradient.addColorStop(1, '#7bb31e');
+        targetCtx.fillStyle = bodyGradient;
+        targetCtx.strokeStyle = '#1d2712';
+        targetCtx.lineWidth = 2.5;
+
+        targetCtx.beginPath();
+        targetCtx.roundRect(-width/2 + 4, -height/2 + 2, width - 8, height - 12, [18, 18, 10, 10]);
+        targetCtx.fill();
+        targetCtx.stroke();
+
+        // Snout / Trunk (Classic Doodle mouth)
+        targetCtx.beginPath();
+        targetCtx.moveTo(-width/2 + 6, -2);
+        targetCtx.bezierCurveTo(-width/2 - 14, -7, -width/2 - 14, 7, -width/2 + 6, 4);
+        targetCtx.closePath();
+        targetCtx.fill();
+        targetCtx.stroke();
+
+        // Big Left Eye
+        targetCtx.fillStyle = '#ffffff';
+        targetCtx.beginPath();
+        targetCtx.arc(-6, -height/4, 7.5, 0, Math.PI * 2);
+        targetCtx.fill();
+        targetCtx.stroke();
+
+        targetCtx.fillStyle = '#111111';
+        targetCtx.beginPath();
+        targetCtx.arc(-8, -height/4, 3, 0, Math.PI * 2);
+        targetCtx.fill();
+
+        // Small Right Eye
+        targetCtx.fillStyle = '#ffffff';
+        targetCtx.beginPath();
+        targetCtx.arc(4, -height/4 - 1, 5.5, 0, Math.PI * 2);
+        targetCtx.fill();
+        targetCtx.stroke();
+
+        targetCtx.fillStyle = '#111111';
+        targetCtx.beginPath();
+        targetCtx.arc(3, -height/4 - 1, 2.2, 0, Math.PI * 2);
+        targetCtx.fill();
+
+        targetCtx.restore();
+    }
+
+    // Render Start Screen Preview Icon
+    function renderPreviewIcon() {
+        const pCanvas = document.getElementById('previewCanvas');
+        const pCtx = pCanvas.getContext('2d');
+        pCtx.clearRect(0, 0, 90, 90);
+        drawDetailedDoodle(pCtx, 20, 18, 50, 54, true);
+    }
+
+    class Platform {
+        constructor(x, y, type) {
+            this.x = x;
+            this.y = y;
+            this.width = platformWidth;
+            this.height = platformHeight;
+            this.type = type; // 0: Solid (Green), 1: Moving (Blue), 2: Fragile (Brown)
+            this.vx = (type === 1) ? (Math.random() < 0.5 ? 1.8 : -1.8) : 0;
+            this.broken = false;
+            this.hasSpring = (type === 0 && Math.random() < 0.12);
+            this.springX = this.x + 10 + Math.random() * (this.width - 28);
+        }
+
+        update() {
+            if (this.type === 1) {
+                this.x += this.vx;
+                if (this.x <= 10 || this.x + this.width >= cw - 10) {
+                    this.vx *= -1;
+                }
+            }
+            if (this.broken) {
+                this.y += 9;
+            }
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+
+            // Draw Spring if present
+            if (this.hasSpring && !this.broken) {
+                const sx = this.springX - this.x;
+                ctx.fillStyle = '#d1d5db';
+                ctx.fillRect(sx, -10, 12, 10);
+                ctx.fillStyle = '#9ca3af';
+                ctx.fillRect(sx - 2, -12, 16, 3);
+            }
+
+            // Platform Colors
+            if (this.type === 0) {
+                ctx.fillStyle = '#4ade80'; // Solid Green
+                ctx.strokeStyle = '#166534';
+            } else if (this.type === 1) {
+                ctx.fillStyle = '#38bdf8'; // Moving Blue
+                ctx.strokeStyle = '#075985';
+            } else if (this.type === 2) {
+                ctx.fillStyle = '#a16207'; // Fragile Brown
+                ctx.strokeStyle = '#451a03';
+                if (this.broken) ctx.globalAlpha = 0.4;
+            }
+
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, this.width, this.height, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            // Inner Highlight
+            if (!this.broken) {
+                ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                ctx.fillRect(4, 3, this.width - 8, 3);
+            }
+
+            ctx.restore();
+        }
+    }
+
+    // Solvability-Guaranteed Level Generator (No Impossible Jumps!)
+    function generateInitialPlatforms() {
+        platforms = [];
+
+        // Base safe platform right under player
+        platforms.push(new Platform(cw / 2 - platformWidth / 2, ch - 60, 0));
+
+        let currentY = ch - 60;
+
+        // Fill screen upwards with strictly bounded gaps (< maxJumpHeight)
+        while (currentY > 40) {
+            // Gap range: 50px to 95px (Well below max jump height ~157px)
+            let gap = 55 + Math.random() * 40;
+            currentY -= gap;
+            
+            let x = Math.random() * (cw - platformWidth - 20) + 10;
+            let type = 0;
+
+            if (score > 1200 && Math.random() < 0.35) type = 1;
+            else if (score > 500 && Math.random() < 0.25) type = 1;
+
+            platforms.push(new Platform(x, currentY, type));
+
+            // Occasionally add a fragile platform near a solid platform as bonus
+            if (Math.random() < 0.2) {
+                let fx = (x + 180) % (cw - platformWidth - 20) + 10;
+                platforms.push(new Platform(fx, currentY - 15, 2));
+            }
+        }
+    }
+
+    function spawnNewPlatformAbove() {
+        let highestY = Math.min(...platforms.map(p => p.y));
+        let gap = 55 + Math.random() * 40; // Strictly bounded gap
+        let newY = highestY - gap;
+        let x = Math.random() * (cw - platformWidth - 20) + 10;
+        
+        let type = 0;
+        let rand = Math.random();
+        if (score > 1000) {
+            if (rand < 0.35) type = 1; // Moving
+            else if (rand < 0.55) type = 2; // Fragile (placed alongside solid)
+        } else if (score > 400) {
+            if (rand < 0.25) type = 1;
+        }
+
+        // Always guarantee at least 1 SOLID platform at each vertical level step
+        if (type === 2) {
+            // Add a solid platform right next to fragile one so path is never blocked
+            platforms.push(new Platform(x, newY, 2));
+            let solidX = (x + 160) % (cw - platformWidth - 20) + 10;
+            platforms.push(new Platform(solidX, newY, 0));
+        } else {
+            platforms.push(new Platform(x, newY, type));
+        }
+    }
+
+    function resizeCanvas() {
+        cw = container.clientWidth;
+        ch = container.clientHeight;
+        canvas.width = cw;
+        canvas.height = ch;
+    }
+
+    function resetGame() {
+        score = 0;
+        scoreElement.textContent = score;
+
+        player.x = cw / 2 - player.width / 2;
+        player.y = ch - 120;
+        player.vx = 0;
+        player.vy = jumpStrength;
+        player.facingLeft = true;
+
+        generateInitialPlatforms();
+    }
+
+    function startGame() {
+        startScreen.classList.add("hidden");
+        gameOverScreen.classList.add("hidden");
+        resetGame();
+        running = true;
+        lastTime = performance.now();
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        gameLoop();
+    }
+
+    function endGame() {
+        running = false;
+        if (score > best) {
+            best = score;
+            bestElement.textContent = best;
+        }
+        finalScoreElement.textContent = score;
+        finalBestElement.textContent = best;
+        gameOverScreen.classList.remove("hidden");
+    }
+
+    // Input Handling
+    let keys = { left: false, right: false };
+    let pointerDown = false;
+    let pointerX = 0;
+
+    window.addEventListener('keydown', e => {
+        if (['ArrowLeft', 'KeyA'].includes(e.code)) keys.left = true;
+        if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = true;
+    });
+
+    window.addEventListener('keyup', e => {
+        if (['ArrowLeft', 'KeyA'].includes(e.code)) keys.left = false;
+        if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = false;
+    });
+
+    function handlePointerStart(clientX) {
+        if (!running) return;
+        pointerDown = true;
+        let rect = container.getBoundingClientRect();
+        pointerX = clientX - rect.left;
+    }
+
+    function handlePointerMove(clientX) {
+        if (!pointerDown) return;
+        let rect = container.getBoundingClientRect();
+        pointerX = clientX - rect.left;
+    }
+
+    function handlePointerEnd() {
+        pointerDown = false;
+    }
+
+    container.addEventListener('mousedown', e => handlePointerStart(e.clientX));
+    window.addEventListener('mousemove', e => handlePointerMove(e.clientX));
+    window.addEventListener('mouseup', handlePointerEnd);
+
+    container.addEventListener('touchstart', e => {
+        if (e.touches[0]) handlePointerStart(e.touches[0].clientX);
+    }, { passive: true });
+
+    window.addEventListener('touchmove', e => {
+        if (e.touches[0]) handlePointerMove(e.touches[0].clientX);
+    }, { passive: true });
+
+    window.addEventListener('touchend', handlePointerEnd, { passive: true });
+
+    function drawGridBackground() {
+        ctx.fillStyle = '#121822';
+        ctx.fillRect(0, 0, cw, ch);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.lineWidth = 1;
+
+        const gridSize = 32;
+        for (let x = 0; x < cw; x += gridSize) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke();
+        }
+        for (let y = 0; y < ch; y += gridSize) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke();
+        }
+    }
+
+    function update() {
+        // Horizontal Movement
+        if (keys.left || (pointerDown && pointerX < cw / 2)) {
+            player.vx = -player.speed;
+            player.facingLeft = true;
+        } else if (keys.right || (pointerDown && pointerX >= cw / 2)) {
+            player.vx = player.speed;
+            player.facingLeft = false;
+        } else {
+            player.vx = 0;
+        }
+
+        player.x += player.vx;
+        player.vy += gravity;
+        player.y += player.vy;
+
+        // Screen Wrap Left/Right
+        if (player.x + player.width / 2 < 0) player.x = cw - player.width / 2;
+        if (player.x + player.width / 2 > cw) player.x = -player.width / 2;
+
+        // Camera Follow (Scroll up when player climbs)
+        if (player.y < ch * 0.45) {
+            let diff = ch * 0.45 - player.y;
+            player.y = ch * 0.45;
+            score += Math.floor(diff);
+            scoreElement.textContent = score;
+
+            platforms.forEach(p => p.y += diff);
+        }
+
+        // Clean out of bounds platforms & spawn new ones
+        platforms = platforms.filter(p => p.y < ch + 40);
+        let highestY = Math.min(...platforms.map(p => p.y));
+        if (highestY > 0) {
+            spawnNewPlatformAbove();
+        }
+
+        // Collisions (Only while falling down)
+        if (player.vy > 0) {
+            platforms.forEach(p => {
+                if (!p.broken &&
+                    player.x + player.width - 10 > p.x &&
+                    player.x + 10 < p.x + p.width &&
+                    player.y + player.height >= p.y &&
+                    player.y + player.height <= p.y + p.height + player.vy + 4) {
+
+                    if (p.type === 2) {
+                        p.broken = true;
+                    } else {
+                        player.y = p.y - player.height;
+                        if (p.hasSpring && player.x + player.width > p.springX && player.x < p.springX + 16) {
+                            player.vy = springJumpStrength;
+                        } else {
+                            player.vy = jumpStrength;
+                        }
+                    }
+                }
+            });
+        }
+
+        // Check Fall Game Over
+        if (player.y > ch + 60) {
+            endGame();
+        }
+
+        // Update platform positions (moving platforms)
+        platforms.forEach(p => p.update());
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, cw, ch);
+        drawGridBackground();
+
+        // Draw Platforms
+        platforms.forEach(p => p.draw());
+
+        // Draw Player
+        drawDetailedDoodle(ctx, player.x, player.y, player.width, player.height, player.facingLeft);
+    }
+
+    function gameLoop() {
+        if (!running) return;
+        update();
+        render();
+        animationFrame = requestAnimationFrame(gameLoop);
+    }
+
+    // Event Listeners
+    startButton.addEventListener('click', startGame);
+    restartButton.addEventListener('click', startGame);
+
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        renderPreviewIcon();
+        if (!running) {
+            drawGridBackground();
+        }
+    });
+
+    // Initial Setup
+    resizeCanvas();
+    renderPreviewIcon();
+    drawGridBackground();
+  </script>
+</body>
+</html>
