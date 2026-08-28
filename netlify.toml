@@ -1,0 +1,8 @@
+[build]
+    publish = "public"
+    functions = "netlify/functions"
+
+[[redirects]]
+    from = "/games/:name.html"
+    to = "/.netlify/functions/proxy?game=:name"
+    status = 200
