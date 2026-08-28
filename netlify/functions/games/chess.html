@@ -19,7 +19,7 @@
         font-family: Arial, Helvetica, sans-serif;
         color: white;
         user-select: none;
-        touch-action: none; /* Evita que la pantalla haga scroll al arrastrar en móvil */
+        touch-action: none;
     }
 
     .game-wrapper {
@@ -163,11 +163,10 @@
         text-shadow: 0 0 10px rgba(255,51,102,0.4);
     }
 
-    /* Estilos de la pieza flotante al arrastrar */
     .floating-piece {
         position: fixed;
         font-size: clamp(28px, 7vw, 44px);
-        pointer-events: none; /* Deja que el ratón "atraviese" la pieza para calcular el cuadro de abajo */
+        pointer-events: none;
         z-index: 1000;
         transform: translate(-50%, -50%) scale(1.2);
         filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
@@ -264,18 +263,16 @@
 
       <button id="reset-btn" class="secondary" style="width: auto; padding: 10px 25px;">MAIN MENU</button>
 
-      <!-- Start Overlay -->
       <div id="start-screen" class="overlay">
         <div class="panel">
           <h1>CHESS <span>DARK</span></h1>
           <div class="btn-group">
-            <button id="mode-bot-btn" class="primary">VS BOT (INTERMEDIATE)</button>
-            <button id="mode-pvp-btn" class="secondary" style="background: rgba(255,255,255,0.05);">2 PLAYERS (LOCAL)</button>
+            <button id="mode-bot-btn" class="primary">VS BOT</button>
+            <button id="mode-pvp-btn" class="secondary" style="background: rgba(255,255,255,0.05);">2 PLAYERS</button>
           </div>
         </div>
       </div>
 
-      <!-- Game Over Overlay -->
       <div id="game-over-screen" class="overlay hidden">
         <div class="panel">
           <h2 id="winner-title">CHECKMATE!</h2>
@@ -304,7 +301,6 @@
         'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
     };
 
-    // Valores para el Bot Intermedio
     const PIECE_VALUES = {
         'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000,
         'P': 100, 'N': 320, 'B': 330, 'R': 500, 'Q': 900, 'K': 20000
@@ -332,6 +328,10 @@
     let botColor = 'b';
     let isAiThinking = false;
 
+    // Estado para Enroque y Captura al paso
+    let castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
+    let enPassantTarget = null; // Guardará la casilla libre de destino del peón que avanzó 2 casillas
+
     // Variables Drag & Drop
     let isDragging = false;
     let dragClone = null;
@@ -349,6 +349,8 @@
             ['R','N','B','Q','K','B','N','R']
         ];
         turn = 'w';
+        castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
+        enPassantTarget = null;
         selectedSquare = null;
         validMoves = [];
         isAiThinking = false;
@@ -383,7 +385,6 @@
                     pEl.className = `piece ${isWhite(piece) ? 'white-piece' : 'black-piece'}`;
                     pEl.textContent = UNICODE_PIECES[piece];
                     
-                    // Ocultar parcialmente la pieza que estamos arrastrando en su casilla original
                     if (r === hidePieceR && c === hidePieceC) {
                         pEl.style.opacity = '0.3';
                     }
@@ -397,7 +398,11 @@
 
                 const isMove = validMoves.some(m => m.r === r && m.c === c);
                 if (isMove) {
-                    if (board[r][c]) square.classList.add('valid-capture');
+                    const isEnPassantCapture = selectedSquare && 
+                        board[selectedSquare.r][selectedSquare.c].toLowerCase() === 'p' && 
+                        enPassantTarget && r === enPassantTarget.r && c === enPassantTarget.c;
+
+                    if (board[r][c] || isEnPassantCapture) square.classList.add('valid-capture');
                     else square.classList.add('valid-move');
                 }
 
@@ -408,7 +413,6 @@
 
     // --- Sistema de Drag & Drop ---
     boardEl.addEventListener('pointerdown', (e) => {
-        // Solo click izquierdo o táctil
         if (e.button !== 0 && e.type !== 'touchstart') return;
         if (isAiThinking || (isVsBot && turn === botColor)) return;
 
@@ -421,7 +425,6 @@
         const c = Math.floor(x / (rect.width / 8));
         const r = Math.floor(y / (rect.height / 8));
 
-        // Tocar para mover (Tap-to-move): Si haces clic en un movimiento válido previo
         if (selectedSquare && validMoves.some(m => m.r === r && m.c === c)) {
             executeMove(selectedSquare.r, selectedSquare.c, r, c);
             selectedSquare = null;
@@ -432,17 +435,14 @@
         }
 
         const piece = board[r][c];
-        // Iniciar Arrastre si tocas tu propia pieza
         if (piece && ((turn === 'w' && isWhite(piece)) || (turn === 'b' && isBlack(piece)))) {
             selectedSquare = {r, c};
-            validMoves = getLegalMoves(board, r, c);
+            validMoves = getLegalMoves(board, r, c, castlingRights, enPassantTarget);
             isDragging = true;
             hasMovedMouse = false;
 
-            // Renderizar tablero, pero atenuando la pieza de origen
             renderBoard(r, c);
 
-            // Crear el clon flotante
             dragClone = document.createElement('div');
             dragClone.className = `floating-piece piece ${isWhite(piece) ? 'white-piece' : 'black-piece'}`;
             dragClone.textContent = UNICODE_PIECES[piece];
@@ -454,7 +454,6 @@
             
             document.body.appendChild(dragClone);
         } else {
-            // Clicar al vacío
             selectedSquare = null;
             validMoves = [];
             renderBoard();
@@ -488,7 +487,6 @@
         const x = clientX - rect.left;
         const y = clientY - rect.top;
         
-        // Si se suelta fuera del tablero, se cancela
         if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
             if (hasMovedMouse) {
                 selectedSquare = null; 
@@ -501,7 +499,6 @@
         const c = Math.floor(x / (rect.width / 8));
         const r = Math.floor(y / (rect.height / 8));
 
-        // Si hemos arrastrado hacia un movimiento válido
         if (hasMovedMouse && selectedSquare && validMoves.some(m => m.r === r && m.c === c)) {
             executeMove(selectedSquare.r, selectedSquare.c, r, c);
             selectedSquare = null;
@@ -509,21 +506,70 @@
             renderBoard();
             if (isVsBot && turn === botColor) triggerBotMove();
         } else {
-            // Solo fue un click/tap o se soltó en lugar inválido, se queda seleccionado
             renderBoard();
         }
     });
 
 
-    // --- Lógica del Juego ---
-    function executeMove(fromR, fromC, toR, toC) {
-        const piece = board[fromR][fromC];
-        board[toR][toC] = piece;
-        board[fromR][fromC] = '';
+    // --- Función Pura para Aplicar Movimientos ---
+    function makeMove(b, cRights, epTarget, fromR, fromC, toR, toC) {
+        const newBoard = b.map(row => [...row]);
+        const piece = newBoard[fromR][fromC];
+        const type = piece.toLowerCase();
+        const newCRights = { ...cRights };
+        let newEpTarget = null;
 
-        // Coronación
-        if (piece === 'P' && toR === 0) board[toR][toC] = 'Q';
-        if (piece === 'p' && toR === 7) board[toR][toC] = 'q';
+        // 1. Captura al paso
+        if (type === 'p' && epTarget && toR === epTarget.r && toC === epTarget.c) {
+            newBoard[fromR][toC] = '';
+        }
+
+        // 2. Movimiento de Enroque (mover la torre)
+        if (type === 'k' && Math.abs(toC - fromC) === 2) {
+            if (toC === 6) { // Enroque corto
+                newBoard[fromR][5] = newBoard[fromR][7];
+                newBoard[fromR][7] = '';
+            } else if (toC === 2) { // Enroque largo
+                newBoard[fromR][3] = newBoard[fromR][0];
+                newBoard[fromR][0] = '';
+            }
+        }
+
+        // 3. Mover la pieza
+        newBoard[toR][toC] = piece;
+        newBoard[fromR][fromC] = '';
+
+        // 4. Coronación
+        if (piece === 'P' && toR === 0) newBoard[toR][toC] = 'Q';
+        if (piece === 'p' && toR === 7) newBoard[toR][toC] = 'q';
+
+        // 5. Registrar casilla de Captura al paso si un peón mueve 2 casillas
+        if (type === 'p' && Math.abs(toR - fromR) === 2) {
+            newEpTarget = { r: (fromR + toR) / 2, c: fromC };
+        }
+
+        // 6. Actualizar derechos de Enroque
+        if (piece === 'K') { newCRights.wK = false; newCRights.wQ = false; }
+        if (piece === 'k') { newCRights.bK = false; newCRights.bQ = false; }
+        if (piece === 'R' && fromR === 7 && fromC === 7) newCRights.wK = false;
+        if (piece === 'R' && fromR === 7 && fromC === 0) newCRights.wQ = false;
+        if (piece === 'r' && fromR === 0 && fromC === 7) newCRights.bK = false;
+        if (piece === 'r' && fromR === 0 && fromC === 0) newCRights.bQ = false;
+
+        // Si se captura una torre en su casilla de origen, se pierde el derecho
+        if (toR === 7 && toC === 7) newCRights.wK = false;
+        if (toR === 7 && toC === 0) newCRights.wQ = false;
+        if (toR === 0 && toC === 7) newCRights.bK = false;
+        if (toR === 0 && toC === 0) newCRights.bQ = false;
+
+        return { board: newBoard, cRights: newCRights, epTarget: newEpTarget };
+    }
+
+    function executeMove(fromR, fromC, toR, toC) {
+        const result = makeMove(board, castlingRights, enPassantTarget, fromR, fromC, toR, toC);
+        board = result.board;
+        castlingRights = result.cRights;
+        enPassantTarget = result.epTarget;
 
         let whiteKing = false, blackKing = false;
         for (let r = 0; r < 8; r++) {
@@ -541,7 +587,7 @@
         turn = turn === 'w' ? 'b' : 'w';
         updateHUD();
 
-        if (hasNoLegalMoves(board, turn)) {
+        if (hasNoLegalMoves(board, turn, castlingRights, enPassantTarget)) {
             if (findKingInCheck(board, turn)) {
                 endGame(turn === 'w' ? (isVsBot ? 'BOT' : 'PLAYER 2') : 'PLAYER 1');
             } else {
@@ -550,13 +596,83 @@
         }
     }
 
-    function getPseudoMoves(b, r, c) {
+    // Comprobar si una casilla está bajo ataque enemigo
+    function isSquareAttacked(b, r, c, attackerColor) {
+        const isWhiteAttacker = attackerColor === 'w';
+
+        // Peones atacando
+        const pawnR = r + (isWhiteAttacker ? 1 : -1);
+        for (let dc of [-1, 1]) {
+            const pawnC = c + dc;
+            if (pawnR >= 0 && pawnR < 8 && pawnC >= 0 && pawnC < 8) {
+                const p = b[pawnR][pawnC];
+                if (p === (isWhiteAttacker ? 'P' : 'p')) return true;
+            }
+        }
+
+        // Caballos
+        const knightOffsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+        for (let [dr, dc] of knightOffsets) {
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+                const p = b[nr][nc];
+                if (p === (isWhiteAttacker ? 'N' : 'n')) return true;
+            }
+        }
+
+        // Rey
+        const kingOffsets = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+        for (let [dr, dc] of kingOffsets) {
+            const kr = r + dr, kc = c + dc;
+            if (kr >= 0 && kr < 8 && kc >= 0 && kc < 8) {
+                const p = b[kr][kc];
+                if (p === (isWhiteAttacker ? 'K' : 'k')) return true;
+            }
+        }
+
+        // Líneas rectas (Torre / Dama)
+        const straightDirs = [[-1,0],[1,0],[0,-1],[0,1]];
+        for (let [dr, dc] of straightDirs) {
+            let step = 1;
+            while (true) {
+                const tr = r + dr * step, tc = c + dc * step;
+                if (tr < 0 || tr >= 8 || tc < 0 || tc >= 8) break;
+                const p = b[tr][tc];
+                if (p) {
+                    if (isWhite(p) === isWhiteAttacker && (p.toLowerCase() === 'r' || p.toLowerCase() === 'q')) return true;
+                    break;
+                }
+                step++;
+            }
+        }
+
+        // Diagonales (Alfil / Dama)
+        const diagDirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
+        for (let [dr, dc] of diagDirs) {
+            let step = 1;
+            while (true) {
+                const tr = r + dr * step, tc = c + dc * step;
+                if (tr < 0 || tr >= 8 || tc < 0 || tc >= 8) break;
+                const p = b[tr][tc];
+                if (p) {
+                    if (isWhite(p) === isWhiteAttacker && (p.toLowerCase() === 'b' || p.toLowerCase() === 'q')) return true;
+                    break;
+                }
+                step++;
+            }
+        }
+
+        return false;
+    }
+
+    function getPseudoMoves(b, r, c, epTarget = enPassantTarget, cRights = castlingRights) {
         const moves = [];
         const piece = b[r][c];
         if (!piece) return moves;
         
         const type = piece.toLowerCase();
         const white = isWhite(piece);
+        const enemyColor = white ? 'b' : 'w';
 
         const addMove = (tr, tc) => {
             if (tr < 0 || tr >= 8 || tc < 0 || tc >= 8) return false;
@@ -586,6 +702,10 @@
                     if (target && ((white && isBlack(target)) || (!white && isWhite(target)))) {
                         moves.push({ r: r + dir, c: c + dc });
                     }
+                    // Captura al paso
+                    if (epTarget && r + dir === epTarget.r && c + dc === epTarget.c) {
+                        moves.push({ r: r + dir, c: c + dc });
+                    }
                 }
             }
         }
@@ -596,6 +716,43 @@
 
         if (type === 'k') {
             [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr, dc]) => addMove(r + dr, c + dc));
+
+            // Reglas de Enroque
+            if (white && r === 7 && c === 4) {
+                // Enroque corto
+                if (cRights.wK && b[7][5] === '' && b[7][6] === '') {
+                    if (!isSquareAttacked(b, 7, 4, enemyColor) &&
+                        !isSquareAttacked(b, 7, 5, enemyColor) &&
+                        !isSquareAttacked(b, 7, 6, enemyColor)) {
+                        moves.push({ r: 7, c: 6 });
+                    }
+                }
+                // Enroque largo
+                if (cRights.wQ && b[7][1] === '' && b[7][2] === '' && b[7][3] === '') {
+                    if (!isSquareAttacked(b, 7, 4, enemyColor) &&
+                        !isSquareAttacked(b, 7, 3, enemyColor) &&
+                        !isSquareAttacked(b, 7, 2, enemyColor)) {
+                        moves.push({ r: 7, c: 2 });
+                    }
+                }
+            } else if (!white && r === 0 && c === 4) {
+                // Enroque corto
+                if (cRights.bK && b[0][5] === '' && b[0][6] === '') {
+                    if (!isSquareAttacked(b, 0, 4, enemyColor) &&
+                        !isSquareAttacked(b, 0, 5, enemyColor) &&
+                        !isSquareAttacked(b, 0, 6, enemyColor)) {
+                        moves.push({ r: 0, c: 6 });
+                    }
+                }
+                // Enroque largo
+                if (cRights.bQ && b[0][1] === '' && b[0][2] === '' && b[0][3] === '') {
+                    if (!isSquareAttacked(b, 0, 4, enemyColor) &&
+                        !isSquareAttacked(b, 0, 3, enemyColor) &&
+                        !isSquareAttacked(b, 0, 2, enemyColor)) {
+                        moves.push({ r: 0, c: 2 });
+                    }
+                }
+            }
         }
 
         const dirs = [];
@@ -610,13 +767,14 @@
         return moves;
     }
 
-    function getLegalMoves(b, r, c) {
-        const color = isWhite(b[r][c]) ? 'w' : 'b';
-        return getPseudoMoves(b, r, c).filter(m => {
-            const tempBoard = b.map(row => [...row]);
-            tempBoard[m.r][m.c] = tempBoard[r][c];
-            tempBoard[r][c] = '';
-            return !findKingInCheck(tempBoard, color);
+    function getLegalMoves(b, r, c, cRights = castlingRights, epTarget = enPassantTarget) {
+        const piece = b[r][c];
+        if (!piece) return [];
+        const color = isWhite(piece) ? 'w' : 'b';
+
+        return getPseudoMoves(b, r, c, epTarget, cRights).filter(m => {
+            const res = makeMove(b, cRights, epTarget, r, c, m.r, m.c);
+            return !findKingInCheck(res.board, color);
         });
     }
 
@@ -635,34 +793,27 @@
         if (kingR === -1) return null;
 
         const enemyColor = color === 'w' ? 'b' : 'w';
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const piece = b[r][c];
-                if (piece && ((enemyColor === 'w' && isWhite(piece)) || (enemyColor === 'b' && isBlack(piece)))) {
-                    if (getPseudoMoves(b, r, c).some(m => m.r === kingR && m.c === kingC)) {
-                        return { r: kingR, c: kingC };
-                    }
-                }
-            }
+        if (isSquareAttacked(b, kingR, kingC, enemyColor)) {
+            return { r: kingR, c: kingC };
         }
         return null;
     }
 
-    function getAllMovesForColor(b, color) {
+    function getAllMovesForColor(b, color, cRights = castlingRights, epTarget = enPassantTarget) {
         const allMoves = [];
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const piece = b[r][c];
                 if (piece && ((color === 'w' && isWhite(piece)) || (color === 'b' && isBlack(piece)))) {
-                    getLegalMoves(b, r, c).forEach(m => allMoves.push({ from: {r, c}, to: m }));
+                    getLegalMoves(b, r, c, cRights, epTarget).forEach(m => allMoves.push({ from: {r, c}, to: m }));
                 }
             }
         }
         return allMoves;
     }
 
-    function hasNoLegalMoves(b, color) {
-        return getAllMovesForColor(b, color).length === 0;
+    function hasNoLegalMoves(b, color, cRights = castlingRights, epTarget = enPassantTarget) {
+        return getAllMovesForColor(b, color, cRights, epTarget).length === 0;
     }
 
     // --- Bot Intermedio (Algoritmo Minimax) ---
@@ -702,21 +853,18 @@
         return total;
     }
 
-    function minimax(b, depth, alpha, beta, isMaximizing) {
+    function minimax(b, depth, alpha, beta, isMaximizing, cRights, epTarget) {
         if (depth === 0) return evaluateBoard(b);
 
         const color = isMaximizing ? 'b' : 'w';
-        const moves = getAllMovesForColor(b, color);
+        const moves = getAllMovesForColor(b, color, cRights, epTarget);
         if (moves.length === 0) return evaluateBoard(b);
 
         if (isMaximizing) {
             let maxEval = -Infinity;
             for (let m of moves) {
-                const tempBoard = b.map(row => [...row]);
-                tempBoard[m.to.r][m.to.c] = tempBoard[m.from.r][m.from.c];
-                tempBoard[m.from.r][m.from.c] = '';
-                
-                let evalVal = minimax(tempBoard, depth - 1, alpha, beta, false);
+                const res = makeMove(b, cRights, epTarget, m.from.r, m.from.c, m.to.r, m.to.c);
+                let evalVal = minimax(res.board, depth - 1, alpha, beta, false, res.cRights, res.epTarget);
                 maxEval = Math.max(maxEval, evalVal);
                 alpha = Math.max(alpha, evalVal);
                 if (beta <= alpha) break;
@@ -725,11 +873,8 @@
         } else {
             let minEval = Infinity;
             for (let m of moves) {
-                const tempBoard = b.map(row => [...row]);
-                tempBoard[m.to.r][m.to.c] = tempBoard[m.from.r][m.from.c];
-                tempBoard[m.from.r][m.from.c] = '';
-
-                let evalVal = minimax(tempBoard, depth - 1, alpha, beta, true);
+                const res = makeMove(b, cRights, epTarget, m.from.r, m.from.c, m.to.r, m.to.c);
+                let evalVal = minimax(res.board, depth - 1, alpha, beta, true, res.cRights, res.epTarget);
                 minEval = Math.min(minEval, evalVal);
                 beta = Math.min(beta, evalVal);
                 if (beta <= alpha) break;
@@ -739,7 +884,7 @@
     }
 
     function getBestBotMove(b, depth) {
-        const moves = getAllMovesForColor(b, 'b');
+        const moves = getAllMovesForColor(b, 'b', castlingRights, enPassantTarget);
         if (moves.length === 0) return null;
 
         let bestMove = null;
@@ -747,11 +892,8 @@
         moves.sort(() => Math.random() - 0.5);
 
         for (let m of moves) {
-            const tempBoard = b.map(row => [...row]);
-            tempBoard[m.to.r][m.to.c] = tempBoard[m.from.r][m.from.c];
-            tempBoard[m.from.r][m.from.c] = '';
-
-            let boardValue = minimax(tempBoard, depth - 1, -Infinity, Infinity, false);
+            const res = makeMove(b, castlingRights, enPassantTarget, m.from.r, m.from.c, m.to.r, m.to.c);
+            let boardValue = minimax(res.board, depth - 1, -Infinity, Infinity, false, res.cRights, res.epTarget);
             if (boardValue > bestValue) {
                 bestValue = boardValue;
                 bestMove = m;
