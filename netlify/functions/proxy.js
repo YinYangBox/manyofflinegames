@@ -56,7 +56,7 @@ exports.handler = async function (event) {
         };
     }
 
-    const filePath = path.join(process.cwd(), "public", "games", `${safeGame}.html`);
+    const filePath = path.join(process.cwd(), "games", `${safeGame}.html`);
 
     if (!fs.existsSync(filePath)) {
         return { statusCode: 404, body: "Game not found" };
