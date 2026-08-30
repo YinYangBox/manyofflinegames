@@ -1,0 +1,8 @@
+{
+    "pong": {
+        "name": "Pong",
+        "path": ".netlify/functions/pong.html",
+        "description": "A classic arcade game where players control paddles to hit a ball back and forth.",
+        "image": "images/pong.png"
+    }
+}

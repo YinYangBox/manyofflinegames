@@ -1,37 +1,75 @@
 const fs = require("fs");
 const path = require("path");
 
-export async function handler(event) {
-	const gameName = event.queryStringParameters?.game;
-	if (!gameName) return { statusCode: 400, body: "Missing ?game=" };
+function isAllowedHost(hostname) {
+    const host = (hostname || "").toLowerCase();
 
-	const ref = event.headers.referer || "";
-	if (!ref.includes("itch.io") && !ref.includes("localhost")) {
-		return { statusCode: 403, body: "Only from itch.io" };
-	}
-
-	if (gameName.includes("..") || gameName.includes("/")) {
-		return { statusCode: 400, body: "Invalid name" };
-	}
-
-  const gamesDir = fs.readdirSync(path.join(process.cwd(), "games"));
-
-  if (!gamesDir.includes(`${gameName}.html`)) {
-    return { statusCode: 404, body: "Game not found" };
-  }
-
-	try {
-		const p = path.join(process.cwd(), `games/${gameName}.html`);
-		const html = fs.readFileSync(p, "utf8");
-		return {
-			statusCode: 200,
-			headers: {
-				"Content-Type": "text/html",
-				"Access-Control-Allow-Origin": "https://itch.io"
-			},
-			body: html
-		};
-	} catch (e) {
-		return { statusCode: 404, body: "Not found" };
-	}
+    return host.endsWith(".netlify.app");
 }
+
+function isAllowedRequest(event) {
+    const headers = event.headers || {};
+    const referer = headers.referer || headers.Referer || "";
+    const origin = headers.origin || headers.Origin || "";
+    const host = headers.host || headers.Host || "";
+
+    const candidates = [];
+
+    if (referer) {
+        try {
+            candidates.push(new URL(referer).hostname);
+        } catch {}
+    }
+
+    if (origin) {
+        try {
+            candidates.push(new URL(origin).hostname);
+        } catch {}
+    }
+
+    if (host) {
+        candidates.push(host.split(":")[0]);
+    }
+
+    return candidates.some((value) => isAllowedHost(value));
+}
+
+exports.handler = async function (event) {
+    const gameName = event.queryStringParameters?.game;
+    if (!gameName) {
+        return { statusCode: 400, body: "Missing ?game=" };
+    }
+
+    const safeGame = String(gameName)
+        .replace(/\.html$/i, "")
+        .replace(/[^a-z0-9_-]/gi, "")
+        .toLowerCase();
+
+    if (!safeGame) {
+        return { statusCode: 400, body: "Invalid game name" };
+    }
+
+    if (!isAllowedRequest(event)) {
+        return {
+            statusCode: 403,
+            body: "Forbidden: only your Netlify site can access this endpoint."
+        };
+    }
+
+    const filePath = path.join(process.cwd(), "public", "games", `${safeGame}.html`);
+
+    if (!fs.existsSync(filePath)) {
+        return { statusCode: 404, body: "Game not found" };
+    }
+
+    const html = fs.readFileSync(filePath, "utf8");
+
+    return {
+        statusCode: 200,
+        headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Access-Control-Allow-Origin": "*"
+        },
+        body: html
+    };
+};

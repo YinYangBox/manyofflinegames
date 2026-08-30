@@ -1,7 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Many Offline Games</title>
-	<meta http-equiv="refresh" content="0; url=games/pacman.html">
+    <title>Many Offline Games</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
 </head>
+<body>
+    <div id="title-container">
+        <h1>Many Offline Games</h1>
+        <p class="subtitle">Elige un juego</p>
+    </div>
+
+    <div class="games-wrap">
+        <div id="game-hub" class="game-hub"></div>
+    </div>
+
+    <div id="game-modal" class="game-modal" aria-hidden="true">
+        <div class="game-modal__panel">
+            <div class="game-modal__header">
+                <h2 id="modal-title">Juego</h2>
+                <button id="close-game" type="button" aria-label="Cerrar juego">✕</button>
+            </div>
+            <iframe id="game-frame" title="Juego"></iframe>
+        </div>
+    </div>
+</body>
 </html>

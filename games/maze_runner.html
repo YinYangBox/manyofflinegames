@@ -1,0 +1,1962 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>MAZE RUNNER — Pixel Arcade</title>
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at center, #252525 0%, #0d0d0d 55%, #030303 100%);
+  font-family: Arial, Helvetica, sans-serif;
+  touch-action: none;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game {
+  position: relative;
+  width: min(96vw, calc(96vh * 1.7142857));
+  height: min(96vh, calc(96vw / 1.7142857));
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  border-radius: 26px;
+  overflow: hidden;
+  background: #050505;
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.65),
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    inset 0 0 50px rgba(255, 255, 255, 0.04);
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.card {
+  width: min(520px, 88%);
+  padding: 38px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(40, 40, 40, 0.98),
+      rgba(15, 15, 15, 0.98)
+    );
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: white;
+  text-align: center;
+}
+
+.logo {
+  margin-bottom: 30px;
+  font-size: clamp(50px, 9vw, 85px);
+  font-weight: 900;
+  letter-spacing: 12px;
+  text-shadow:
+    4px 4px 0 #444,
+    0 0 25px rgba(255, 255, 255, 0.2);
+}
+
+h2 {
+  margin: 0 0 18px;
+  font-size: 22px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+button {
+  border: 2px solid white;
+  border-radius: 12px;
+  padding: 14px 24px;
+  background: #111;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.12s,
+    background 0.12s,
+    color 0.12s;
+}
+
+button:hover {
+  background: white;
+  color: black;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(2px);
+}
+
+.difficultyButtons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.difficultyButtons button {
+  padding: 11px 5px;
+  font-size: 12px;
+}
+
+.difficultyButtons button.active {
+  background: white;
+  color: black;
+}
+
+.difficultyInfo {
+  min-height: 25px;
+  margin: 15px 0;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.startButton {
+  width: 100%;
+  background: white;
+  color: black;
+  font-size: 18px;
+  padding: 15px;
+}
+
+#directionScreen {
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.directionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  text-align: center;
+}
+
+.readyText {
+  font-size: clamp(35px, 7vw, 65px);
+  font-weight: 900;
+  letter-spacing: 8px;
+}
+
+#directionArrow {
+  margin: 25px;
+  font-size: clamp(80px, 15vw, 150px);
+  line-height: 1;
+  transform-origin: center;
+  filter:
+    drop-shadow(0 0 10px rgba(255,255,255,0.5))
+    drop-shadow(0 0 25px rgba(255,255,255,0.25));
+}
+
+.directionText {
+  font-size: 15px;
+  letter-spacing: 5px;
+  color: #aaa;
+}
+
+#scoreBoard {
+  position: absolute;
+  z-index: 4;
+  top: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 35px;
+  color: white;
+  font-size: clamp(40px, 7vw, 75px);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow:
+    3px 3px 0 #000,
+    0 0 20px rgba(255,255,255,0.25);
+  pointer-events: none;
+}
+
+.scoreLine {
+  width: 3px;
+  height: 45px;
+  background: rgba(255,255,255,0.45);
+}
+
+#winner {
+  margin-bottom: 30px;
+  font-size: clamp(35px, 7vw, 65px);
+  font-weight: 900;
+}
+
+.finalScores {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  margin-bottom: 25px;
+}
+
+.finalScores div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.finalScores span {
+  color: #999;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.finalScores strong {
+  font-size: 45px;
+}
+
+#gameOver button {
+  margin: 5px;
+}
+
+#mobileControls {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#leftControl,
+#rightControl {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  pointer-events: auto;
+}
+
+#leftControl {
+  left: 0;
+}
+
+#rightControl {
+  right: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #mobileControls {
+    display: none;
+  }
+}
+
+@media (max-width: 650px) {
+  #game {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    border-width: 0;
+  }
+
+  .card {
+    padding: 28px 20px;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+
+  .buttons button {
+    width: 100%;
+  }
+
+  .difficultyButtons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+/* ===== MAZE RUNNER // GAME POLISH ===== */
+#gameCanvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#hud {
+  position: absolute;
+  inset: 14px 16px auto;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  pointer-events: none;
+  color: #fff;
+  font-weight: 900;
+  text-shadow: 3px 3px 0 #000, 0 0 16px rgba(255,255,255,.16);
+}
+
+.hudBlock {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.hudBox {
+  border: 2px solid rgba(255,255,255,.62);
+  border-radius: 14px;
+  background: rgba(8,8,8,.74);
+  padding: 8px 12px;
+  min-width: 72px;
+  backdrop-filter: blur(4px);
+}
+
+.hudLabel {
+  color: #888;
+  font-size: 9px;
+  letter-spacing: 2px;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.hudValue {
+  font-size: 20px;
+  line-height: 1;
+}
+
+#coinIcon {
+  display: inline-flex;
+  width: 19px;
+  height: 19px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  font-family: monospace;
+  font-size: 10px;
+  margin-right: 5px;
+  vertical-align: -2px;
+}
+
+#status {
+  font-size: 11px;
+  color: #aaa;
+  letter-spacing: 2px;
+}
+
+#pauseBtn {
+  position: absolute;
+  z-index: 12;
+  right: 13px;
+  bottom: 13px;
+  padding: 8px 11px;
+  font-size: 12px;
+  border-radius: 10px;
+  pointer-events: auto;
+}
+
+#exitBtn {
+  position: absolute;
+  z-index: 12;
+  left: 13px;
+  bottom: 13px;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+  pointer-events: auto;
+}
+
+#showControlsBtn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+#controlsPreview {
+  display: none;
+  margin-top: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+#controlsPreview.show { display: flex; }
+
+.previewPad {
+  display: grid;
+  grid-template-columns: 42px 42px 42px;
+  grid-template-rows: 42px 42px;
+  gap: 5px;
+}
+.previewPad span, .controlBtn {
+  border: 2px solid rgba(255,255,255,.72);
+  background: rgba(12,12,12,.88);
+  color: #fff;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.previewPad span:nth-child(1){grid-column:2;}
+.previewPad span:nth-child(2){grid-column:1;grid-row:2;}
+.previewPad span:nth-child(3){grid-column:2;grid-row:2;}
+.previewPad span:nth-child(4){grid-column:3;grid-row:2;}
+
+#dpad {
+  position: absolute;
+  z-index: 11;
+  left: 18px;
+  bottom: 18px;
+  width: 146px;
+  height: 146px;
+  display: none;
+  grid-template-columns: 48px 48px 48px;
+  grid-template-rows: 48px 48px 48px;
+  gap: 5px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#dpad.show { display: grid; }
+.controlBtn { font-size: 20px; padding: 0; cursor: pointer; }
+.controlBtn:active { transform: translateY(2px); background: #fff; color:#000; }
+#upBtn{grid-column:2;grid-row:1}
+#leftBtn{grid-column:1;grid-row:2}
+#downBtn{grid-column:2;grid-row:2}
+#rightBtn{grid-column:3;grid-row:2}
+
+@media (max-width:650px){
+  #dpad{left:14px;bottom:14px;transform:scale(.94);transform-origin:bottom left;}
+  #exitBtn{left:auto;right:9px;bottom:9px;}
+  #pauseBtn{right:9px;bottom:58px;}
+}
+#touchHint {
+  position: absolute;
+  left: 50%;
+  bottom: 13px;
+  z-index: 6;
+  transform: translateX(-50%);
+  padding: 7px 12px;
+  border-radius: 99px;
+  background: rgba(0,0,0,.48);
+  color: #999;
+  font-size: 10px;
+  letter-spacing: 2px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.titleLogo {
+  margin-bottom: 7px;
+  font-family: monospace;
+  font-weight: 900;
+  letter-spacing: 7px;
+  font-size: clamp(34px, 7vw, 66px);
+  text-shadow: 4px 4px 0 #444, 0 0 24px rgba(255,255,255,.2);
+}
+
+.titleSub {
+  color: #888;
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  margin-bottom: 23px;
+}
+
+.smallNote {
+  margin-top: 15px;
+  color: #777;
+  font-size: 10px;
+  letter-spacing: 1px;
+  line-height: 1.55;
+}
+
+#gameOver .card { max-width: 540px; }
+#gameOver .finalScores { gap: 72px; }
+
+@media (max-width: 650px) {
+  #hud { inset: 9px 9px auto; }
+  .hudBox { padding: 7px 10px; }
+  .hudValue { font-size: 17px; }
+  #touchHint { bottom: 8px; }
+  #pauseBtn { right: 8px; bottom: 8px; }
+}
+
+
+/* ===== PERSISTENT COINS + SKIN SHOP ===== */
+#bankedCoinsMenu {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin:10px 0 14px;
+  padding:9px 12px;
+  border:2px solid rgba(255,255,255,.42);
+  border-radius:14px;
+  background:rgba(8,8,8,.62);
+  font-family:monospace;
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+.bankCoin {
+  display:inline-flex;
+  width:20px;
+  height:20px;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #fff;
+  border-radius:50%;
+  font-size:10px;
+}
+#skinShopScreen { z-index:30; padding:14px; }
+.skinShopCard {
+  width:min(760px,92%);
+  height:min(82vh,620px);
+  max-height:82vh;
+  overflow:hidden;
+  padding:22px;
+  display:flex;
+  flex-direction:column;
+}
+.skinShopHeader {
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.skinShopTitle {
+  font-family:monospace;
+  font-size:clamp(24px,5vw,40px);
+  font-weight:900;
+  letter-spacing:5px;
+}
+.shopCoins {
+  border:2px solid rgba(255,255,255,.5);
+  border-radius:12px;
+  padding:8px 12px;
+  font-family:monospace;
+  font-weight:900;
+  white-space:nowrap;
+}
+.skinGrid {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  padding:2px 4px 8px 2px;
+}
+.skinItem {
+  min-width:0;
+  border:2px solid rgba(255,255,255,.35);
+  border-radius:16px;
+  padding:10px;
+  background:linear-gradient(145deg,rgba(40,40,40,.9),rgba(12,12,12,.95));
+  text-align:center;
+}
+.skinItem.active {
+  border-color:#fff;
+  box-shadow:0 0 18px rgba(255,255,255,.14);
+}
+.skinPreview {
+  width:80px;
+  height:92px;
+  margin:2px auto 8px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  background:#080808;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.skinPreview canvas {
+  position:static;
+  display:block;
+  width:80px !important;
+  height:92px !important;
+  inset:auto;
+  flex:none;
+}
+.skinName {
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:1px;
+}
+.skinPrice {
+  margin:5px 0 9px;
+  color:#aaa;
+  font-size:11px;
+}
+.skinBtn {
+  width:100%;
+  padding:9px 8px;
+  font-size:11px;
+}
+.skinBtn:disabled {
+  opacity:.55;
+  cursor:default;
+}
+.shopCloseBtn {
+  flex:0 0 auto;
+  margin-top:10px;
+  width:100%;
+}
+@media (max-width:650px){
+  #skinShopScreen { padding:8px; }
+  .skinShopCard {
+    width:96%;
+    height:88vh;
+    max-height:88vh;
+    padding:16px;
+  }
+  .skinGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+  .skinPreview { width:72px; height:82px; }
+  .skinPreview canvas { width:72px !important; height:82px !important; }
+  .shopCoins { font-size:12px; padding:7px 9px; }
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="hud" class="hidden">
+    <div class="hudBlock">
+      <div class="hudBox">
+        <span class="hudLabel">COINS</span>
+        <span class="hudValue"><span id="coinIcon">C</span><span id="coins">0</span></span>
+      </div>
+      <div class="hudBox">
+        <span class="hudLabel">TIME</span>
+        <span class="hudValue" id="timer">0.0</span>
+      </div>
+    </div>
+    <div class="hudBox" style="text-align:right">
+      <span class="hudLabel" id="level">SECTOR 01</span>
+      <span class="hudValue" id="status">FIND THE EXIT</span>
+    </div>
+  </div>
+
+  <button id="pauseBtn" class="hidden" aria-label="Pause">Ⅱ</button>
+  <button id="exitBtn" class="hidden" aria-label="Exit game">EXIT GAME</button>
+  <div id="dpad" aria-label="On-screen controls">
+    <button class="controlBtn" id="upBtn" aria-label="Move up">↑</button>
+    <button class="controlBtn" id="leftBtn" aria-label="Move left">←</button>
+    <button class="controlBtn" id="downBtn" aria-label="Move down">↓</button>
+    <button class="controlBtn" id="rightBtn" aria-label="Move right">→</button>
+  </div>
+  <div id="touchHint" class="hidden">ON-SCREEN CONTROLS: ↑ ↓ ← →</div>
+
+  <div id="menu" class="screen">
+    <div class="card">
+      <div class="titleLogo">MAZE RUNNER</div>
+      <div class="titleSub">PIXEL ARCADE // ESCAPE THE MAZE</div>
+
+      <h2>THE MAZE IS WAITING</h2>
+      <p style="color:#aaa;line-height:1.6;margin-bottom:18px">
+        Reach the exit, collect the coins, and avoid the guardian.
+      </p>
+
+      <div class="difficultyButtons" id="difficultyButtons">
+        <button data-size="21" data-coins="8" data-speed="650" data-vision="7" data-alert="1400" data-info="21×21 · 8 coins · 3×3 & 4×4 open areas · slow guardian" class="active">EASY</button>
+        <button data-size="25" data-coins="11" data-speed="540" data-vision="8" data-alert="1700" data-info="25×25 · 11 coins · more open areas · balanced guardian">NORMAL</button>
+        <button data-size="29" data-coins="14" data-speed="410" data-vision="9" data-alert="2000" data-info="29×29 · 14 coins · open map · fast guardian">HARD</button>
+        <button data-size="21" data-coins="10" data-speed="270" data-vision="10" data-alert="2600" data-info="21×21 · same size as Easy · aggressive AI · 10-tile vision" >NIGHTMARE</button>
+      </div>
+
+      <div class="difficultyInfo" id="difficultyInfo">
+        21×21 · 8 coins · 3×3 & 4×4 open areas · slow guardian
+      </div>
+
+      <div id="bankedCoinsMenu">
+        <span class="bankCoin">C</span>
+        <span id="bankedCoinsValue">0</span>
+        <span style="color:#888;font-size:10px;letter-spacing:2px;">TOTAL COINS</span>
+      </div>
+
+      <button id="startButton" class="startButton">▶ PLAY</button>
+      <button id="skinShopBtn">SKIN SHOP</button>
+      <button id="showControlsBtn">SHOW CONTROLS</button>
+      <div id="controlsPreview"><div class="previewPad"><span>↑</span><span>←</span><span>↓</span><span>→</span></div></div>
+
+      <div class="smallNote">
+        MOBILE: turn on SHOW CONTROLS for the on-screen arrows · PC: WASD or arrow keys
+      </div>
+    </div>
+  </div>
+
+
+  <div id="skinShopScreen" class="screen hidden">
+    <div class="card skinShopCard">
+      <div class="skinShopHeader">
+        <div class="skinShopTitle">SKIN SHOP</div>
+        <div class="shopCoins"><span class="bankCoin">C</span> <span id="shopCoinsValue">0</span></div>
+      </div>
+      <div class="skinGrid" id="skinGrid"></div>
+      <button id="closeShopBtn" type="button" class="shopCloseBtn">BACK TO MENU</button>
+    </div>
+  </div>
+
+  <div id="directionScreen" class="screen hidden">
+    <div class="directionCard">
+      <div class="readyText">READY</div>
+      <div id="directionArrow">↓</div>
+      <div class="directionText">FIND THE EXIT</div>
+    </div>
+  </div>
+
+  <div id="gameOver" class="screen hidden">
+    <div class="card">
+      <div id="winner">YOU ESCAPED!</div>
+      <div class="finalScores">
+        <div><span>COINS</span><strong id="finalCoins">0</strong></div>
+        <div><span>TIME</span><strong id="finalTime">0.0</strong></div>
+      </div>
+      <button id="againButton">↻ PLAY AGAIN</button>
+      <button id="menuButton">MENU</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  const $ = (id) => document.getElementById(id);
+  const menu = $("menu");
+  const skinShopScreen = $("skinShopScreen");
+  const directionScreen = $("directionScreen");
+  const gameOver = $("gameOver");
+  const hud = $("hud");
+  const pauseBtn = $("pauseBtn");
+  const exitBtn = $("exitBtn");
+  const dpad = $("dpad");
+  const controlsPreview = $("controlsPreview");
+  const touchHint = $("touchHint");
+  const startButton = $("startButton");
+  const skinShopBtn = $("skinShopBtn");
+  const showControlsBtn = $("showControlsBtn");
+  const closeShopBtn = $("closeShopBtn");
+  const bankedCoinsValue = $("bankedCoinsValue");
+  const shopCoinsValue = $("shopCoinsValue");
+  const skinGrid = $("skinGrid");
+  const againButton = $("againButton");
+  const menuButton = $("menuButton");
+  const winner = $("winner");
+  const coinsEl = $("coins");
+  const timerEl = $("timer");
+  const levelEl = $("level");
+  const statusEl = $("status");
+  const finalCoins = $("finalCoins");
+  const finalTime = $("finalTime");
+  const infoEl = $("difficultyInfo");
+  const directionArrow = $("directionArrow");
+
+  let cfg = { size: 21, coins: 8, monsterMs: 650, vision: 7, alertMs: 1400 };
+  let maze = [];
+  let floorCells = [];
+  let coinList = [];
+  let roomList = [];
+  let chestList = [];
+  let player = { x: 1, y: 1, px: 1, py: 1, dir: "down", anim: 0 };
+  let monster = { x: 1, y: 1, px: 1, py: 1, dir: "left", anim: 0, mode: "wander", target: null, path: [], alert: 0, lastSeen: null, idle: 0 };
+  let exitCell = { x: 1, y: 1 };
+  let coinScore = 0;
+  let totalCoins = 0;
+  let startTime = 0;
+  let elapsed = 0;
+  let running = false;
+  let paused = false;
+  let monsterTimer = 0;
+  let raf = 0;
+  let lastFrame = 0;
+  let shake = 0;
+  let flash = 0;
+  let particles = [];
+  let dragStart = null;
+  let showControls = false;
+  let audioCtx = null;
+
+  const SAVE_KEY = "mazeRunnerArcadeSave_v3";
+  const SKINS = [
+    { id:"classic", name:"CLASSIC", cost:0, desc:"Original runner",
+      main:"#c0c0c0", dark:"#303030", accent:"#ffffff", visor:"#0a0a0a" },
+    { id:"shadow", name:"SHADOW", cost:40, desc:"Stealth suit",
+      main:"#4b4b4b", dark:"#111111", accent:"#8b8b8b", visor:"#050505" },
+    { id:"chrome", name:"CHROME", cost:90, desc:"Polished armor",
+      main:"#eeeeee", dark:"#707070", accent:"#ffffff", visor:"#222222" },
+    { id:"ember", name:"EMBER", cost:160, desc:"Hot-run gear",
+      main:"#777777", dark:"#2a2a2a", accent:"#f2f2f2", visor:"#090909" },
+    { id:"wraith", name:"WRAITH", cost:250, desc:"Ghost protocol",
+      main:"#666666", dark:"#181818", accent:"#bdbdbd", visor:"#010101" },
+    { id:"void", name:"VOID", cost:400, desc:"Endgame armor",
+      main:"#222222", dark:"#050505", accent:"#9e9e9e", visor:"#000000" }
+  ];
+
+  let save = {
+    coins: 0,
+    owned: ["classic"],
+    equipped: "classic"
+  };
+
+  try {
+    const stored = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+    if (stored && typeof stored === "object") {
+      save = {
+        coins: Math.max(0, Number(stored.coins) || 0),
+        owned: Array.isArray(stored.owned) && stored.owned.length ? [...new Set(stored.owned)] : ["classic"],
+        equipped: typeof stored.equipped === "string" ? stored.equipped : "classic"
+      };
+      if (!save.owned.includes("classic")) save.owned.unshift("classic");
+      if (!SKINS.some(s => s.id === save.equipped) || !save.owned.includes(save.equipped)) save.equipped = "classic";
+    }
+  } catch (_) {}
+
+  function persistSave() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (_) {}
+    updateCoinDisplays();
+    renderSkinShop();
+  }
+
+  function updateCoinDisplays() {
+    bankedCoinsValue.textContent = String(save.coins);
+    shopCoinsValue.textContent = String(save.coins);
+  }
+
+  function addBankedCoins(amount) {
+    amount = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!amount) return;
+    save.coins += amount;
+    persistSave();
+  }
+
+
+  function openSkinShop() {
+    running = false;
+    paused = false;
+    showScreen(gameOver,false);
+    showScreen(directionScreen,false);
+    showScreen(menu,false);
+    showScreen(skinShopScreen,true);
+    hud.classList.add("hidden");
+    touchHint.classList.add("hidden");
+    pauseBtn.classList.add("hidden");
+    renderSkinShop();
+  }
+
+  function closeSkinShop() {
+    running = false;
+    paused = false;
+    showScreen(skinShopScreen,false);
+    showScreen(menu,true);
+    hud.classList.add("hidden");
+    touchHint.classList.add("hidden");
+    pauseBtn.classList.add("hidden");
+    updateCoinDisplays();
+  }
+
+  function renderSkinShop() {
+    skinGrid.innerHTML = "";
+    for (const skin of SKINS) {
+      const item = document.createElement("div");
+      item.className = "skinItem" + (save.equipped === skin.id ? " active" : "");
+
+      const preview = document.createElement("div");
+      preview.className = "skinPreview";
+      const c = document.createElement("canvas");
+      c.width = 80;
+      c.height = 92;
+      c.style.width = "80px";
+      c.style.height = "92px";
+      const pctx = c.getContext("2d");
+      pctx.imageSmoothingEnabled = false;
+      drawPlayerIcon(pctx, 40, 50, skin, 1.65);
+      preview.appendChild(c);
+
+      const name = document.createElement("div");
+      name.className = "skinName";
+      name.textContent = skin.name;
+
+      const price = document.createElement("div");
+      price.className = "skinPrice";
+      price.textContent = skin.cost === 0 ? "FREE" : `COST: ${skin.cost} COINS`;
+
+      const btn = document.createElement("button");
+      btn.className = "skinBtn";
+      const owned = save.owned.includes(skin.id);
+      if (save.equipped === skin.id) {
+        btn.textContent = "EQUIPPED";
+        btn.disabled = true;
+      } else if (owned) {
+        btn.textContent = "EQUIP";
+      } else {
+        btn.textContent = `BUY · ${skin.cost}`;
+      }
+
+      btn.addEventListener("click", () => {
+        if (!owned) {
+          if (save.coins < skin.cost) {
+            beep(110,0.08,"square",0.02);
+            return;
+          }
+          save.coins -= skin.cost;
+          save.owned.push(skin.id);
+        }
+        save.equipped = skin.id;
+        persistSave();
+        beep(580,0.07);
+      });
+
+      item.appendChild(preview);
+      item.appendChild(name);
+      item.appendChild(price);
+      item.appendChild(btn);
+      skinGrid.appendChild(item);
+    }
+    updateCoinDisplays();
+  }
+
+  function drawPlayerIcon(pctx, cx, cy, skin, scale) {
+    const r = (x,y,w,h,c) => {
+      pctx.fillStyle = c;
+      pctx.fillRect(Math.round(cx+x*scale), Math.round(cy+y*scale), Math.round(w*scale), Math.round(h*scale));
+    };
+    r(-11,12,22,5,"#000");
+    r(-9,7,7,8,skin.dark);
+    r(2,7,7,8,skin.dark);
+    r(-10,14,8,3,"#050505");
+    r(2,14,9,3,"#050505");
+    r(-10,-4,20,15,skin.dark);
+    r(-7,-2,14,13,skin.main);
+    r(-3,-1,6,12,skin.visor);
+    r(-12,0,4,9,skin.dark);
+    r(8,0,4,9,skin.dark);
+    r(-9,6,18,3,"#111");
+    r(-12,-2,4,12,skin.dark);
+    r(8,-2,4,12,skin.dark);
+    r(-10,-16,20,13,skin.dark);
+    r(-8,-18,16,3,"#111");
+    r(-7,-14,14,10,skin.main);
+    r(-8,-12,16,6,skin.visor);
+    r(-6,-11,5,3,skin.accent);
+    r(2,-11,5,3,skin.accent);
+    r(-3,-8,6,2,skin.dark);
+    r(-4,-1,8,4,skin.accent);
+  }
+
+  updateCoinDisplays();
+
+
+  const TILE = 32;
+  const colors = {
+    bg: "#070707",
+    floor: "#111111",
+    floor2: "#151515",
+    wall: "#292929",
+    wall2: "#383838",
+    edge: "#0a0a0a",
+    white: "#f4f4f4",
+    dim: "#858585",
+    coin: "#f1f1f1",
+    monster: "#4c4c4c",
+    monsterDark: "#1b1b1b",
+    exit: "#bdbdbd",
+    exitDark: "#454545"
+  };
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", resize, { passive: true });
+  resize();
+
+  function randInt(n) {
+    return Math.floor(Math.random() * n);
+  }
+
+  function key(x, y) {
+    return y + "," + x;
+  }
+
+  function shuffledDirs() {
+    const a = [[2,0],[-2,0],[0,2],[0,-2]];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = randInt(i + 1);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function carveRoom(rx, ry, rw, rh) {
+    for (let y = ry; y < ry + rh; y++) {
+      for (let x = rx; x < rx + rw; x++) {
+        if (x > 0 && x < maze.length - 1 && y > 0 && y < maze.length - 1) maze[y][x] = 0;
+      }
+    }
+    roomList.push({ x: rx, y: ry, w: rw, h: rh });
+  }
+
+  function nearestFloorFrom(x, y, dx, dy, maxSteps = 8) {
+    let cx = x, cy = y;
+    for (let i = 0; i < maxSteps; i++) {
+      cx += dx; cy += dy;
+      if (!inBounds(cx, cy)) break;
+      if (maze[cy][cx] === 0) return { x: cx, y: cy };
+    }
+    return null;
+  }
+
+  function connectRoom(room) {
+    const sides = ["top", "bottom", "left", "right"].sort(() => Math.random() - 0.5);
+    const wanted = 2 + randInt(3); // 2–4 entrances.
+    let made = 0;
+
+    function inside(px,py) {
+      return px >= room.x && px < room.x+room.w && py >= room.y && py < room.y+room.h;
+    }
+
+    function connectFromBoundary(bx,by) {
+      const start = [bx,by];
+      const q=[start];
+      const prev=new Map([[key(bx,by),null]]);
+      let hit=null;
+
+      while(q.length) {
+        const [x,y]=q.shift();
+        if (!(x===bx && y===by) && !inside(x,y) && maze[y][x]===0) { hit=[x,y]; break; }
+        const dirs=shuffledDirs().concat([[1,0],[-1,0],[0,1],[0,-1]]);
+        for (const [dx,dy] of dirs) {
+          const nx=x+dx, ny=y+dy;
+          const k=key(nx,ny);
+          if (!inBounds(nx,ny) || inside(nx,ny) || prev.has(k)) continue;
+          prev.set(k,[x,y]);
+          q.push([nx,ny]);
+        }
+      }
+
+      if (!hit) return false;
+      let cur=hit;
+      while(cur) {
+        maze[cur[1]][cur[0]]=0;
+        cur=prev.get(key(cur[0],cur[1]));
+      }
+      maze[by][bx]=0;
+      return true;
+    }
+
+    for (const side of sides) {
+      let bx,by;
+      if (side === "top") {
+        bx = room.x + 1 + randInt(Math.max(1, room.w-2)); by = room.y-1;
+      } else if (side === "bottom") {
+        bx = room.x + 1 + randInt(Math.max(1, room.w-2)); by = room.y+room.h;
+      } else if (side === "left") {
+        bx = room.x-1; by = room.y + 1 + randInt(Math.max(1, room.h-2));
+      } else {
+        bx = room.x+room.w; by = room.y + 1 + randInt(Math.max(1, room.h-2));
+      }
+      if (!inBounds(bx,by)) continue;
+      if (connectFromBoundary(bx,by)) made++;
+      if (made >= wanted) break;
+    }
+
+    // Absolute fallback: carve a door directly to the nearest edge corridor.
+    if (made < 2) {
+      const options=[
+        [room.x+Math.floor(room.w/2),room.y-1],
+        [room.x+Math.floor(room.w/2),room.y+room.h],
+        [room.x-1,room.y+Math.floor(room.h/2)],
+        [room.x+room.w,room.y+Math.floor(room.h/2)]
+      ].filter(([x,y])=>inBounds(x,y));
+      for (const [x,y] of options) {
+        if (maze[y][x]===1) maze[y][x]=0;
+        if (made++ >= 2) break;
+      }
+    }
+  }
+
+  function openLoops(size) {
+    // A few openings between neighboring corridors create alternate escape routes.
+    const candidates=[];
+    for (let y=1;y<size-1;y++) {
+      for (let x=1;x<size-1;x++) {
+        if (maze[y][x]!==1) continue;
+        const horizontal = maze[y][x-1]===0 && maze[y][x+1]===0;
+        const vertical = maze[y-1][x]===0 && maze[y+1][x]===0;
+        if (horizontal || vertical) candidates.push({x,y});
+      }
+    }
+    const cuts = Math.max(3, Math.floor(candidates.length * 0.11));
+    for (let i=0;i<cuts && candidates.length;i++) {
+      const idx=randInt(candidates.length);
+      const c=candidates.splice(idx,1)[0];
+      maze[c.y][c.x]=0;
+    }
+  }
+
+  function generateMaze(size) {
+    maze = Array.from({ length: size }, () => Array(size).fill(1));
+    roomList = [];
+    chestList = [];
+    const stack = [[1,1]];
+    maze[1][1] = 0;
+
+    // Base maze: every carved corridor is connected to the entrance.
+    while (stack.length) {
+      const [x,y] = stack[stack.length - 1];
+      let carved = false;
+      for (const [dx,dy] of shuffledDirs()) {
+        const nx = x + dx, ny = y + dy;
+        if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && maze[ny][nx] === 1) {
+          maze[y + dy/2][x + dx/2] = 0;
+          maze[ny][nx] = 0;
+          stack.push([nx,ny]);
+          carved = true;
+          break;
+        }
+      }
+      if (!carved) stack.pop();
+    }
+
+    // Open plazas: carve 3x3 and 4x4 clearings, then give each multiple entrances.
+    const roomCount = Math.max(3, Math.floor(size / 6));
+    let attempts = roomCount * 12;
+    while (roomList.length < roomCount && attempts-- > 0) {
+      const rw = Math.random() < 0.55 ? 3 : 4;
+      const rh = Math.random() < 0.55 ? 3 : 4;
+      const rx = 3 + randInt(Math.max(1, size - rw - 5));
+      const ry = 3 + randInt(Math.max(1, size - rh - 5));
+      const tooClose = roomList.some(r =>
+        rx < r.x + r.w + 2 && rx + rw + 2 > r.x &&
+        ry < r.y + r.h + 2 && ry + rh + 2 > r.y
+      );
+      if (tooClose) continue;
+      if (rx < 6 && ry < 6) continue;
+      if (rx + rw > size - 5 && ry + rh > size - 5) continue;
+      carveRoom(rx,ry,rw,rh);
+      connectRoom(roomList[roomList.length - 1]);
+    }
+
+    // Break a few walls to remove the “single snake corridor” feeling.
+    openLoops(size);
+
+    // Exit: always on the outside edge and connected to the interior.
+    exitCell = { x: size - 2, y: size - 1 };
+    maze[size - 2][size - 2] = 0;
+    maze[size - 1][size - 2] = 0;
+
+    floorCells = [];
+    for (let y=1; y<size-1; y++) {
+      for (let x=1; x<size-1; x++) {
+        if (maze[y][x] === 0) floorCells.push({x,y});
+      }
+    }
+
+    player = { x:1, y:1, px:1, py:1, dir:"down", anim:0 };
+    monster = chooseMonsterSpawn();
+
+    // Chests go in the heart of plazas and give a chunky coin payout.
+    chestList = roomList.map((r, i) => ({
+      x: r.x + Math.floor(r.w/2),
+      y: r.y + Math.floor(r.h/2),
+      opened: false,
+      bonus: 5 + randInt(6),
+      seed: i * 1.71 + Math.random()*2
+    })).filter(c => !(c.x === player.x && c.y === player.y) && !(c.x === exitCell.x && c.y === exitCell.y));
+
+    coinList = [];
+    const used = new Set([
+      key(1,1), key(monster.x,monster.y), key(exitCell.x,exitCell.y),
+      ...chestList.map(c => key(c.x,c.y))
+    ]);
+    const pool = [...floorCells];
+    while (coinList.length < cfg.coins && pool.length) {
+      const i = randInt(pool.length);
+      const cell = pool.splice(i,1)[0];
+      const k = key(cell.x,cell.y);
+      if (used.has(k)) continue;
+      used.add(k);
+      coinList.push({ ...cell, taken:false, spin:Math.random()*Math.PI*2 });
+    }
+    totalCoins = coinList.length + chestList.reduce((sum,c)=>sum+c.bonus,0);
+  }
+
+  function chooseMonsterSpawn() {
+    const targetDistance = Math.max(8, cfg.size * 0.52);
+    const candidates = floorCells.length ? floorCells : [{x:cfg.size-2,y:cfg.size-2}];
+    let best = candidates[candidates.length - 1], bestD = -1;
+    for (const c of candidates) {
+      const d = Math.abs(c.x - 1) + Math.abs(c.y - 1);
+      if (d >= targetDistance && d > bestD && !(c.x === exitCell.x && c.y === exitCell.y)) {
+        best = c; bestD = d;
+      }
+    }
+    return {
+      x:best.x, y:best.y, px:best.x, py:best.y, dir:"left", anim:0,
+      mode:"wander", target:null, path:[], alert:0, lastSeen:null, idle:0
+    };
+  }
+
+  function inBounds(x,y) {
+    return y >= 0 && y < maze.length && x >= 0 && x < maze.length;
+  }
+
+  function isFloor(x,y) {
+    return inBounds(x,y) && maze[y][x] === 0;
+  }
+
+  function neighbors(x,y) {
+    const out = [];
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (const [dx,dy] of dirs) {
+      const nx=x+dx, ny=y+dy;
+      if (isFloor(nx,ny)) out.push([nx,ny]);
+    }
+    return out;
+  }
+
+  function findPath(start, target) {
+    const q = [[start.x,start.y]];
+    const prev = new Map();
+    prev.set(key(start.x,start.y), null);
+
+    while (q.length) {
+      const [x,y] = q.shift();
+      if (x === target.x && y === target.y) break;
+
+      for (const [nx,ny] of neighbors(x,y)) {
+        const k = key(nx,ny);
+        if (!prev.has(k)) {
+          prev.set(k, [x,y]);
+          q.push([nx,ny]);
+        }
+      }
+    }
+
+    const targetKey = key(target.x,target.y);
+    if (!prev.has(targetKey)) return [];
+
+    const path = [];
+    let cur = [target.x,target.y];
+    while (cur) {
+      path.push(cur);
+      cur = prev.get(key(cur[0],cur[1]));
+    }
+    path.reverse();
+    return path;
+  }
+
+  function beep(freq=420, duration=0.05, type="square", vol=0.025) {
+    try {
+      audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = vol;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.stop(audioCtx.currentTime + duration);
+    } catch (_) {}
+  }
+
+  function spawnParticles(x,y,count=7, life=500) {
+    for (let i=0;i<count;i++) {
+      particles.push({
+        x, y,
+        vx:(Math.random()-.5)*3.2,
+        vy:(Math.random()-.5)*3.2,
+        r:Math.random()*2+1,
+        life, max:life
+      });
+    }
+  }
+
+  function showScreen(el, yes) {
+    el.classList.toggle("hidden", !yes);
+  }
+
+  function updateHud() {
+    coinsEl.textContent = coinScore + "/" + totalCoins;
+    timerEl.textContent = elapsed.toFixed(1);
+    levelEl.textContent = "SECTOR " + String(cfg.size).padStart(2,"0");
+  }
+
+  function resetGame() {
+    generateMaze(cfg.size);
+    coinScore = 0;
+    elapsed = 0;
+    monsterTimer = 0;
+    shake = 0;
+    flash = 0;
+    particles = [];
+    updateHud();
+  }
+
+  function startGame() {
+    resetGame();
+    showScreen(menu,false);
+    showScreen(gameOver,false);
+    showScreen(directionScreen,true);
+    hud.classList.remove("hidden");
+    touchHint.classList.toggle("hidden", !showControls);
+    pauseBtn.classList.remove("hidden");
+    exitBtn.classList.remove("hidden");
+    dpad.classList.toggle("show", showControls);
+    running = false;
+    paused = false;
+
+    let n = 0;
+    directionArrow.textContent = "↓";
+    const t = setInterval(() => {
+      n++;
+      directionArrow.textContent = n % 2 ? "→" : "↓";
+      if (n >= 4) {
+        clearInterval(t);
+        directionScreen.classList.add("hidden");
+        running = true;
+        startTime = performance.now();
+        beep(280,0.08);
+      }
+    }, 180);
+
+    cancelAnimationFrame(raf);
+    lastFrame = performance.now();
+    raf = requestAnimationFrame(loop);
+  }
+
+  function toMenu() {
+    running = false;
+    paused = false;
+    showScreen(gameOver,false);
+    showScreen(directionScreen,false);
+    showScreen(skinShopScreen,false);
+    showScreen(menu,true);
+    hud.classList.add("hidden");
+    touchHint.classList.add("hidden");
+    pauseBtn.classList.add("hidden");
+    exitBtn.classList.add("hidden");
+    dpad.classList.remove("show");
+  }
+
+  function endGame(won) {
+    running = false;
+    paused = false;
+    shake = won ? 0 : 13;
+    flash = won ? 850 : 450;
+    winner.textContent = won ? "YOU ESCAPED!" : "YOU GOT CAUGHT!";
+    statusEl.textContent = won ? "EXIT FOUND" : "GAME OVER";
+    finalCoins.textContent = coinScore;
+    finalTime.textContent = elapsed.toFixed(1) + "s";
+    showScreen(gameOver,true);
+    pauseBtn.classList.add("hidden");
+    exitBtn.classList.add("hidden");
+    dpad.classList.remove("show");
+    touchHint.classList.add("hidden");
+    if (won) {
+      beep(660,0.1);
+      setTimeout(()=>beep(880,0.14),90);
+      spawnParticles(exitCell.x, exitCell.y, 28, 900);
+    } else {
+      beep(90,0.24,"sawtooth",0.035);
+      spawnParticles(player.x, player.y, 22, 700);
+    }
+  }
+
+  function openChestAt(x,y) {
+    for (const chest of chestList) {
+      if (!chest.opened && chest.x === x && chest.y === y) {
+        chest.opened = true;
+        coinScore += chest.bonus;
+        addBankedCoins(chest.bonus);
+        statusEl.textContent = `CHEST +${chest.bonus} COINS`;
+        spawnParticles(x,y,20,850);
+        beep(520,0.08,"square",0.025);
+        setTimeout(()=>beep(720,0.1,"square",0.023),80);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function tryMove(dx,dy) {
+    if (!running || paused) return;
+    const nx = player.x + dx;
+    const ny = player.y + dy;
+    const dirs = { "1,0":"right", "-1,0":"left", "0,1":"down", "0,-1":"up" };
+    player.dir = dirs[dx+","+dy] || player.dir;
+
+    if (!isFloor(nx,ny)) {
+      beep(100,0.018,"square",0.012);
+      return;
+    }
+
+    player.px = player.x; player.py = player.y;
+    player.x = nx; player.y = ny; player.anim = 1;
+    beep(270,0.025,"square",0.016);
+
+    for (const coin of coinList) {
+      if (!coin.taken && coin.x === nx && coin.y === ny) {
+        coin.taken = true;
+        coinScore++;
+        addBankedCoins(1);
+        spawnParticles(nx,ny,10,520);
+        beep(760,0.06,"square",0.025);
+        statusEl.textContent = coinScore === totalCoins ? "ALL COINS" : "COIN!";
+      }
+    }
+
+    openChestAt(nx,ny);
+
+    if (nx === exitCell.x && ny === exitCell.y) {
+      setTimeout(()=>endGame(true), 80);
+      return;
+    }
+    if (nx === monster.x && ny === monster.y) endGame(false);
+  }
+
+  function hasLineOfSight(from, to) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const distance = Math.max(Math.abs(dx), Math.abs(dy));
+    if (distance > cfg.vision) return false;
+    if (distance === 0) return true;
+
+    for (let i=1; i<distance; i++) {
+      const x=Math.round(from.x + dx*i/distance);
+      const y=Math.round(from.y + dy*i/distance);
+      if (!isFloor(x,y)) return false;
+    }
+    return true;
+  }
+
+  function pickWanderTarget() {
+    const candidates = floorCells.filter(c => {
+      const d=Math.abs(c.x-monster.x)+Math.abs(c.y-monster.y);
+      return d >= 4 && d <= Math.max(8,Math.floor(cfg.size*.42)) &&
+             !(c.x===exitCell.x && c.y===exitCell.y) &&
+             !(c.x===player.x && c.y===player.y);
+    });
+    if (!candidates.length) return null;
+    return candidates[randInt(candidates.length)];
+  }
+
+  function stepMonsterToward(target) {
+    const path=findPath(monster,target);
+    if (path.length < 2) return false;
+    const [nx,ny]=path[1];
+    monster.px=monster.x; monster.py=monster.y;
+    monster.x=nx; monster.y=ny; monster.anim=1;
+    if (nx>monster.px) monster.dir="right";
+    else if (nx<monster.px) monster.dir="left";
+    else if (ny>monster.py) monster.dir="down";
+    else monster.dir="up";
+    return true;
+  }
+
+  function moveMonster() {
+    if (hasLineOfSight(monster, player)) {
+      monster.mode="chase";
+      monster.alert=cfg.alertMs;
+      monster.lastSeen={x:player.x,y:player.y};
+      statusEl.textContent="GUARDIAN SPOTTED!";
+    }
+
+    if (monster.mode === "chase") {
+      if (monster.alert > 0 && monster.lastSeen) {
+        const moved=stepMonsterToward(monster.lastSeen);
+        monster.alert -= cfg.monsterMs;
+        if (!moved || (monster.x===monster.lastSeen.x && monster.y===monster.lastSeen.y)) {
+          if (monster.alert <= 0) {
+            monster.mode="wander";
+            monster.target=null;
+            monster.idle=150+randInt(350);
+            statusEl.textContent="FIND THE EXIT";
+          }
+        }
+      } else {
+        monster.mode="wander";
+        monster.target=null;
+      }
+    }
+
+    if (monster.mode === "wander") {
+      if (monster.idle > 0) {
+        monster.idle -= cfg.monsterMs;
+      } else {
+        if (!monster.target || (monster.x===monster.target.x && monster.y===monster.target.y) || randInt(8)===0) {
+          monster.target=pickWanderTarget();
+        }
+        if (monster.target) {
+          const moved=stepMonsterToward(monster.target);
+          if (!moved || (monster.x===monster.target.x && monster.y===monster.target.y)) {
+            monster.target=null;
+            monster.idle=150+randInt(500);
+          }
+        }
+      }
+    }
+
+    if (monster.x===player.x && monster.y===player.y) endGame(false);
+  }
+
+  function drawPixelRect(x,y,w,h,fill) {
+    ctx.fillStyle = fill;
+    ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+
+  function drawMaze(ox,oy,tile) {
+    const size = maze.length;
+
+    for (let y=0;y<size;y++) {
+      for (let x=0;x<size;x++) {
+        const px=ox+x*tile, py=oy+y*tile;
+        if (maze[y][x] === 1) {
+          drawPixelRect(px,py,tile,tile,colors.wall);
+          drawPixelRect(px+2,py+2,tile-4,3,colors.wall2);
+          drawPixelRect(px+2,py+5,3,tile-7,colors.edge);
+          drawPixelRect(px+tile-5,py+5,3,tile-7,colors.edge);
+          if ((x+y)%3===0) {
+            drawPixelRect(px+tile-8,py+tile-8,3,3,"#444");
+          }
+        } else {
+          drawPixelRect(px,py,tile,tile,((x+y)&1) ? colors.floor : colors.floor2);
+          drawPixelRect(px+2,py+2,tile-4,1,"#202020");
+        }
+      }
+    }
+
+    // MARCO exterior
+    ctx.strokeStyle = "#4b4b4b";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(ox+1,oy+1,size*tile-2,size*tile-2);
+
+    // EXIT: casilla de puerta grande, contrastada y siempre visible.
+    const ex=ox+exitCell.x*tile, ey=oy+exitCell.y*tile;
+    drawPixelRect(ex+2,ey+2,tile-4,tile-4,colors.exitDark);
+    drawPixelRect(ex+5,ey+4,tile-10,3,colors.exit);
+    drawPixelRect(ex+5,ey+7,3,tile-12,colors.exit);
+    drawPixelRect(ex+tile-8,ey+7,3,tile-12,colors.exit);
+    drawPixelRect(ex+8,ey+tile-8,tile-16,3,colors.exit);
+    drawPixelRect(ex+tile/2-2,ey+tile/2-5,4,8,colors.white);
+    ctx.strokeStyle="#f4f4f4";
+    ctx.lineWidth=2;
+    ctx.strokeRect(ex+6,ey+5,tile-12,tile-10);
+    ctx.font="900 8px monospace";
+    ctx.fillStyle="#fff";
+    ctx.textAlign="center";
+    ctx.fillText("EXIT",ex+tile/2,ey-4);
+  }
+
+  function drawCoin(c,ox,oy,tile,t) {
+    if (c.taken) return;
+    const x=ox+c.x*tile+tile/2;
+    const y=oy+c.y*tile+tile/2 + Math.sin(t*0.006+c.spin)*2;
+    const s=1+Math.sin(t*0.01+c.spin)*0.07;
+
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.scale(s,1);
+    ctx.fillStyle="#050505";
+    ctx.fillRect(-9,-11,18,22);
+    ctx.fillStyle="#c6c6c6";
+    ctx.fillRect(-7,-10,14,20);
+    ctx.fillStyle="#f5f5f5";
+    ctx.fillRect(-5,-8,10,16);
+    ctx.fillStyle="#323232";
+    ctx.fillRect(-3,-5,6,10);
+    ctx.fillStyle="#101010";
+    ctx.font="900 9px monospace";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText("C",0,1);
+    ctx.fillStyle="#fff";
+    ctx.fillRect(-4,-9,5,2);
+    ctx.restore();
+  }
+
+  function drawPlayer(p,ox,oy,tile,t) {
+    const skin =
+      (save.owned.includes(save.equipped) && SKINS.find(s => s.id === save.equipped))
+      || SKINS[0];
+    const bob = p.anim * Math.sin(t*0.02) * 2;
+    const cx=ox+p.x*tile+tile/2;
+    const cy=oy+p.y*tile+tile/2+bob;
+    const s=tile/28;
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.scale(s,s);
+
+    const r = (x,y,w,h,c) => drawPixelRect(x,y,w,h,c);
+
+    r(-11,12,22,5,"#000");
+    r(-7,12,14,3,"#222");
+
+    // legs / boots
+    r(-9,7,7,8,skin.dark);
+    r(2,7,7,8,skin.dark);
+    r(-10,14,8,3,"#050505");
+    r(2,14,9,3,"#050505");
+
+    // suit
+    r(-10,-4,20,15,skin.dark);
+    r(-7,-2,14,13,skin.main);
+    r(-3,-1,6,12,skin.visor);
+    r(-12,0,4,9,skin.dark);
+    r(8,0,4,9,skin.dark);
+
+    // belt + backpack
+    r(-9,6,18,3,"#111");
+    r(-12,-2,4,12,skin.dark);
+    r(8,-2,4,12,skin.dark);
+
+    // helmet
+    r(-10,-16,20,13,skin.dark);
+    r(-8,-18,16,3,"#111");
+    r(-7,-14,14,10,skin.main);
+
+    // visor
+    r(-8,-12,16,6,skin.visor);
+    r(-6,-11,5,3,skin.accent);
+    r(2,-11,5,3,skin.accent);
+    r(-3,-8,6,2,skin.dark);
+
+    // chest emblem differs per skin
+    r(-4,-1,8,4,skin.accent);
+
+    // tiny skin-specific shoulder mark
+    if (skin.id === "shadow") r(-13,-3,2,6,"#777");
+    if (skin.id === "chrome") r(11,-3,2,6,"#fff");
+    if (skin.id === "ember") r(-13,3,2,5,"#ddd");
+    if (skin.id === "wraith") r(11,3,2,5,"#aaa");
+    if (skin.id === "void") r(-13,-2,2,8,"#777");
+
+    ctx.restore();
+  }
+
+  function drawMonster(m,ox,oy,tile,t) {
+    const pulse = Math.sin(t*0.012)*1.2;
+    const cx=ox+m.x*tile+tile/2;
+    const cy=oy+m.y*tile+tile/2+pulse;
+    const s=tile/28;
+
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.scale(s,s);
+
+    // sombra
+    drawPixelRect(-13,12,26,5,"#000");
+
+    // aura
+    ctx.globalAlpha=.11;
+    ctx.fillStyle="#fff";
+    ctx.fillRect(-17,-19,34,36);
+    ctx.globalAlpha=1;
+
+    // patas / garras
+    drawPixelRect(-12,11,6,7,"#0d0d0d");
+    drawPixelRect(6,11,6,7,"#0d0d0d");
+    drawPixelRect(-15,16,8,2,"#9a9a9a");
+    drawPixelRect(7,16,8,2,"#9a9a9a");
+
+    // cuerpo blindado
+    drawPixelRect(-13,-6,26,19,"#242424");
+    drawPixelRect(-11,-9,22,20,"#4b4b4b");
+    drawPixelRect(-8,-6,16,15,"#626262");
+    drawPixelRect(-5,-3,10,11,"#1b1b1b");
+    drawPixelRect(-4,0,8,4,"#e5e5e5");
+
+    // brazos, garras
+    drawPixelRect(-17,-3,5,16,"#1d1d1d");
+    drawPixelRect(12,-3,5,16,"#1d1d1d");
+    drawPixelRect(-20,10,6,3,"#bdbdbd");
+    drawPixelRect(14,10,6,3,"#bdbdbd");
+
+    // cabeza y cuernos
+    drawPixelRect(-10,-18,20,14,"#333");
+    drawPixelRect(-8,-20,16,4,"#5a5a5a");
+    drawPixelRect(-13,-21,6,6,"#777");
+    drawPixelRect(7,-21,6,6,"#777");
+    drawPixelRect(-9,-15,18,10,"#777");
+
+    // ojos
+    drawPixelRect(-7,-13,5,4,"#fafafa");
+    drawPixelRect(2,-13,5,4,"#fafafa");
+    drawPixelRect(-6,-12,3,2,"#111");
+    drawPixelRect(3,-12,3,2,"#111");
+
+    // jaw
+    drawPixelRect(-7,-6,14,5,"#151515");
+    drawPixelRect(-5,-4,3,3,"#d8d8d8");
+    drawPixelRect(2,-4,3,3,"#d8d8d8");
+
+    ctx.restore();
+  }
+
+
+  function drawChest(c,ox,oy,tile,t) {
+    const x=ox+c.x*tile+tile/2;
+    const y=oy+c.y*tile+tile/2;
+    const glow=(0.12+0.06*Math.sin(t*0.008+c.seed));
+    ctx.globalAlpha=glow;
+    ctx.fillStyle="#fff";
+    ctx.fillRect(x-tile*.58,y-tile*.58,tile*1.16,tile*1.16);
+    ctx.globalAlpha=1;
+
+    if (!c.opened) {
+      // lid
+      drawPixelRect(x-11,y-10,22,7,"#171717");
+      drawPixelRect(x-9,y-8,18,4,"#8a8a8a");
+      drawPixelRect(x-9,y-2,18,10,"#5a5a5a");
+      drawPixelRect(x-10,y-1,20,3,"#bcbcbc");
+      drawPixelRect(x-2,y-1,4,7,"#111");
+      // coin pile visible above the chest
+      drawPixelRect(x-6,y-13,5,5,"#ddd");
+      drawPixelRect(x+1,y-15,5,5,"#fff");
+      drawPixelRect(x+5,y-11,4,4,"#aaa");
+    } else {
+      // open chest + empty inside
+      drawPixelRect(x-11,y-8,22,5,"#4d4d4d");
+      drawPixelRect(x-9,y-2,18,10,"#252525");
+      drawPixelRect(x-10,y-1,20,3,"#999");
+      drawPixelRect(x-3,y-1,6,7,"#0b0b0b");
+    }
+    ctx.font="900 7px monospace"; ctx.textAlign="center"; ctx.fillStyle="#fff";
+    ctx.fillText(c.opened?"EMPTY":"BONUS",x,y+tile*.78);
+  }
+
+  function drawParticles(ox,oy,tile,dt) {
+    for (const p of particles) {
+      p.life -= dt;
+      p.x += p.vx*dt/100;
+      p.y += p.vy*dt/100;
+      const a = Math.max(0,p.life/p.max);
+      ctx.globalAlpha=a;
+      drawPixelRect(
+        ox + p.x*tile,
+        oy + p.y*tile,
+        p.r,p.r,
+        "#fff"
+      );
+    }
+    ctx.globalAlpha=1;
+    particles = particles.filter(p=>p.life>0);
+  }
+
+  function cameraAndDraw(t,dt) {
+    const w=canvas.clientWidth, h=canvas.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle=colors.bg;
+    ctx.fillRect(0,0,w,h);
+
+    const mazePx = maze.length*TILE;
+    let scale = Math.min((w-22)/mazePx, (h-22)/mazePx);
+    let tile = Math.max(10, TILE*scale);
+    let ox=(w-maze.length*tile)/2, oy=(h-maze.length*tile)/2;
+
+    // vignette and gentle camera follow
+    const jx=ox+player.x*tile+tile/2, jy=oy+player.y*tile+tile/2;
+    const targetCx=w/2, targetCy=h/2;
+    let cxShift=(targetCx-jx)*0.12;
+    let cyShift=(targetCy-jy)*0.12;
+    cxShift=Math.max(-45,Math.min(45,cxShift));
+    cyShift=Math.max(-45,Math.min(45,cyShift));
+
+    const shakeX = shake ? (Math.random()-.5)*shake : 0;
+    const shakeY = shake ? (Math.random()-.5)*shake : 0;
+
+    ctx.save();
+    ctx.translate(cxShift+shakeX,cyShift+shakeY);
+
+    drawMaze(ox,oy,tile);
+
+    for (const c of chestList) drawChest(c,ox,oy,tile,t);
+    for (const c of coinList) drawCoin(c,ox,oy,tile,t);
+    drawMonster(monster,ox,oy,tile,t);
+    drawPlayer(player,ox,oy,tile,t);
+    drawParticles(ox,oy,tile,dt);
+
+    // make the exit zone unmistakable
+    const ex=ox+exitCell.x*tile+tile/2, ey=oy+exitCell.y*tile+tile/2;
+    ctx.globalAlpha=.12 + .06*Math.sin(t*.008);
+    ctx.fillStyle="#fff";
+    ctx.fillRect(ex-tile*.75,ey-tile*.75,tile*1.5,tile*1.5);
+    ctx.globalAlpha=1;
+
+    ctx.restore();
+
+    const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.2,w/2,h/2,Math.max(w,h)*.7);
+    vg.addColorStop(0,"rgba(0,0,0,0)");
+    vg.addColorStop(1,"rgba(0,0,0,.7)");
+    ctx.fillStyle=vg;
+    ctx.fillRect(0,0,w,h);
+
+    if (flash>0) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.min(.28,flash/1600)})`;
+      ctx.fillRect(0,0,w,h);
+    }
+  }
+
+  function loop(t) {
+    const dt=Math.min(50,t-lastFrame);
+    lastFrame=t;
+
+    if (running && !paused) {
+      elapsed=(t-startTime)/1000;
+      updateHud();
+
+      monsterTimer += dt;
+      if (monsterTimer >= cfg.monsterMs) {
+        monsterTimer=0;
+        moveMonster();
+      }
+      player.anim=Math.max(0,player.anim-dt/220);
+      monster.anim=Math.max(0,monster.anim-dt/220);
+    }
+
+    if (shake>0) shake=Math.max(0,shake-dt*.035);
+    if (flash>0) flash=Math.max(0,flash-dt);
+    cameraAndDraw(t,dt);
+
+    raf=requestAnimationFrame(loop);
+  }
+
+  // ===== CONTROLES =====
+  document.addEventListener("keydown", (e) => {
+    const map = {
+      ArrowUp:[0,-1], w:[0,-1], W:[0,-1],
+      ArrowDown:[0,1], s:[0,1], S:[0,1],
+      ArrowLeft:[-1,0], a:[-1,0], A:[-1,0],
+      ArrowRight:[1,0], d:[1,0], D:[1,0]
+    };
+    if (e.key === " " && running) {
+      paused=!paused;
+      statusEl.textContent=paused ? "PAUSED" : "FIND THE EXIT";
+    }
+    if (map[e.key]) {
+      e.preventDefault();
+      tryMove(...map[e.key]);
+    }
+  }, { passive:false });
+
+  // Mobile movement is deliberately NOT swipe + buttons combined.
+  // The menu's SHOW CONTROLS switch chooses the on-screen D-pad mode.
+
+  function bindControl(btn, dx, dy) {
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      tryMove(dx,dy);
+    });
+  }
+
+  bindControl($("upBtn"),0,-1);
+  bindControl($("leftBtn"),-1,0);
+  bindControl($("downBtn"),0,1);
+  bindControl($("rightBtn"),1,0);
+
+  skinShopBtn.addEventListener("click", openSkinShop);
+
+  closeShopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeSkinShop();
+  });
+
+  showControlsBtn.addEventListener("click", () => {
+    showControls = !showControls;
+    controlsPreview.classList.toggle("show", showControls);
+    showControlsBtn.textContent = showControls ? "HIDE CONTROLS" : "SHOW CONTROLS";
+  });
+
+  pauseBtn.addEventListener("click", () => {
+    if (!running) return;
+    paused=!paused;
+    statusEl.textContent=paused ? "PAUSED" : "FIND THE EXIT";
+  });
+
+  document.querySelectorAll("#difficultyButtons button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#difficultyButtons button").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      cfg = {
+        size:Number(btn.dataset.size),
+        coins:Number(btn.dataset.coins),
+        monsterMs:Number(btn.dataset.speed),
+        vision:Number(btn.dataset.vision),
+        alertMs:Number(btn.dataset.alert)
+      };
+      infoEl.textContent = btn.dataset.info;
+    });
+  });
+
+  startButton.addEventListener("click", startGame);
+  againButton.addEventListener("click", startGame);
+  menuButton.addEventListener("click", toMenu);
+  exitBtn.addEventListener("click", toMenu);
+
+  // Prevent browser scrolling while using the game.
+  document.addEventListener("touchmove", e => e.preventDefault(), {passive:false});
+
+  // initialization
+  updateCoinDisplays();
+  renderSkinShop();
+  persistSave();
+  resetGame();
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(loop);
+})();
+
+</script>
+</body>
+</html>
