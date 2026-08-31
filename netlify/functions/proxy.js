@@ -1,75 +1,103 @@
 const fs = require("fs");
 const path = require("path");
 
-function isAllowedHost(hostname) {
-    const host = (hostname || "").toLowerCase();
+exports.handler = async (event) => {
+    try {
+        const game = String(
+            event.queryStringParameters?.game || ""
+        ).trim();
 
-    return host.endsWith(".netlify.app");
-}
+        console.log("Requested game:", game);
+        console.log("cwd:", process.cwd());
+        console.log("__dirname:", __dirname);
 
-function isAllowedRequest(event) {
-    const headers = event.headers || {};
-    const referer = headers.referer || headers.Referer || "";
-    const origin = headers.origin || headers.Origin || "";
-    const host = headers.host || headers.Host || "";
+        if (!game) {
+            return {
+                statusCode: 400,
+                headers: {
+                    "Content-Type": "text/plain; charset=utf-8"
+                },
+                body: "Missing game parameter"
+            };
+        }
 
-    const candidates = [];
+        // Solo nombres simples: pong, tetris, flappy-bird, etc.
+        if (!/^[a-zA-Z0-9_-]+$/.test(game)) {
+            return {
+                statusCode: 400,
+                headers: {
+                    "Content-Type": "text/plain; charset=utf-8"
+                },
+                body: "Invalid game name"
+            };
+        }
 
-    if (referer) {
-        try {
-            candidates.push(new URL(referer).hostname);
-        } catch {}
-    }
+        /*
+         * Netlify incluye games/** en el bundle de la Function.
+         *
+         * __dirname:
+         *   /.../netlify/functions
+         *
+         * Subimos dos niveles:
+         *   /.../netlify/functions
+         *          ↓ ..
+         *   /.../netlify
+         *          ↓ ..
+         *   /...
+         *
+         * y entramos en games/
+         */
+        const projectRoot = path.resolve(__dirname, "../..");
 
-    if (origin) {
-        try {
-            candidates.push(new URL(origin).hostname);
-        } catch {}
-    }
+        const filePath = path.join(
+            projectRoot,
+            "games",
+            `${game}.html`
+        );
 
-    if (host) {
-        candidates.push(host.split(":")[0]);
-    }
+        console.log("Looking for:", filePath);
+        console.log("Exists:", fs.existsSync(filePath));
 
-    return candidates.some((value) => isAllowedHost(value));
-}
+        if (!fs.existsSync(filePath)) {
+            return {
+                statusCode: 404,
+                headers: {
+                    "Content-Type": "text/plain; charset=utf-8"
+                },
+                body: `Game not found: ${game}.html`
+            };
+        }
 
-exports.handler = async function (event) {
-    const gameName = event.queryStringParameters?.game;
-    if (!gameName) {
-        return { statusCode: 400, body: "Missing ?game=" };
-    }
+        const html = fs.readFileSync(filePath, "utf8");
 
-    const safeGame = String(gameName)
-        .replace(/\.html$/i, "")
-        .replace(/[^a-z0-9_-]/gi, "")
-        .toLowerCase();
+        if (!html.trim()) {
+            return {
+                statusCode: 404,
+                headers: {
+                    "Content-Type": "text/plain; charset=utf-8"
+                },
+                body: "Game file is empty"
+            };
+        }
 
-    if (!safeGame) {
-        return { statusCode: 400, body: "Invalid game name" };
-    }
-
-    if (!isAllowedRequest(event)) {
         return {
-            statusCode: 403,
-            body: "Forbidden: only your Netlify site can access this endpoint."
+            statusCode: 200,
+            headers: {
+                "Content-Type": "text/html; charset=utf-8",
+                "Cache-Control": "no-store"
+            },
+            body: html
+        };
+
+    } catch (error) {
+        console.error("Proxy error:", error);
+
+        return {
+            statusCode: 500,
+            headers: {
+                "Content-Type": "text/plain; charset=utf-8"
+            },
+            body: `Proxy error: ${error.message}`
         };
     }
-
-    const filePath = path.join(process.cwd(), "games", `${safeGame}.html`);
-
-    if (!fs.existsSync(filePath)) {
-        return { statusCode: 404, body: "Game not found" };
-    }
-
-    const html = fs.readFileSync(filePath, "utf8");
-
-    return {
-        statusCode: 200,
-        headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Access-Control-Allow-Origin": "*"
-        },
-        body: html
-    };
 };

@@ -1,8 +1,10 @@
 [
   {
+    "id": "pong",
     "name": "Pong",
-    "path": "/.netlify/functions/proxy?game=pong",
-    "description": "A classic arcade game where players control paddles to hit a ball back and forth.",
-    "icon": "🏓"
+    "description": "Classic Pong",
+    "cost": 100,
+    "icon": "🏓",
+    "path": "/.netlify/functions/proxy?game=pong"
   }
 ]
