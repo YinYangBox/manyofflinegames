@@ -5,16 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#08111f">
     <title>Many Offline Games</title>
+
     <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
 </head>
+
 <body>
     <div class="background-orb background-orb--one"></div>
     <div class="background-orb background-orb--two"></div>
 
     <header class="topbar">
-        <div class="coin-badge" aria-live="polite" aria-label="Current coin balance">
+        <div
+            class="coin-badge"
+            aria-live="polite"
+            aria-label="Current coin balance"
+        >
             <span class="coin-badge__icon">🪙</span>
+
             <span>
                 <span class="coin-badge__label">Coins</span>
                 <strong data-coin-value>0</strong>
@@ -26,8 +33,14 @@
             <span id="connection-status">Checking connection…</span>
         </div>
 
-        <button id="reward-button" class="reward-badge" type="button" aria-haspopup="dialog">
+        <button
+            id="reward-button"
+            class="reward-badge"
+            type="button"
+            aria-haspopup="dialog"
+        >
             <span class="reward-badge__icon">🎁</span>
+
             <span>
                 <span class="reward-badge__label">Daily reward</span>
                 <strong id="reward-button-text">Claim +100</strong>
@@ -38,106 +51,281 @@
     <main class="page-shell">
         <section id="title-container" class="hero">
             <div class="hero__eyebrow">YOUR OFFLINE ARCADE</div>
+
             <h1>Many Offline Games</h1>
-            <p class="subtitle">Buy once. Play whenever you want, even without internet.</p>
+
+            <p class="subtitle">
+                Buy once. Play whenever you want, even without internet.
+            </p>
         </section>
 
-        <section class="library-section" aria-labelledby="library-title">
+        <!-- YOUR PURCHASED GAMES -->
+        <section
+            class="library-section"
+            aria-labelledby="your-games-title"
+        >
             <div class="section-heading">
                 <div>
-                    <span class="section-kicker">GAME LIBRARY</span>
-                    <h2 id="library-title">Your games</h2>
+                    <span class="section-kicker">YOUR LIBRARY</span>
+                    <h2 id="your-games-title">Your games</h2>
                 </div>
-                <span id="library-count" class="library-count">0 games</span>
+
+                <span
+                    id="your-games-count"
+                    class="library-count"
+                >
+                    0 games
+                </span>
             </div>
-            <div id="game-hub" class="game-hub"></div>
+
+            <div
+                id="your-game-hub"
+                class="game-hub"
+            ></div>
+        </section>
+
+        <!-- ONLINE GAME GALLERY -->
+        <section
+            id="gallery-section"
+            class="library-section"
+            aria-labelledby="gallery-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">DISCOVER & BUY</span>
+                    <h2 id="gallery-title">Game Gallery</h2>
+                </div>
+
+                <span
+                    id="gallery-count"
+                    class="library-count"
+                >
+                    0 games
+                </span>
+            </div>
+
+            <div
+                id="game-gallery"
+                class="game-hub"
+            ></div>
         </section>
     </main>
 
-    <div id="status-toast" class="status-toast" aria-live="polite" role="status"></div>
+    <!-- TOAST -->
+    <div
+        id="status-toast"
+        class="status-toast"
+        aria-live="polite"
+        role="status"
+    ></div>
 
-    <div id="purchase-modal" class="app-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="purchase-title">
+    <!-- PURCHASE MODAL -->
+    <div
+        id="purchase-modal"
+        class="app-modal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="purchase-title"
+    >
         <div class="app-modal__panel purchase-panel">
             <div class="app-modal__header">
                 <div>
-                    <span class="section-kicker">CONFIRM PURCHASE</span>
-                    <h2 id="purchase-title">Buy game</h2>
+                    <span class="section-kicker">
+                        CONFIRM PURCHASE
+                    </span>
+
+                    <h2 id="purchase-title">
+                        Buy game
+                    </h2>
                 </div>
-                <button id="close-purchase" class="icon-button" type="button" aria-label="Close purchase dialog">✕</button>
+
+                <button
+                    id="close-purchase"
+                    class="icon-button"
+                    type="button"
+                    aria-label="Close purchase dialog"
+                >
+                    ✕
+                </button>
             </div>
 
             <div class="purchase-panel__body">
                 <div class="purchase-preview">
-                    <div id="purchase-icon" class="purchase-preview__icon">🎮</div>
+                    <div
+                        id="purchase-icon"
+                        class="purchase-preview__icon"
+                    >
+                        🎮
+                    </div>
+
                     <div>
-                        <h3 id="purchase-game-name">Game</h3>
-                        <p id="purchase-game-description">Get this game and keep it available offline.</p>
+                        <h3 id="purchase-game-name">
+                            Game
+                        </h3>
+
+                        <p id="purchase-game-description">
+                            Get this game and keep it available offline.
+                        </p>
                     </div>
                 </div>
 
                 <div class="purchase-summary">
                     <div>
                         <span>Price</span>
-                        <strong id="purchase-cost">100 🪙</strong>
+                        <strong id="purchase-cost">
+                            100 🪙
+                        </strong>
                     </div>
+
                     <div>
                         <span>Your balance</span>
-                        <strong id="purchase-balance">0 🪙</strong>
+                        <strong id="purchase-balance">
+                            0 🪙
+                        </strong>
                     </div>
+
                     <div>
                         <span>Balance after</span>
-                        <strong id="purchase-after">0 🪙</strong>
+                        <strong id="purchase-after">
+                            0 🪙
+                        </strong>
                     </div>
                 </div>
 
-                <p id="purchase-note" class="purchase-note"></p>
+                <p
+                    id="purchase-note"
+                    class="purchase-note"
+                ></p>
 
                 <div class="modal-actions">
-                    <button id="cancel-purchase" class="secondary-button" type="button">Not now</button>
-                    <button id="confirm-purchase" class="primary-button" type="button">Buy game</button>
+                    <button
+                        id="cancel-purchase"
+                        class="secondary-button"
+                        type="button"
+                    >
+                        Not now
+                    </button>
+
+                    <button
+                        id="confirm-purchase"
+                        class="primary-button"
+                        type="button"
+                    >
+                        Buy game
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="reward-modal" class="app-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reward-title">
+    <!-- DAILY REWARD MODAL -->
+    <div
+        id="reward-modal"
+        class="app-modal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reward-title"
+    >
         <div class="app-modal__panel reward-panel">
             <div class="app-modal__header">
                 <div>
-                    <span class="section-kicker">KEEP YOUR STREAK</span>
-                    <h2 id="reward-title">Daily rewards</h2>
+                    <span class="section-kicker">
+                        KEEP YOUR STREAK
+                    </span>
+
+                    <h2 id="reward-title">
+                        Daily rewards
+                    </h2>
                 </div>
-                <button id="close-reward" class="icon-button" type="button" aria-label="Close rewards">✕</button>
+
+                <button
+                    id="close-reward"
+                    class="icon-button"
+                    type="button"
+                    aria-label="Close rewards"
+                >
+                    ✕
+                </button>
             </div>
 
             <div class="reward-panel__body">
                 <div class="reward-hero">
-                    <div class="reward-hero__icon">🎁</div>
+                    <div class="reward-hero__icon">
+                        🎁
+                    </div>
+
                     <div>
-                        <strong id="reward-streak">Day 1 streak</strong>
-                        <span id="reward-next-text">Claim today to keep it going.</span>
+                        <strong id="reward-streak">
+                            Day 1 streak
+                        </strong>
+
+                        <span id="reward-next-text">
+                            Claim today to keep it going.
+                        </span>
                     </div>
                 </div>
 
-                <div id="reward-list" class="reward-list"></div>
+                <div
+                    id="reward-list"
+                    class="reward-list"
+                ></div>
 
-                <button id="claim-daily" class="primary-button primary-button--wide" type="button">Claim today's reward</button>
-                <p class="reward-footnote">Miss a day and your streak starts over. Rewards repeat after day 7.</p>
+                <button
+                    id="claim-daily"
+                    class="primary-button primary-button--wide"
+                    type="button"
+                >
+                    Claim today's reward
+                </button>
+
+                <p class="reward-footnote">
+                    Miss a day and your streak starts over.
+                    Rewards repeat after day 7.
+                </p>
             </div>
         </div>
     </div>
 
-    <div id="game-modal" class="game-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <!-- GAME MODAL -->
+    <div
+        id="game-modal"
+        class="game-modal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+    >
         <div class="game-modal__panel">
             <div class="game-modal__header">
                 <div>
-                    <span class="section-kicker">NOW PLAYING</span>
-                    <h2 id="modal-title">Game</h2>
+                    <span class="section-kicker">
+                        NOW PLAYING
+                    </span>
+
+                    <h2 id="modal-title">
+                        Game
+                    </h2>
                 </div>
-                <button id="close-game" class="icon-button" type="button" aria-label="Close game">✕</button>
+
+                <button
+                    id="close-game"
+                    class="icon-button"
+                    type="button"
+                    aria-label="Close game"
+                >
+                    ✕
+                </button>
             </div>
-            <iframe id="game-frame" title="Game" allow="autoplay; fullscreen"></iframe>
+
+            <iframe
+                id="game-frame"
+                title="Game"
+                allow="autoplay; fullscreen"
+            ></iframe>
         </div>
     </div>
 </body>
 </html>
+
