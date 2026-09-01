@@ -2,1447 +2,3638 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <meta name="theme-color" content="#111827">
-      <meta name="mobile-web-app-capable" content="yes">
-      <meta name="apple-mobile-web-app-capable" content="yes">
-      <title>Flappy Bird</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+  <meta name="theme-color" content="#08111f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Flappy Arcade</title>
 
   <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f8fbff;
+      --muted: #9fb0c6;
+      --panel: rgba(7, 14, 27, 0.94);
+      --panel-light: rgba(22, 35, 56, 0.94);
+      --line: rgba(255, 255, 255, 0.13);
+      --accent: #ffd64a;
+      --accent-2: #ff8a3d;
+      --blue: #54d5ff;
+      --green: #68e18e;
+      --danger: #ff6684;
+      --shadow: rgba(0, 0, 0, 0.48);
+    }
+
     * {
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html,
     body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
     }
 
     body {
-        overflow: hidden;
-        background:
-            radial-gradient(circle at center, #202938, #080b10);
-        font-family: Arial, Helvetica, sans-serif;
-        color: white;
-        user-select: none;
-        touch-action: none;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 10%, #263957 0, #0b1423 48%, #040812 100%);
+      color: var(--ink);
+      font-family:
+        Inter,
+        ui-rounded,
+        "Arial Rounded MT Bold",
+        Arial,
+        sans-serif;
+      user-select: none;
+      touch-action: none;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 3px;
     }
 
     .game-wrapper {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100dvh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      position: fixed;
+      inset: 0;
+      display: grid;
+      width: 100vw;
+      height: 100dvh;
+      place-items: center;
+      padding: clamp(0px, 0.8vw, 12px);
     }
 
     #game-container {
-        position: relative;
-        width: 100vw;
-        height: 100dvh;
-        overflow: hidden;
-
-        border-radius: clamp(0px, 1.2vw, 24px);
-        border: clamp(0px, 0.2vw, 4px) solid rgba(255,255,255,0.18);
-
-        background: #72c9ef;
-
-        box-shadow:
-            0 25px 80px rgba(0,0,0,0.55),
-            inset 0 0 40px rgba(0,0,0,0.15);
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #72c9ef;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: clamp(0px, 1.5vw, 24px);
+      box-shadow:
+        0 30px 90px var(--shadow),
+        inset 0 0 50px rgba(0, 0, 0, 0.1);
+      isolation: isolate;
     }
 
     #gameCanvas {
-        position: absolute;
-        inset: 0;
-
-        width: 100%;
-        height: 100%;
-
-        display: block;
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
     }
 
     #hud {
-        position: absolute;
-        top: clamp(15px, 3vh, 40px);
-        left: 0;
-        width: 100%;
-
-        display: flex;
-        justify-content: center;
-        gap: clamp(35px, 6vw, 100px);
-
-        pointer-events: none;
-        z-index: 5;
+      position: absolute;
+      z-index: 5;
+      top: clamp(12px, 2.2vh, 28px);
+      left: 50%;
+      display: flex;
+      width: min(calc(100% - 32px), 760px);
+      align-items: flex-start;
+      justify-content: center;
+      gap: clamp(12px, 3.3vw, 52px);
+      transform: translateX(-50%);
+      pointer-events: none;
     }
 
-    .score-container,
-    .best-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-
-        text-shadow: 0 3px 6px rgba(0,0,0,0.45);
+    .hud-stat {
+      display: flex;
+      min-width: 62px;
+      flex-direction: column;
+      align-items: center;
+      text-shadow: 0 3px 7px rgba(0, 0, 0, 0.5);
     }
 
     .hud-label {
-        font-size: clamp(10px, 1vw, 17px);
-        font-weight: 900;
-        letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: clamp(8px, 0.8vw, 12px);
+      font-weight: 1000;
+      letter-spacing: 0.16em;
     }
 
-    #score,
-    #best {
-        font-size: clamp(32px, 4vw, 76px);
-        font-weight: 900;
-        line-height: 1;
+    .hud-value {
+      margin-top: 1px;
+      font-size: clamp(24px, 3.3vw, 54px);
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    #hud-difficulty {
+      max-width: 110px;
+      overflow: hidden;
+      font-size: clamp(13px, 1.5vw, 24px);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .corner-controls {
+      position: absolute;
+      z-index: 7;
+      top: clamp(10px, 2vh, 24px);
+      right: clamp(10px, 2vw, 24px);
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-button {
+      display: grid;
+      width: clamp(38px, 4vw, 52px);
+      height: clamp(38px, 4vw, 52px);
+      padding: 0;
+      place-items: center;
+      color: white;
+      background: rgba(5, 13, 24, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+      cursor: pointer;
+      font-size: clamp(16px, 1.6vw, 22px);
+      font-weight: 1000;
+      backdrop-filter: blur(8px);
+      transition:
+        transform 0.16s ease,
+        background 0.16s ease;
+    }
+
+    .icon-button:hover {
+      background: rgba(23, 42, 67, 0.8);
+      transform: translateY(-2px);
+    }
+
+    #pause-button {
+      display: none;
+    }
+
+    #game-container.is-active #pause-button {
+      display: grid;
     }
 
     .overlay {
-        position: absolute;
-        inset: 0;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        padding: 20px;
-
-        background: rgba(0,0,0,0.24);
-        backdrop-filter: blur(3px);
-
-        z-index: 10;
+      position: absolute;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      overflow: auto;
+      padding: clamp(16px, 3vw, 38px);
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(37, 82, 119, 0.2), transparent 55%),
+        rgba(2, 7, 15, 0.48);
+      backdrop-filter: blur(5px);
+      overscroll-behavior: contain;
     }
 
+    .overlay.hidden,
     .hidden {
-        display: none !important;
+      display: none !important;
     }
 
     .panel {
-        width: min(90%, 470px);
-
-        padding: clamp(25px, 4vw, 45px);
-
-        border-radius: 26px;
-        border: 2px solid rgba(255,255,255,0.16);
-
-        background:
-            linear-gradient(
-                145deg,
-                rgba(30,38,52,0.96),
-                rgba(9,13,20,0.96)
-            );
-
-        box-shadow:
-            0 25px 70px rgba(0,0,0,0.55),
-            inset 0 1px 0 rgba(255,255,255,0.08);
-
-        text-align: center;
+      position: relative;
+      width: min(94%, 540px);
+      padding: clamp(22px, 4vw, 42px);
+      overflow: hidden;
+      text-align: center;
+      background:
+        linear-gradient(145deg, var(--panel-light), var(--panel));
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
-    .bird-preview {
-        font-size: clamp(55px, 8vw, 100px);
-        margin-bottom: 8px;
-
-        filter:
-            drop-shadow(
-                0 8px 8px rgba(0,0,0,0.35)
-            );
-
-        animation: birdFloat 1.5s ease-in-out infinite;
+    .panel::before {
+      position: absolute;
+      top: 0;
+      left: 12%;
+      width: 76%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      content: "";
+      opacity: 0.8;
     }
 
-    @keyframes birdFloat {
-        0%, 100% {
-            transform: translateY(0) rotate(-3deg);
-        }
+    .wide-panel {
+      width: min(96%, 960px);
+    }
 
-        50% {
-            transform: translateY(-10px) rotate(3deg);
-        }
+    .shop-panel {
+      width: min(98%, 1120px);
+      min-height: min(740px, 92dvh);
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--blue);
+      font-size: clamp(9px, 1vw, 13px);
+      font-weight: 1000;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
     }
 
     h1,
     h2 {
-        margin: 0 0 10px;
-        font-weight: 1000;
-        letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-weight: 1000;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
     }
 
     h1 {
-        font-size: clamp(30px, 4vw, 64px);
+      font-size: clamp(38px, 6vw, 82px);
     }
 
     h2 {
-        font-size: clamp(30px, 4vw, 60px);
+      font-size: clamp(30px, 4.2vw, 58px);
+    }
+
+    .title-accent {
+      color: var(--accent);
+      text-shadow: 0 4px 0 rgba(151, 78, 17, 0.45);
     }
 
     .subtitle {
-        margin: 0 0 28px;
-        color: rgba(255,255,255,0.68);
-        font-size: clamp(13px, 1.5vw, 20px);
+      margin-bottom: 22px;
+      color: var(--muted);
+      font-size: clamp(12px, 1.4vw, 17px);
+      line-height: 1.5;
     }
 
-    button {
-        width: 100%;
-
-        border: 0;
-        border-radius: 14px;
-
-        padding: clamp(13px, 1.5vw, 19px);
-
-        font-size: clamp(15px, 1.5vw, 21px);
-        font-weight: 900;
-
-        color: #10151d;
-
-        background:
-            linear-gradient(
-                135deg,
-                #ffffff,
-                #cfd6df
-            );
-
-        cursor: pointer;
-
-        box-shadow:
-            0 8px 20px rgba(0,0,0,0.3);
-
-        transition:
-            transform 0.15s,
-            box-shadow 0.15s;
+    .menu-layout {
+      display: grid;
+      align-items: center;
+      grid-template-columns: minmax(260px, 0.9fr) minmax(300px, 1.1fr);
+      gap: clamp(22px, 4vw, 48px);
     }
 
-    button:hover {
-        transform: translateY(-2px);
-
-        box-shadow:
-            0 12px 25px rgba(0,0,0,0.4);
+    .menu-preview-wrap {
+      position: relative;
+      min-height: 300px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(78, 202, 255, 0.3), rgba(255, 215, 115, 0.13));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.18);
     }
 
-    button:active {
-        transform: translateY(1px) scale(0.98);
+    #menu-preview {
+      display: block;
+      width: 100%;
+      height: 300px;
+    }
+
+    .preview-badge {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      left: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 12px;
+      background: rgba(6, 16, 29, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 13px;
+      font-size: 11px;
+      font-weight: 900;
+      backdrop-filter: blur(7px);
+    }
+
+    .credit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 12px;
+      color: #fff2ab;
+      background: rgba(255, 201, 54, 0.12);
+      border: 1px solid rgba(255, 214, 74, 0.28);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: 0.04em;
+    }
+
+    .difficulty-title {
+      margin: 0 0 10px;
+      color: rgba(255, 255, 255, 0.64);
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: 0.2em;
+      text-align: left;
+    }
+
+    .difficulty-grid {
+      display: grid;
+      margin-bottom: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .difficulty-card {
+      position: relative;
+      min-height: 76px;
+      padding: 12px;
+      color: white;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      cursor: pointer;
+      transition:
+        transform 0.16s ease,
+        border-color 0.16s ease,
+        background 0.16s ease;
+    }
+
+    .difficulty-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      transform: translateY(-2px);
+    }
+
+    .difficulty-card.selected {
+      background: rgba(84, 213, 255, 0.13);
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(84, 213, 255, 0.08);
+    }
+
+    .difficulty-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+    }
+
+    .difficulty-card small {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .difficulty-card .multiplier {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      color: var(--accent);
+      font-size: 9px;
+      font-weight: 1000;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .danger-button {
+      width: 100%;
+      min-height: 51px;
+      padding: 13px 18px;
+      border: 0;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: clamp(13px, 1.3vw, 17px);
+      font-weight: 1000;
+      letter-spacing: 0.05em;
+      transition:
+        transform 0.14s ease,
+        filter 0.14s ease,
+        box-shadow 0.14s ease;
+    }
+
+    .primary-button {
+      color: #152030;
+      background: linear-gradient(135deg, #fff3a4, var(--accent) 54%, #ff9b45);
+      box-shadow:
+        0 9px 22px rgba(255, 164, 50, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65);
     }
 
     .secondary-button {
-        margin-top: 10px;
-
-        color: white;
-
-        background: rgba(255,255,255,0.08);
-
-        border:
-            1px solid
-            rgba(255,255,255,0.15);
+      color: white;
+      background: rgba(255, 255, 255, 0.075);
+      border: 1px solid rgba(255, 255, 255, 0.12);
     }
 
-    .controls {
-        margin-top: 18px;
-
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-
-        color: rgba(255,255,255,0.45);
-
-        font-size: clamp(9px, 1vw, 13px);
-        font-weight: 800;
-
-        letter-spacing: 1px;
+    .danger-button {
+      color: white;
+      background: rgba(255, 102, 132, 0.15);
+      border: 1px solid rgba(255, 102, 132, 0.34);
     }
 
-    .results {
-        display: flex;
-        justify-content: center;
-        gap: clamp(35px, 6vw, 70px);
-
-        margin: 25px 0;
+    .primary-button:hover,
+    .secondary-button:hover,
+    .danger-button:hover {
+      filter: brightness(1.08);
+      transform: translateY(-2px);
     }
 
-    .results div {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .primary-button:active,
+    .secondary-button:active,
+    .danger-button:active {
+      transform: translateY(1px) scale(0.985);
     }
 
-    .results span {
-        font-size: 11px;
-        letter-spacing: 2px;
-        color: rgba(255,255,255,0.5);
+    .button-row {
+      display: grid;
+      margin-top: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
     }
 
-    .results strong {
-        margin-top: 5px;
-        font-size: clamp(32px, 4vw, 55px);
+    .button-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .controls-hint {
+      margin: 13px 0 0;
+      color: rgba(255, 255, 255, 0.42);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      line-height: 1.6;
+    }
+
+    .shop-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .shop-header h2 {
+      margin-bottom: 3px;
+    }
+
+    .shop-tabs {
+      display: grid;
+      max-width: 480px;
+      margin: 0 auto 16px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 6px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+    }
+
+    .tab-button {
+      padding: 11px 12px;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 11px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 1000;
+      letter-spacing: 0.1em;
+    }
+
+    .tab-button.active {
+      color: white;
+      background: rgba(84, 213, 255, 0.15);
+      box-shadow: inset 0 0 0 1px rgba(84, 213, 255, 0.3);
+    }
+
+    .shop-grid {
+      display: grid;
+      max-height: min(480px, 58dvh);
+      overflow: auto;
+      padding: 3px 5px 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      scrollbar-color: rgba(84, 213, 255, 0.4) rgba(255, 255, 255, 0.04);
+    }
+
+    .shop-card {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.052);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      transition:
+        transform 0.16s ease,
+        border-color 0.16s ease;
+    }
+
+    .shop-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .shop-card.equipped {
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px rgba(104, 225, 142, 0.08);
+    }
+
+    .shop-card canvas {
+      display: block;
+      width: 100%;
+      height: 124px;
+      background:
+        linear-gradient(180deg, rgba(95, 204, 244, 0.25), rgba(255, 229, 148, 0.12));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .shop-card-body {
+      padding: 12px;
+      text-align: left;
+    }
+
+    .shop-card h3 {
+      margin: 0 0 4px;
+      overflow: hidden;
+      font-size: 14px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .shop-card p {
+      min-height: 30px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.4;
+    }
+
+    .shop-card button {
+      width: 100%;
+      padding: 9px 8px;
+      color: #142031;
+      background: linear-gradient(135deg, #f8fbff, #bcd1e6);
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 1000;
+    }
+
+    .shop-card button.equip {
+      color: #092216;
+      background: linear-gradient(135deg, #b9ffd0, var(--green));
+    }
+
+    .shop-card button.current {
+      color: #b7c4d5;
+      background: rgba(255, 255, 255, 0.06);
+      cursor: default;
+    }
+
+    .shop-card button.locked {
+      color: white;
+      background: linear-gradient(135deg, #ffb75d, #ff784d);
+    }
+
+    .how-grid {
+      display: grid;
+      margin: 24px 0;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      text-align: left;
+    }
+
+    .how-card {
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+    }
+
+    .how-icon {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 10px;
+      place-items: center;
+      color: var(--accent);
+      background: rgba(255, 214, 74, 0.11);
+      border: 1px solid rgba(255, 214, 74, 0.22);
+      border-radius: 11px;
+      font-weight: 1000;
+    }
+
+    .how-card h3 {
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .how-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .results-grid {
+      display: grid;
+      margin: 23px 0 18px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .result-box {
+      padding: 14px 8px;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+    }
+
+    .result-box span {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.13em;
+    }
+
+    .result-box strong {
+      display: block;
+      margin-top: 5px;
+      font-size: clamp(25px, 4vw, 45px);
+      line-height: 1;
+    }
+
+    .record-banner {
+      display: none;
+      margin: 0 auto 14px;
+      padding: 8px 14px;
+      color: #fff2a4;
+      background: rgba(255, 214, 74, 0.12);
+      border: 1px solid rgba(255, 214, 74, 0.27);
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: 0.15em;
+    }
+
+    .record-banner.visible {
+      display: inline-flex;
+    }
+
+    .pause-mark {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 0 auto 18px;
+    }
+
+    .pause-mark i {
+      width: 12px;
+      height: 46px;
+      background: linear-gradient(180deg, var(--blue), #4777ff);
+      border-radius: 5px;
+      box-shadow: 0 5px 14px rgba(84, 213, 255, 0.25);
     }
 
     #ready-message {
-        position: absolute;
+      position: absolute;
+      z-index: 6;
+      left: 50%;
+      bottom: clamp(74px, 11%, 140px);
+      padding: 10px 18px;
+      color: rgba(255, 255, 255, 0.93);
+      background: rgba(5, 13, 24, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.17);
+      border-radius: 999px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      transform: translateX(-50%);
+      pointer-events: none;
+      font-size: clamp(10px, 1vw, 14px);
+      font-weight: 1000;
+      letter-spacing: 0.15em;
+      white-space: nowrap;
+      backdrop-filter: blur(7px);
+      animation: readyPulse 1.2s ease-in-out infinite;
+    }
 
-        left: 50%;
-        bottom: 9%;
+    #toast {
+      position: absolute;
+      z-index: 30;
+      top: 80px;
+      left: 50%;
+      max-width: calc(100% - 40px);
+      padding: 10px 15px;
+      color: white;
+      background: rgba(6, 15, 28, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      transform: translate(-50%, -20px);
+      pointer-events: none;
+      opacity: 0;
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+    }
 
-        transform: translateX(-50%);
-
-        z-index: 6;
-
-        padding: 10px 18px;
-
-        border-radius: 999px;
-
-        background: rgba(0,0,0,0.35);
-
-        border:
-            1px solid
-            rgba(255,255,255,0.15);
-
-        color: rgba(255,255,255,0.85);
-
-        font-size: clamp(10px, 1vw, 15px);
-        font-weight: 900;
-
-        letter-spacing: 1.5px;
-
-        pointer-events: none;
-
-        animation:
-            readyPulse 1.3s ease-in-out infinite;
+    #toast.visible {
+      transform: translate(-50%, 0);
+      opacity: 1;
     }
 
     @keyframes readyPulse {
-        0%, 100% {
-            opacity: 0.55;
-        }
+      0%,
+      100% {
+        opacity: 0.58;
+        transform: translateX(-50%) scale(0.97);
+      }
 
-        50% {
-            opacity: 1;
-        }
+      50% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
     }
 
-    @media (max-width: 700px) {
-        .game-wrapper {
-            padding: 5px;
-        }
+    @media (max-width: 780px) {
+      .game-wrapper {
+        padding: 0;
+      }
 
-        #game-container {
-            border-radius: 18px;
-        }
+      #game-container {
+        border: 0;
+        border-radius: 0;
+      }
 
-        .panel {
-            padding: 28px 22px;
-        }
+      .menu-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .menu-preview-wrap {
+        min-height: 190px;
+      }
+
+      #menu-preview {
+        height: 190px;
+      }
+
+      .shop-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .shop-card canvas {
+        height: 105px;
+      }
     }
 
-    @media (orientation: landscape) and (max-width: 900px) {
-        .panel {
-            padding: 18px 25px;
-        }
+    @media (max-width: 460px) {
+      .overlay {
+        padding: 10px;
+        align-items: center;
+      }
 
-        .bird-preview {
-            font-size: 45px;
-        }
+      .panel {
+        width: 100%;
+        padding: 22px 16px;
+        border-radius: 22px;
+      }
 
-        .subtitle {
-            margin-bottom: 14px;
-        }
+      .difficulty-card {
+        min-height: 70px;
+        padding: 10px;
+      }
 
-        .controls {
-            margin-top: 10px;
-        }
+      .shop-panel {
+        min-height: calc(100dvh - 20px);
+      }
+
+      .shop-header {
+        align-items: flex-start;
+      }
+
+      .shop-grid {
+        max-height: calc(100dvh - 270px);
+        gap: 8px;
+      }
+
+      .shop-card-body {
+        padding: 9px;
+      }
+
+      .how-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #hud {
+        left: 14px;
+        width: auto;
+        justify-content: flex-start;
+        gap: 15px;
+        transform: none;
+      }
+
+      .hud-stat {
+        min-width: 43px;
+      }
+
+      .corner-controls {
+        right: 10px;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 620px) {
+      .overlay {
+        padding: 8px;
+      }
+
+      .panel {
+        padding: 17px 22px;
+      }
+
+      .menu-layout {
+        grid-template-columns: minmax(220px, 0.8fr) minmax(340px, 1.2fr);
+        gap: 22px;
+      }
+
+      .menu-preview-wrap {
+        min-height: 240px;
+      }
+
+      #menu-preview {
+        height: 240px;
+      }
+
+      .difficulty-card {
+        min-height: 62px;
+        padding: 9px;
+      }
+
+      .subtitle {
+        margin-bottom: 12px;
+      }
+
+      .shop-panel {
+        min-height: calc(100dvh - 16px);
+      }
+
+      .shop-header {
+        margin-bottom: 7px;
+      }
+
+      .shop-grid {
+        max-height: calc(100dvh - 215px);
+      }
+
+      .shop-card canvas {
+        height: 92px;
+      }
+
+      .shop-card p {
+        min-height: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
     }
   </style>
 </head>
+
 <body>
   <main class="game-wrapper">
+    <section
+      id="game-container"
+      aria-label="Flappy Arcade game"
+    >
+      <canvas
+        id="gameCanvas"
+        aria-label="Flappy Arcade play field"
+      ></canvas>
 
-          <section id="game-container">
+      <div id="hud">
+        <div class="hud-stat">
+          <span class="hud-label">SCORE</span>
+          <span id="score" class="hud-value">0</span>
+        </div>
 
-              <canvas id="gameCanvas"></canvas>
+        <div class="hud-stat">
+          <span class="hud-label">BEST</span>
+          <span id="best" class="hud-value">0</span>
+        </div>
 
-              <div id="hud">
-                  <div class="score-container">
-                      <span class="hud-label">SCORE</span>
-                      <span id="score">0</span>
-                  </div>
+        <div class="hud-stat">
+          <span class="hud-label">CREDITS</span>
+          <span id="hud-credits" class="hud-value">0</span>
+        </div>
 
-                  <div class="best-container">
-                      <span class="hud-label">BEST</span>
-                      <span id="best">0</span>
-                  </div>
+        <div class="hud-stat">
+          <span class="hud-label">MODE</span>
+          <span id="hud-difficulty" class="hud-value">CLASSIC</span>
+        </div>
+      </div>
+
+      <div class="corner-controls">
+        <button
+          id="sound-button"
+          class="icon-button"
+          type="button"
+          aria-label="Mute sound"
+          title="Sound"
+        >
+          SFX
+        </button>
+
+        <button
+          id="pause-button"
+          class="icon-button"
+          type="button"
+          aria-label="Pause game"
+          title="Pause"
+        >
+          II
+        </button>
+      </div>
+
+      <section
+        id="menu-screen"
+        class="overlay"
+        aria-labelledby="menu-title"
+      >
+        <div class="panel wide-panel">
+          <div class="menu-layout">
+            <div class="menu-preview-wrap">
+              <canvas
+                id="menu-preview"
+                width="520"
+                height="360"
+                aria-label="Selected bird and pipe preview"
+              ></canvas>
+
+              <div class="preview-badge">
+                <span id="preview-loadout">SUNNY SCOUT + GARDEN PIPES</span>
+                <span id="menu-credits" class="credit-pill">0 CREDITS</span>
+              </div>
+            </div>
+
+            <div>
+              <p class="eyebrow">SKYLINE FLIGHT PROGRAM</p>
+              <h1 id="menu-title">
+                FLAPPY
+                <span class="title-accent">ARCADE</span>
+              </h1>
+              <p class="subtitle">
+                Master four flight models, collect credits, and build a loadout
+                with hand-drawn birds and structural pipe styles.
+              </p>
+
+              <p class="difficulty-title">SELECT DIFFICULTY</p>
+              <div id="difficulty-grid" class="difficulty-grid"></div>
+
+              <button
+                id="play-button"
+                class="primary-button"
+                type="button"
+              >
+                START FLIGHT
+              </button>
+
+              <div class="button-row">
+                <button
+                  id="shop-button"
+                  class="secondary-button"
+                  type="button"
+                >
+                  HANGAR
+                </button>
+
+                <button
+                  id="how-button"
+                  class="secondary-button"
+                  type="button"
+                >
+                  HOW TO PLAY
+                </button>
               </div>
 
-              <div id="start-screen" class="overlay">
-                  <div class="panel">
-  <h1>FLAPPY BIRD</h1>
-                      <p class="subtitle">Tap or press SPACE to fly</p>
+              <p class="controls-hint">
+                SPACE / W / UP ARROW · CLICK · TAP · P OR ESC TO PAUSE
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-                      <button id="start-button">
-                          START GAME
-                      </button>
+      <section
+        id="shop-screen"
+        class="overlay hidden"
+        aria-labelledby="shop-title"
+      >
+        <div class="panel shop-panel">
+          <div class="shop-header">
+            <div>
+              <p class="eyebrow">LOADOUT WORKSHOP</p>
+              <h2 id="shop-title">THE HANGAR</h2>
+              <p class="subtitle">
+                Every unlock changes the drawing, silhouette, and construction.
+              </p>
+            </div>
 
-                      <div class="controls">
-                          <span>SPACE</span>
-                          <span>•</span>
-                          <span>CLICK</span>
-                          <span>•</span>
-                          <span>TAP</span>
-                      </div>
-                  </div>
-              </div>
+            <span id="shop-credits" class="credit-pill">0 CREDITS</span>
+          </div>
 
-              <div id="game-over-screen" class="overlay hidden">
-                  <div class="panel">
-                      <h2>GAME OVER</h2>
+          <div class="shop-tabs" role="tablist">
+            <button
+              id="bird-tab"
+              class="tab-button active"
+              type="button"
+              role="tab"
+              aria-selected="true"
+            >
+              BIRD SKINS
+            </button>
 
-                      <div class="results">
-                          <div>
-                              <span>SCORE</span>
-                              <strong id="final-score">0</strong>
-                          </div>
+            <button
+              id="pipe-tab"
+              class="tab-button"
+              type="button"
+              role="tab"
+              aria-selected="false"
+            >
+              PIPE STYLES
+            </button>
+          </div>
 
-                          <div>
-                              <span>BEST</span>
-                              <strong id="final-best">0</strong>
-                          </div>
-                      </div>
+          <div
+            id="shop-grid"
+            class="shop-grid"
+            aria-live="polite"
+          ></div>
 
-                      <button id="restart-button">
-                          PLAY AGAIN
-                      </button>
+          <button
+            id="shop-back-button"
+            class="secondary-button"
+            type="button"
+            style="margin-top: 12px"
+          >
+            BACK TO MENU
+          </button>
+        </div>
+      </section>
 
-                      <button id="menu-button" class="secondary-button">
-                          MENU
-                      </button>
-                  </div>
-              </div>
+      <section
+        id="how-screen"
+        class="overlay hidden"
+        aria-labelledby="how-title"
+      >
+        <div class="panel">
+          <p class="eyebrow">PILOT BRIEFING</p>
+          <h2 id="how-title">HOW TO FLY</h2>
+          <p class="subtitle">
+            Simple controls, precise timing, and four very different flight models.
+          </p>
 
-              <div id="ready-message">
-                  TAP TO FLY
-              </div>
+          <div class="how-grid">
+            <article class="how-card">
+              <div class="how-icon">01</div>
+              <h3>FLAP</h3>
+              <p>
+                Tap, click, or press Space, W, or the Up Arrow. Every input gives
+                the bird an immediate upward impulse.
+              </p>
+            </article>
 
-          </section>
+            <article class="how-card">
+              <div class="how-icon">02</div>
+              <h3>CLEAR THE GAP</h3>
+              <p>
+                Fly between both obstacles. The hitbox is slightly smaller than
+                the artwork so clean-looking passes remain fair.
+              </p>
+            </article>
 
-      </main>
+            <article class="how-card">
+              <div class="how-icon">03</div>
+              <h3>EARN CREDITS</h3>
+              <p>
+                Each completed run pays for every cleared gate. Higher difficulty
+                modes apply larger reward multipliers.
+              </p>
+            </article>
+
+            <article class="how-card">
+              <div class="how-icon">04</div>
+              <h3>BUILD A LOADOUT</h3>
+              <p>
+                Bird skins and pipe styles are independent. Unlock a design once
+                and equip it whenever you want.
+              </p>
+            </article>
+          </div>
+
+          <button
+            id="how-back-button"
+            class="secondary-button"
+            type="button"
+          >
+            BACK TO MENU
+          </button>
+        </div>
+      </section>
+
+      <section
+        id="pause-screen"
+        class="overlay hidden"
+        aria-labelledby="pause-title"
+      >
+        <div class="panel">
+          <div class="pause-mark" aria-hidden="true">
+            <i></i>
+            <i></i>
+          </div>
+
+          <p class="eyebrow">FLIGHT ON HOLD</p>
+          <h2 id="pause-title">PAUSED</h2>
+          <p class="subtitle">
+            Your position is frozen. Resume when you are ready.
+          </p>
+
+          <div class="button-stack">
+            <button
+              id="resume-button"
+              class="primary-button"
+              type="button"
+            >
+              RESUME FLIGHT
+            </button>
+
+            <button
+              id="pause-restart-button"
+              class="secondary-button"
+              type="button"
+            >
+              RESTART RUN
+            </button>
+
+            <button
+              id="pause-menu-button"
+              class="danger-button"
+              type="button"
+            >
+              RETURN TO MENU
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="game-over-screen"
+        class="overlay hidden"
+        aria-labelledby="game-over-title"
+      >
+        <div class="panel">
+          <p class="eyebrow">RUN COMPLETE</p>
+          <h2 id="game-over-title">FLIGHT OVER</h2>
+          <div id="record-banner" class="record-banner">
+            NEW MODE RECORD
+          </div>
+
+          <div class="results-grid">
+            <div class="result-box">
+              <span>SCORE</span>
+              <strong id="final-score">0</strong>
+            </div>
+
+            <div class="result-box">
+              <span>BEST</span>
+              <strong id="final-best">0</strong>
+            </div>
+
+            <div class="result-box">
+              <span>EARNED</span>
+              <strong id="earned-credits">0</strong>
+            </div>
+          </div>
+
+          <p id="result-detail" class="subtitle">
+            Classic · 1.00x reward
+          </p>
+
+          <div class="button-stack">
+            <button
+              id="restart-button"
+              class="primary-button"
+              type="button"
+            >
+              FLY AGAIN
+            </button>
+
+            <button
+              id="game-over-menu-button"
+              class="secondary-button"
+              type="button"
+            >
+              RETURN TO MENU
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div id="ready-message" class="hidden">
+        TAP TO LAUNCH
+      </div>
+
+      <div id="toast" role="status" aria-live="polite"></div>
+    </section>
+  </main>
 
   <script>
-    const canvas = document.getElementById("gameCanvas");
+    "use strict";
+
+    // -------------------------------------------------------------------------
+    // DOM helpers and immutable game catalogues
+    // -------------------------------------------------------------------------
+
+    const $ = (selector) => document.querySelector(selector);
+
+    const DIFFICULTIES = Object.freeze({
+      relaxed: {
+        id: "relaxed",
+        name: "Relaxed",
+        summary: "Wide gates, gentle gravity, slower skyline.",
+        gravity: 1450,
+        flap: -590,
+        gapLandscape: 340,
+        gapPortrait: 430,
+        speedLandscape: 360,
+        speedPortrait: 320,
+        spacingLandscape: 650,
+        spacingPortrait: 570,
+        drift: 60,
+        multiplier: 0.75,
+        sky: ["#70d7ff", "#c7efff", "#ffe6a5"]
+      },
+      classic: {
+        id: "classic",
+        name: "Classic",
+        summary: "Balanced physics and the intended arcade pace.",
+        gravity: 1775,
+        flap: -655,
+        gapLandscape: 292,
+        gapPortrait: 380,
+        speedLandscape: 470,
+        speedPortrait: 400,
+        spacingLandscape: 600,
+        spacingPortrait: 520,
+        drift: 85,
+        multiplier: 1,
+        sky: ["#54c8f4", "#a9e7fa", "#ffd68b"]
+      },
+      expert: {
+        id: "expert",
+        name: "Expert",
+        summary: "Tighter gates, sharper fall, faster reactions.",
+        gravity: 2075,
+        flap: -710,
+        gapLandscape: 246,
+        gapPortrait: 328,
+        speedLandscape: 560,
+        speedPortrait: 475,
+        spacingLandscape: 555,
+        spacingPortrait: 480,
+        drift: 118,
+        multiplier: 1.6,
+        sky: ["#f08a59", "#f5bd6c", "#513760"]
+      },
+      nightmare: {
+        id: "nightmare",
+        name: "Nightmare",
+        summary: "Narrow gates, high velocity, moving openings.",
+        gravity: 2310,
+        flap: -755,
+        gapLandscape: 216,
+        gapPortrait: 292,
+        speedLandscape: 650,
+        speedPortrait: 550,
+        spacingLandscape: 520,
+        spacingPortrait: 450,
+        drift: 150,
+        multiplier: 2.35,
+        sky: ["#111b45", "#42295d", "#d05c65"]
+      }
+    });
+
+    const BIRD_SKINS = Object.freeze({
+      sunny: {
+        id: "sunny",
+        name: "Sunny Scout",
+        price: 0,
+        description: "The original golden flyer, upgraded with feathered wings and tail control."
+      },
+      owl: {
+        id: "owl",
+        name: "Night Owl",
+        price: 120,
+        description: "Broad facial discs, ear tufts, layered wings, and a hooked beak."
+      },
+      rocket: {
+        id: "rocket",
+        name: "Rocket Finch",
+        price: 260,
+        description: "A swept metal airframe with visor, plates, nozzle, and live exhaust."
+      },
+      glider: {
+        id: "glider",
+        name: "Cloud Glider",
+        price: 420,
+        description: "Long gull wings, a narrow body, and a deeply forked steering tail."
+      },
+      clockwork: {
+        id: "clockwork",
+        name: "Clockwork Wren",
+        price: 650,
+        description: "Brass body plates, a turning gear wing, rivets, key, and monocle."
+      },
+      phoenix: {
+        id: "phoenix",
+        name: "Solar Phoenix",
+        price: 950,
+        description: "A crested firebird built from layered flame feathers and ember trails."
+      }
+    });
+
+    const PIPE_SKINS = Object.freeze({
+      garden: {
+        id: "garden",
+        name: "Garden Pipes",
+        price: 0,
+        description: "Classic cylinders with metal rims, climbing vines, and leaves."
+      },
+      brick: {
+        id: "brick",
+        name: "Brick Towers",
+        price: 150,
+        description: "Staggered masonry, mortar joints, stone ledges, and battlements."
+      },
+      bamboo: {
+        id: "bamboo",
+        name: "Bamboo Gates",
+        price: 310,
+        description: "Bundled stalks with raised nodes, rope bindings, and cross braces."
+      },
+      ice: {
+        id: "ice",
+        name: "Ice Columns",
+        price: 480,
+        description: "Faceted frozen pillars with cracks, frost, and jagged icicle edges."
+      },
+      tech: {
+        id: "tech",
+        name: "Tech Gates",
+        price: 720,
+        description: "Armored panels, bolts, hazard strips, vents, and energy bands."
+      },
+      temple: {
+        id: "temple",
+        name: "Ruined Temple",
+        price: 1050,
+        description: "Ancient stone courses, carved lintels, moss, and structural cracks."
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Shared arcade persistence
+    // -------------------------------------------------------------------------
+
+    class SaveManager {
+      static STORAGE_KEY = "ARCADE_GAMES";
+      static GAME_KEY = "flappy-bird";
+      static LEGACY_KEY = "flappy-bird-legacy";
+
+      static data = {
+        version: 1,
+        credits: 0,
+        gamesPlayed: 0,
+        bestScores: {
+          relaxed: 0,
+          classic: 0,
+          expert: 0,
+          nightmare: 0
+        },
+        selectedDifficulty: "classic",
+        selectedBird: "sunny",
+        ownedBirds: ["sunny"],
+        selectedPipes: "garden",
+        ownedPipes: ["garden"],
+        sound: true
+      };
+
+      static readArcadeRoot() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || "{}");
+          return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+            ? parsed
+            : {};
+        } catch (error) {
+          console.warn("Flappy Arcade could not read the shared save.", error);
+          return {};
+        }
+      }
+
+      static sanitizeNumber(value, fallback = 0) {
+        const number = Number(value);
+        return Number.isFinite(number) && number >= 0
+          ? Math.floor(number)
+          : fallback;
+      }
+
+      static sanitizeOwned(value, catalogue, starter) {
+        const valid = Array.isArray(value)
+          ? value.filter((id) => Object.hasOwn(catalogue, id))
+          : [];
+        return [...new Set([starter, ...valid])];
+      }
+
+      static load() {
+        const defaults = JSON.parse(JSON.stringify(this.data));
+        const root = this.readArcadeRoot();
+        const stored = root[this.GAME_KEY];
+
+        if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+          this.data = {
+            ...defaults,
+            ...stored,
+            bestScores: {
+              ...defaults.bestScores,
+              ...(stored.bestScores || {})
+            }
+          };
+        }
+
+        this.data.credits = this.sanitizeNumber(this.data.credits);
+        this.data.gamesPlayed = this.sanitizeNumber(this.data.gamesPlayed);
+
+        for (const id of Object.keys(DIFFICULTIES)) {
+          this.data.bestScores[id] = this.sanitizeNumber(
+            this.data.bestScores[id]
+          );
+        }
+
+        this.data.ownedBirds = this.sanitizeOwned(
+          this.data.ownedBirds,
+          BIRD_SKINS,
+          "sunny"
+        );
+        this.data.ownedPipes = this.sanitizeOwned(
+          this.data.ownedPipes,
+          PIPE_SKINS,
+          "garden"
+        );
+
+        if (!Object.hasOwn(DIFFICULTIES, this.data.selectedDifficulty)) {
+          this.data.selectedDifficulty = "classic";
+        }
+
+        if (!this.data.ownedBirds.includes(this.data.selectedBird)) {
+          this.data.selectedBird = "sunny";
+        }
+
+        if (!this.data.ownedPipes.includes(this.data.selectedPipes)) {
+          this.data.selectedPipes = "garden";
+        }
+
+        this.data.sound = this.data.sound !== false;
+
+        let migratedLegacy = false;
+        try {
+          const legacyValue = localStorage.getItem(this.LEGACY_KEY);
+          if (legacyValue !== null) {
+            const legacyBest = this.sanitizeNumber(legacyValue);
+            this.data.bestScores.classic = Math.max(
+              this.data.bestScores.classic,
+              legacyBest
+            );
+            migratedLegacy = true;
+          }
+        } catch (error) {
+          console.warn("Flappy Arcade could not inspect the legacy score.", error);
+        }
+
+        this.save();
+
+        if (migratedLegacy) {
+          try {
+            localStorage.removeItem(this.LEGACY_KEY);
+          } catch (error) {
+            console.warn("The legacy Flappy score could not be removed.", error);
+          }
+        }
+
+        return this.data;
+      }
+
+      static save() {
+        try {
+          const root = this.readArcadeRoot();
+          root[this.GAME_KEY] = JSON.parse(JSON.stringify(this.data));
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(root));
+          return true;
+        } catch (error) {
+          console.warn("Flappy Arcade could not save progress.", error);
+          return false;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Lightweight synthesized sound effects
+    // -------------------------------------------------------------------------
+
+    class SoundManager {
+      static context = null;
+
+      static ensureContext() {
+        if (!SaveManager.data.sound) {
+          return null;
+        }
+
+        const AudioEngine = window.AudioContext || window.webkitAudioContext;
+        if (!AudioEngine) {
+          return null;
+        }
+
+        if (!this.context) {
+          this.context = new AudioEngine();
+        }
+
+        if (this.context.state === "suspended") {
+          this.context.resume().catch(() => {});
+        }
+
+        return this.context;
+      }
+
+      static tone(frequency, duration, type = "sine", volume = 0.045, delay = 0) {
+        const audio = this.ensureContext();
+        if (!audio) {
+          return;
+        }
+
+        const start = audio.currentTime + delay;
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration + 0.02);
+      }
+
+      static flap() {
+        this.tone(430, 0.09, "triangle", 0.035);
+        this.tone(620, 0.07, "sine", 0.022, 0.025);
+      }
+
+      static score() {
+        this.tone(720, 0.08, "sine", 0.04);
+        this.tone(980, 0.12, "triangle", 0.035, 0.07);
+      }
+
+      static crash() {
+        this.tone(170, 0.22, "sawtooth", 0.055);
+        this.tone(82, 0.3, "square", 0.03, 0.05);
+      }
+
+      static purchase() {
+        this.tone(523, 0.08, "triangle", 0.035);
+        this.tone(659, 0.08, "triangle", 0.035, 0.08);
+        this.tone(784, 0.13, "triangle", 0.04, 0.16);
+      }
+
+      static click() {
+        this.tone(320, 0.045, "sine", 0.018);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Runtime references and mutable world state
+    // -------------------------------------------------------------------------
+
+    const canvas = $("#gameCanvas");
     const ctx = canvas.getContext("2d");
+    const gameContainer = $("#game-container");
+    const menuPreview = $("#menu-preview");
+    const previewContext = menuPreview.getContext("2d");
 
-    const scoreElement = document.getElementById("score");
-    const bestElement = document.getElementById("best");
+    const scoreElement = $("#score");
+    const bestElement = $("#best");
+    const hudCreditsElement = $("#hud-credits");
+    const hudDifficultyElement = $("#hud-difficulty");
+    const menuCreditsElement = $("#menu-credits");
+    const shopCreditsElement = $("#shop-credits");
+    const previewLoadoutElement = $("#preview-loadout");
 
-    const finalScoreElement =
-        document.getElementById("final-score");
+    const menuScreen = $("#menu-screen");
+    const shopScreen = $("#shop-screen");
+    const howScreen = $("#how-screen");
+    const pauseScreen = $("#pause-screen");
+    const gameOverScreen = $("#game-over-screen");
+    const readyMessage = $("#ready-message");
+    const toastElement = $("#toast");
 
-    const finalBestElement =
-        document.getElementById("final-best");
+    const difficultyGrid = $("#difficulty-grid");
+    const shopGrid = $("#shop-grid");
+    const birdTab = $("#bird-tab");
+    const pipeTab = $("#pipe-tab");
+    const soundButton = $("#sound-button");
+    const pauseButton = $("#pause-button");
 
-    const startScreen =
-        document.getElementById("start-screen");
+    const finalScoreElement = $("#final-score");
+    const finalBestElement = $("#final-best");
+    const earnedCreditsElement = $("#earned-credits");
+    const resultDetailElement = $("#result-detail");
+    const recordBanner = $("#record-banner");
 
-    const gameOverScreen =
-        document.getElementById("game-over-screen");
+    let WORLD_WIDTH = 1600;
+    let WORLD_HEIGHT = 900;
+    let worldUnit = 1;
+    let landscape = true;
+    let groundHeight = 90;
 
-    const readyMessage =
-        document.getElementById("ready-message");
-
-    const startButton =
-        document.getElementById("start-button");
-
-    const restartButton =
-        document.getElementById("restart-button");
-
-    const menuButton =
-        document.getElementById("menu-button");
-
-    let WORLD_WIDTH;
-    let WORLD_HEIGHT;
-
-    let running = false;
-    let gameStarted = false;
-
-    let lastTime = 0;
-    let animationFrame = 0;
-
+    let phase = "menu";
     let score = 0;
-
-    let best =
-        Number(
-            localStorage.getItem("flappyBirdBest")
-        ) || 0;
-
-    bestElement.textContent = best;
+    let lastTime = performance.now();
+    let visualTime = 0;
+    let runTime = 0;
+    let currentShopTab = "birds";
+    let toastTimer = 0;
+    let shakeStrength = 0;
+    let newRecord = false;
 
     const bird = {
-        x: 0,
-        y: 0,
-
-        width: 0,
-        height: 0,
-
-        velocityY: 0,
-
-        gravity: 0,
-        flapStrength: 0,
-
-        rotation: 0
+      x: 0,
+      y: 0,
+      width: 72,
+      height: 56,
+      velocityY: 0,
+      gravity: 1775,
+      flapStrength: -655,
+      rotation: 0,
+      wingPhase: 0
     };
 
     const pipeSettings = {
-        width: 0,
-        gap: 0,
-        speed: 0,
-        spacing: 0
+      width: 128,
+      gap: 292,
+      speed: 470,
+      spacing: 600
     };
 
-    let groundHeight = 0;
-
     let pipes = [];
-
     let clouds = [];
+    let particles = [];
+    let floatingTexts = [];
 
-    function resizeGame() {
-        const width =
-            window.innerWidth;
+    const clamp = (value, minimum, maximum) =>
+      Math.max(minimum, Math.min(maximum, value));
 
-        const height =
-            window.innerHeight;
+    const lerp = (start, end, amount) =>
+      start + (end - start) * amount;
 
-        const landscape =
-            width > height;
+    const randomBetween = (minimum, maximum) =>
+      minimum + Math.random() * (maximum - minimum);
 
-        if (landscape) {
-            WORLD_WIDTH = 1600;
-            WORLD_HEIGHT = 900;
-        } else {
-            WORLD_WIDTH = 900;
-            WORLD_HEIGHT = 1600;
-        }
-
-        canvas.width =
-            WORLD_WIDTH;
-
-        canvas.height =
-            WORLD_HEIGHT;
-
-        const scale =
-            Math.min(
-                WORLD_WIDTH / 900,
-                WORLD_HEIGHT / 1600
-            );
-
-        bird.width =
-            68 * scale;
-
-        bird.height =
-            52 * scale;
-
-        bird.gravity =
-            1900 * scale;
-
-        bird.flapStrength =
-            -650 * scale;
-
-        pipeSettings.width =
-            125 * scale;
-
-        pipeSettings.gap =
-            landscape
-                ? 300 * scale
-                : 390 * scale;
-
-        pipeSettings.speed =
-            landscape
-                ? 520 * scale
-                : 420 * scale;
-
-        pipeSettings.spacing =
-            landscape
-                ? 610 * scale
-                : 510 * scale;
-
-        groundHeight =
-            landscape
-                ? 80 * scale
-                : 105 * scale;
-
-        clouds = [
-            {
-                x: WORLD_WIDTH * 0.12,
-                y: WORLD_HEIGHT * 0.15,
-                scale: 1 * scale
-            },
-            {
-                x: WORLD_WIDTH * 0.65,
-                y: WORLD_HEIGHT * 0.3,
-                scale: 0.7 * scale
-            },
-            {
-                x: WORLD_WIDTH * 0.4,
-                y: WORLD_HEIGHT * 0.07,
-                scale: 0.55 * scale
-            }
-        ];
-
-        if (!gameStarted) {
-            bird.x =
-                WORLD_WIDTH *
-                0.23;
-
-            bird.y =
-                WORLD_HEIGHT *
-                0.48;
-        }
+    function currentDifficulty() {
+      return DIFFICULTIES[SaveManager.data.selectedDifficulty];
     }
 
-    function resetGame() {
-        score = 0;
+    function currentBest() {
+      return SaveManager.data.bestScores[SaveManager.data.selectedDifficulty] || 0;
+    }
 
-        scoreElement.textContent =
-            score;
+    function showToast(message) {
+      toastElement.textContent = message;
+      toastElement.classList.add("visible");
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => {
+        toastElement.classList.remove("visible");
+      }, 1900);
+    }
 
-        bird.x =
-            WORLD_WIDTH *
-            0.23;
+    // -------------------------------------------------------------------------
+    // Bird artwork: six genuinely different silhouettes and constructions
+    // -------------------------------------------------------------------------
 
-        bird.y =
-            WORLD_HEIGHT *
-            0.48;
+    function ellipse(g, x, y, radiusX, radiusY, color, rotation = 0) {
+      g.fillStyle = color;
+      g.beginPath();
+      g.ellipse(x, y, radiusX, radiusY, rotation, 0, Math.PI * 2);
+      g.fill();
+    }
 
-        bird.velocityY = 0;
-        bird.rotation = 0;
+    function circle(g, x, y, radius, color) {
+      ellipse(g, x, y, radius, radius, color);
+    }
 
-        pipes = [];
+    function polygon(g, points, color) {
+      if (!points.length) {
+        return;
+      }
 
-        let x =
-            WORLD_WIDTH *
-            0.85;
+      g.fillStyle = color;
+      g.beginPath();
+      g.moveTo(points[0][0], points[0][1]);
+      for (let index = 1; index < points.length; index += 1) {
+        g.lineTo(points[index][0], points[index][1]);
+      }
+      g.closePath();
+      g.fill();
+    }
 
-        for (
-            let i = 0;
-            i < 4;
-            i++
-        ) {
-            createPipe(x);
+    function line(g, points, color, width, close = false) {
+      if (!points.length) {
+        return;
+      }
 
-            x +=
-                pipeSettings.spacing;
+      g.strokeStyle = color;
+      g.lineWidth = width;
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.beginPath();
+      g.moveTo(points[0][0], points[0][1]);
+      for (let index = 1; index < points.length; index += 1) {
+        g.lineTo(points[index][0], points[index][1]);
+      }
+      if (close) {
+        g.closePath();
+      }
+      g.stroke();
+    }
+
+    function roundedRectPath(g, x, y, width, height, radius) {
+      const r = Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2);
+      g.beginPath();
+      g.moveTo(x + r, y);
+      g.lineTo(x + width - r, y);
+      g.quadraticCurveTo(x + width, y, x + width, y + r);
+      g.lineTo(x + width, y + height - r);
+      g.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      g.lineTo(x + r, y + height);
+      g.quadraticCurveTo(x, y + height, x, y + height - r);
+      g.lineTo(x, y + r);
+      g.quadraticCurveTo(x, y, x + r, y);
+      g.closePath();
+    }
+
+    function drawSunnyScout(g, wingPhase) {
+      const wingLift = Math.sin(wingPhase) * 5;
+
+      // A split feather tail gives the original bird a stronger silhouette.
+      polygon(g, [[-30, -3], [-49, -15], [-43, 1], [-51, 12], [-27, 10]], "#e69b27");
+      line(g, [[-43, 1], [-29, 3]], "#9b5a1d", 2);
+
+      g.save();
+      g.shadowColor = "rgba(0, 0, 0, 0.28)";
+      g.shadowBlur = 9;
+      ellipse(g, -2, 0, 35, 27, "#f7d53f", -0.03);
+      g.restore();
+
+      ellipse(g, 4, 9, 24, 15, "#ffe66d", 0.04);
+
+      // The layered wing preserves the hand-drawn oval from the original.
+      ellipse(g, -12, 7 + wingLift * 0.32, 22, 13, "#efad28", -0.3);
+      polygon(
+        g,
+        [
+          [-27, 7 + wingLift * 0.25],
+          [-5, 7 + wingLift],
+          [-13, 15 + wingLift * 0.55],
+          [-24, 17 + wingLift * 0.25]
+        ],
+        "#d98620"
+      );
+      line(g, [[-23, 7], [-6, 10]], "rgba(129, 73, 20, 0.45)", 2);
+      line(g, [[-21, 12], [-9, 14]], "rgba(129, 73, 20, 0.4)", 2);
+
+      // Small crown feathers keep the scout expressive at tiny sizes.
+      polygon(g, [[7, -24], [13, -36], [16, -22]], "#e8ac26");
+      polygon(g, [[15, -22], [23, -32], [22, -18]], "#d99021");
+
+      circle(g, 18, -10, 12, "#ffffff");
+      circle(g, 21, -10, 5, "#152033");
+      circle(g, 23, -12, 1.8, "#ffffff");
+
+      polygon(g, [[27, -2], [54, 5], [27, 11]], "#f17732");
+      polygon(g, [[28, 4], [50, 5], [29, 8]], "#c94f25");
+      line(g, [[27, 5], [48, 5]], "#8f341f", 1.7);
+    }
+
+    function drawNightOwl(g, wingPhase) {
+      const wingSpread = 4 + Math.sin(wingPhase) * 4;
+
+      polygon(g, [[-24, -18], [-19, -38], [-8, -24]], "#433766");
+      polygon(g, [[7, -24], [19, -39], [20, -15]], "#433766");
+      polygon(g, [[-28, 4], [-46, -4], [-42, 12], [-49, 20], [-24, 17]], "#332c54");
+
+      g.save();
+      g.shadowColor = "rgba(0, 0, 0, 0.32)";
+      g.shadowBlur = 9;
+      ellipse(g, -3, 2, 31, 32, "#544677");
+      g.restore();
+
+      ellipse(g, -5, 13, 21, 18, "#8072a1");
+
+      // Broad feather fans make the owl read differently from the scout.
+      g.save();
+      g.translate(-20, 7);
+      g.rotate(-0.1 - wingSpread * 0.018);
+      ellipse(g, 0, 0, 17, 23 + wingSpread, "#392f5d", -0.12);
+      for (let index = 0; index < 4; index += 1) {
+        ellipse(
+          g,
+          -8 + index * 5,
+          8 + index * 2,
+          5,
+          11,
+          index % 2 ? "#695b8b" : "#766895",
+          -0.35 + index * 0.12
+        );
+      }
+      g.restore();
+
+      // Twin facial discs and forward-facing eyes define the owl anatomy.
+      circle(g, 2, -9, 17, "#c8bddd");
+      circle(g, 20, -8, 16, "#c8bddd");
+      circle(g, 3, -9, 8.5, "#f4d36c");
+      circle(g, 19, -8, 8.5, "#f4d36c");
+      circle(g, 4, -8, 4.2, "#111728");
+      circle(g, 20, -7, 4.2, "#111728");
+      circle(g, 5.5, -10, 1.3, "#ffffff");
+      circle(g, 21.5, -9, 1.3, "#ffffff");
+
+      polygon(g, [[12, 0], [21, 7], [10, 11], [5, 5]], "#e29a38");
+      line(g, [[-13, 22], [-8, 26], [-3, 22], [2, 26], [7, 21]], "#b7a8cc", 2);
+    }
+
+    function drawRocketFinch(g, wingPhase) {
+      const exhaust = 8 + (Math.sin(wingPhase * 1.7) + 1) * 4;
+
+      // Animated exhaust and nozzle replace a biological tail.
+      polygon(g, [[-35, -10], [-55 - exhaust, -3], [-42, 3]], "#ff6a3d");
+      polygon(g, [[-37, 0], [-59 - exhaust * 0.7, 9], [-39, 11]], "#ffd24d");
+      polygon(g, [[-38, 4], [-52 - exhaust * 0.35, 7], [-39, 8]], "#dfffff");
+      roundedRectPath(g, -38, -14, 14, 28, 4);
+      g.fillStyle = "#39495e";
+      g.fill();
+      line(g, [[-33, -11], [-33, 11]], "#8ea4b9", 2);
+
+      g.save();
+      g.shadowColor = "rgba(64, 220, 255, 0.32)";
+      g.shadowBlur = 10;
+      g.fillStyle = "#d9e6ec";
+      g.beginPath();
+      g.moveTo(-31, -18);
+      g.bezierCurveTo(-8, -27, 24, -22, 39, -5);
+      g.bezierCurveTo(47, 5, 34, 18, 6, 22);
+      g.bezierCurveTo(-13, 25, -29, 16, -35, 4);
+      g.closePath();
+      g.fill();
+      g.restore();
+
+      // Swept lifting surface, not a recolored oval wing.
+      polygon(
+        g,
+        [[-12, 6], [14, 8], [-12, 31 + Math.sin(wingPhase) * 2], [-29, 29], [-21, 9]],
+        "#4c6c89"
+      );
+      polygon(g, [[-10, 9], [6, 10], [-14, 25], [-23, 25]], "#6f93ad");
+
+      polygon(g, [[-24, -17], [-7, -29], [1, -20]], "#6e8598");
+      line(g, [[-17, -15], [-17, 15]], "#8da2b1", 2);
+      line(g, [[0, -21], [4, 21]], "#b8c8d2", 2);
+
+      // A wraparound cyan visor replaces a normal eye.
+      g.fillStyle = "#43d9ff";
+      g.beginPath();
+      g.moveTo(8, -19);
+      g.quadraticCurveTo(31, -18, 39, -4);
+      g.lineTo(25, 1);
+      g.quadraticCurveTo(15, -3, 8, -10);
+      g.closePath();
+      g.fill();
+      line(g, [[13, -14], [31, -10]], "rgba(255, 255, 255, 0.75)", 2);
+
+      polygon(g, [[38, -4], [54, 2], [38, 8]], "#97aaba");
+      circle(g, -5, 0, 2.4, "#ffbe38");
+      circle(g, 8, 14, 2.4, "#ffbe38");
+    }
+
+    function drawCloudGlider(g, wingPhase) {
+      const wingAngle = Math.sin(wingPhase) * 0.09;
+
+      // Forked tail and long beak establish the gull-like profile.
+      polygon(g, [[-34, -2], [-56, -19], [-50, 2], [-58, 17], [-31, 10]], "#d6e8ef");
+      line(g, [[-49, 1], [-30, 4]], "#809daa", 1.8);
+
+      ellipse(g, -1, 1, 37, 18, "#f2f7f8", -0.02);
+      ellipse(g, 12, 7, 25, 11, "#d5e6eb", 0.02);
+
+      // Two long lifting wings change pose rather than merely changing color.
+      g.save();
+      g.translate(-8, -3);
+      g.rotate(-0.13 + wingAngle);
+      g.fillStyle = "#ffffff";
+      g.beginPath();
+      g.moveTo(-14, 3);
+      g.quadraticCurveTo(-10, -25, 17, -43);
+      g.quadraticCurveTo(27, -47, 21, -31);
+      g.lineTo(8, -6);
+      g.closePath();
+      g.fill();
+      line(g, [[-5, -3], [12, -31]], "#b9d2db", 2);
+      line(g, [[2, -3], [19, -27]], "#c7dce3", 2);
+      g.restore();
+
+      g.save();
+      g.translate(-12, 6);
+      g.rotate(0.12 - wingAngle);
+      g.fillStyle = "#b9d5df";
+      g.beginPath();
+      g.moveTo(-9, 1);
+      g.quadraticCurveTo(1, 18, 28, 26);
+      g.quadraticCurveTo(12, 30, -7, 18);
+      g.closePath();
+      g.fill();
+      g.restore();
+
+      circle(g, 22, -8, 6.5, "#ffffff");
+      circle(g, 24, -8, 2.8, "#172334");
+      circle(g, 25, -9, 0.9, "#ffffff");
+      polygon(g, [[33, -4], [58, -1], [34, 4]], "#efb53c");
+      line(g, [[35, 0], [54, -1]], "#b97927", 1.4);
+      line(g, [[-15, 13], [5, 14], [19, 10]], "#8fb0bc", 1.5);
+    }
+
+    function drawGear(g, x, y, radius, teeth, color, angle) {
+      g.save();
+      g.translate(x, y);
+      g.rotate(angle);
+      g.fillStyle = color;
+      g.beginPath();
+
+      for (let index = 0; index < teeth * 2; index += 1) {
+        const toothRadius = index % 2 === 0 ? radius + 3 : radius;
+        const theta = (index / (teeth * 2)) * Math.PI * 2;
+        const px = Math.cos(theta) * toothRadius;
+        const py = Math.sin(theta) * toothRadius;
+        if (index === 0) {
+          g.moveTo(px, py);
+        } else {
+          g.lineTo(px, py);
         }
+      }
+
+      g.closePath();
+      g.fill();
+      circle(g, 0, 0, radius * 0.35, "#5d3f20");
+      g.restore();
+    }
+
+    function drawClockworkWren(g, wingPhase) {
+      const gearAngle = wingPhase * 0.45;
+
+      // Wind-up key and segmented tail make the mechanical construction visible.
+      line(g, [[-31, -3], [-48, -7], [-55, -15]], "#7c5325", 5);
+      ellipse(g, -59, -17, 8, 4, "#c6933f", -0.35);
+      ellipse(g, -48, -14, 4, 8, "#c6933f", -0.35);
+      polygon(g, [[-28, 3], [-49, 0], [-42, 10], [-50, 17], [-25, 14]], "#9b6a2c");
+
+      g.save();
+      g.shadowColor = "rgba(0, 0, 0, 0.3)";
+      g.shadowBlur = 8;
+      ellipse(g, -1, 1, 34, 26, "#b67b31");
+      g.restore();
+
+      ellipse(g, 4, 1, 29, 22, "#d9a94e");
+      g.fillStyle = "#e6bd66";
+      g.beginPath();
+      g.arc(3, 0, 21, -1.1, 1.2);
+      g.lineTo(1, 0);
+      g.closePath();
+      g.fill();
+
+      line(g, [[-13, -21], [-8, 22]], "#865821", 2);
+      line(g, [[8, -20], [12, 18]], "#8f612a", 2);
+
+      drawGear(g, -14, 7, 15, 10, "#70471f", gearAngle);
+      drawGear(g, -14, 7, 10, 8, "#d8a548", -gearAngle * 1.3);
+      circle(g, -14, 7, 3, "#f5d47e");
+
+      // Rivets follow the plate boundaries.
+      for (const [x, y] of [[-17, -15], [4, -18], [17, 12], [-2, 20]]) {
+        circle(g, x, y, 2.1, "#69471f");
+        circle(g, x - 0.5, y - 0.5, 0.7, "#ffe69a");
+      }
+
+      circle(g, 19, -8, 11, "#6f4a24");
+      circle(g, 19, -8, 8, "#daf8ff");
+      circle(g, 21, -8, 3.3, "#172334");
+      circle(g, 22, -9, 0.9, "#ffffff");
+      line(g, [[29, -6], [35, 14]], "#6f4a24", 2);
+
+      polygon(g, [[29, 0], [48, 6], [30, 11]], "#6f4a24");
+      polygon(g, [[30, 2], [45, 6], [30, 7]], "#e3b24f");
+    }
+
+    function drawFlameFeather(g, x, y, length, width, rotation, outer, inner) {
+      g.save();
+      g.translate(x, y);
+      g.rotate(rotation);
+      g.fillStyle = outer;
+      g.beginPath();
+      g.moveTo(0, 0);
+      g.bezierCurveTo(-width, length * 0.25, -width * 0.35, length * 0.72, 0, length);
+      g.bezierCurveTo(width * 0.45, length * 0.65, width, length * 0.28, 0, 0);
+      g.fill();
+      g.fillStyle = inner;
+      g.beginPath();
+      g.moveTo(0, length * 0.2);
+      g.quadraticCurveTo(-width * 0.28, length * 0.58, 0, length * 0.82);
+      g.quadraticCurveTo(width * 0.28, length * 0.54, 0, length * 0.2);
+      g.fill();
+      g.restore();
+    }
+
+    function drawSolarPhoenix(g, wingPhase) {
+      const wingLift = Math.sin(wingPhase) * 0.12;
+
+      // Independent flame feathers form a large, animated tail.
+      drawFlameFeather(g, -25, 3, 47, 10, 1.25, "#df3b2e", "#ffbd39");
+      drawFlameFeather(g, -28, 0, 54, 11, 1.5, "#ff5b2e", "#ffd85d");
+      drawFlameFeather(g, -24, -5, 44, 9, 1.83, "#c92d36", "#ff8a2e");
+
+      g.save();
+      g.shadowColor = "rgba(255, 91, 46, 0.48)";
+      g.shadowBlur = 14;
+      ellipse(g, -1, 2, 31, 24, "#e34b2e", -0.05);
+      g.restore();
+
+      ellipse(g, 5, 3, 25, 19, "#ff8a2f");
+      ellipse(g, 9, 9, 17, 11, "#ffd45b");
+
+      // Layered flame wing uses pointed feathers and changes spread during flight.
+      g.save();
+      g.translate(-12, 3);
+      g.rotate(-0.3 + wingLift);
+      drawFlameFeather(g, -4, 3, 39, 9, 2.7, "#b92739", "#ff7b2f");
+      drawFlameFeather(g, 2, 2, 34, 8, 2.9, "#e13c2e", "#ffc247");
+      drawFlameFeather(g, 8, 2, 27, 7, 3.1, "#ff652f", "#ffe071");
+      g.restore();
+
+      // Three crest plumes give the firebird a regal head profile.
+      drawFlameFeather(g, 8, -17, 25, 6, 3.65, "#cf2937", "#ff9b32");
+      drawFlameFeather(g, 16, -18, 27, 6, 3.42, "#ed452e", "#ffd159");
+      drawFlameFeather(g, 22, -15, 21, 5, 3.2, "#ba263c", "#ff8a2e");
+
+      circle(g, 20, -8, 9, "#ffbf45");
+      circle(g, 22, -9, 4, "#421a2a");
+      circle(g, 23, -10, 1.2, "#fff6c9");
+      polygon(g, [[29, -2], [53, 1], [30, 8], [35, 3]], "#7e2530");
+      polygon(g, [[30, -1], [49, 1], [31, 3]], "#f3bb48");
+    }
+
+    const BIRD_RENDERERS = Object.freeze({
+      sunny: drawSunnyScout,
+      owl: drawNightOwl,
+      rocket: drawRocketFinch,
+      glider: drawCloudGlider,
+      clockwork: drawClockworkWren,
+      phoenix: drawSolarPhoenix
+    });
+
+    function renderBird(g, skinId, x, y, rotation, scale, wingPhase, alpha = 1) {
+      const renderer = BIRD_RENDERERS[skinId] || BIRD_RENDERERS.sunny;
+
+      g.save();
+      g.globalAlpha = alpha;
+      g.translate(x, y);
+      g.rotate(rotation);
+      g.scale(scale, scale);
+      renderer(g, wingPhase);
+      g.restore();
+    }
+
+    // -------------------------------------------------------------------------
+    // Pipe artwork: six structural obstacle families, not simple recolors
+    // -------------------------------------------------------------------------
+
+    function drawGardenSegment(g, x, y, width, height, isTop) {
+      if (height <= 0) {
+        return;
+      }
+
+      const edgeY = isTop ? y + height : y;
+      const capHeight = Math.min(46, height * 0.24);
+      const capY = isTop ? edgeY - capHeight : edgeY;
+      const gradient = g.createLinearGradient(x, 0, x + width, 0);
+      gradient.addColorStop(0, "#17662d");
+      gradient.addColorStop(0.18, "#2f9841");
+      gradient.addColorStop(0.48, "#6ad25d");
+      gradient.addColorStop(0.74, "#3cab48");
+      gradient.addColorStop(1, "#155327");
+
+      g.save();
+      g.beginPath();
+      g.rect(x, y, width, height);
+      g.clip();
+      g.fillStyle = gradient;
+      g.fillRect(x, y, width, height);
+
+      // Long cylinder seams and highlights suggest curved metal.
+      g.fillStyle = "rgba(255, 255, 255, 0.18)";
+      g.fillRect(x + width * 0.22, y, width * 0.07, height);
+      g.fillStyle = "rgba(0, 0, 0, 0.14)";
+      g.fillRect(x + width * 0.82, y, width * 0.11, height);
+
+      // A real vine travels across the pipe with individual leaves.
+      const vineStart = isTop ? y + 18 : y + height - 18;
+      const vineEnd = isTop ? y + height - 18 : y + 18;
+      const direction = Math.sign(vineEnd - vineStart) || 1;
+      g.strokeStyle = "#1b6e34";
+      g.lineWidth = 5;
+      g.beginPath();
+      g.moveTo(x + width * 0.7, vineStart);
+      g.bezierCurveTo(
+        x + width * 0.25,
+        lerp(vineStart, vineEnd, 0.3),
+        x + width * 0.82,
+        lerp(vineStart, vineEnd, 0.66),
+        x + width * 0.42,
+        vineEnd
+      );
+      g.stroke();
+
+      const leafCount = Math.min(6, Math.floor(height / 60));
+      for (let index = 0; index < leafCount; index += 1) {
+        const leafY = vineStart + direction * (30 + index * 52);
+        const leafX = x + width * (index % 2 ? 0.57 : 0.38);
+        ellipse(
+          g,
+          leafX,
+          leafY,
+          10,
+          5,
+          index % 2 ? "#75dd64" : "#48bb4c",
+          index % 2 ? -0.55 : 0.55
+        );
+      }
+      g.restore();
+
+      // Reinforced mouth ring remains inside the collision silhouette.
+      const capGradient = g.createLinearGradient(x, 0, x + width, 0);
+      capGradient.addColorStop(0, "#205d2e");
+      capGradient.addColorStop(0.3, "#54c251");
+      capGradient.addColorStop(0.58, "#7be36a");
+      capGradient.addColorStop(1, "#194e27");
+      g.fillStyle = capGradient;
+      g.fillRect(x, capY, width, capHeight);
+      g.fillStyle = "rgba(255, 255, 255, 0.15)";
+      g.fillRect(x + 8, capY + 7, width - 16, 5);
+      g.strokeStyle = "rgba(0, 0, 0, 0.32)";
+      g.lineWidth = 4;
+      g.strokeRect(x + 2, capY + 2, width - 4, capHeight - 4);
+    }
+
+    function drawBrickSegment(g, x, y, width, height, isTop) {
+      if (height <= 0) {
+        return;
+      }
+
+      const edgeY = isTop ? y + height : y;
+      const ledgeHeight = Math.min(42, height * 0.25);
+      const ledgeY = isTop ? edgeY - ledgeHeight : edgeY;
+
+      g.save();
+      g.beginPath();
+      g.rect(x, y, width, height);
+      g.clip();
+      g.fillStyle = "#743d35";
+      g.fillRect(x, y, width, height);
+
+      const brickHeight = 32;
+      const brickWidth = 53;
+      g.lineWidth = 3;
+      g.strokeStyle = "#b77961";
+
+      for (let row = Math.floor(y / brickHeight); row * brickHeight < y + height; row += 1) {
+        const rowY = row * brickHeight;
+        const offset = row % 2 ? -brickWidth / 2 : 0;
+        for (
+          let brickX = x + offset;
+          brickX < x + width;
+          brickX += brickWidth
+        ) {
+          g.strokeRect(brickX, rowY, brickWidth, brickHeight);
+          g.fillStyle = (row + Math.round(brickX)) % 3 === 0
+            ? "rgba(255, 191, 137, 0.07)"
+            : "rgba(20, 8, 8, 0.05)";
+          g.fillRect(brickX + 4, rowY + 4, brickWidth - 8, brickHeight - 8);
+        }
+      }
+      g.restore();
+
+      // Stone ledge and battlements make this a tower rather than a flat texture.
+      g.fillStyle = "#a38878";
+      g.fillRect(x, ledgeY, width, ledgeHeight);
+      g.fillStyle = "#c0aa98";
+      g.fillRect(x, isTop ? ledgeY : ledgeY + ledgeHeight - 7, width, 7);
+      g.strokeStyle = "#5c4d46";
+      g.lineWidth = 3;
+      g.strokeRect(x + 2, ledgeY + 2, width - 4, ledgeHeight - 4);
+
+      const toothWidth = width / 4;
+      const toothHeight = Math.min(18, ledgeHeight * 0.45);
+      for (let index = 0; index < 4; index += 1) {
+        const toothY = isTop ? edgeY - toothHeight : edgeY;
+        if (index % 2 === 0) {
+          g.fillStyle = "#877165";
+          g.fillRect(x + index * toothWidth, toothY, toothWidth, toothHeight);
+        }
+      }
+    }
+
+    function drawBambooSegment(g, x, y, width, height, isTop) {
+      if (height <= 0) {
+        return;
+      }
+
+      const stalkWidth = width / 3;
+      const colors = ["#c7b84e", "#98ad3f", "#d2c45a"];
+
+      g.save();
+      g.beginPath();
+      g.rect(x, y, width, height);
+      g.clip();
+      g.fillStyle = "#47562b";
+      g.fillRect(x, y, width, height);
+
+      for (let stalk = 0; stalk < 3; stalk += 1) {
+        const stalkX = x + stalk * stalkWidth + 2;
+        const stalkGradient = g.createLinearGradient(
+          stalkX,
+          0,
+          stalkX + stalkWidth - 4,
+          0
+        );
+        stalkGradient.addColorStop(0, "#657a2f");
+        stalkGradient.addColorStop(0.35, colors[stalk]);
+        stalkGradient.addColorStop(0.75, "#d8cb62");
+        stalkGradient.addColorStop(1, "#65752e");
+        g.fillStyle = stalkGradient;
+        g.fillRect(stalkX, y, stalkWidth - 4, height);
+
+        for (let nodeY = y + 26 + stalk * 9; nodeY < y + height; nodeY += 62) {
+          g.fillStyle = "#667a2d";
+          g.fillRect(stalkX - 1, nodeY, stalkWidth - 2, 8);
+          g.fillStyle = "rgba(255, 244, 143, 0.28)";
+          g.fillRect(stalkX + 2, nodeY + 1, stalkWidth - 8, 2);
+        }
+      }
+
+      // Cross braces give the gate visible construction.
+      g.strokeStyle = "rgba(76, 61, 26, 0.68)";
+      g.lineWidth = 9;
+      g.beginPath();
+      g.moveTo(x + 5, y + height * 0.25);
+      g.lineTo(x + width - 5, y + height * 0.62);
+      g.moveTo(x + width - 5, y + height * 0.34);
+      g.lineTo(x + 5, y + height * 0.72);
+      g.stroke();
+      g.restore();
+
+      const edgeY = isTop ? y + height : y;
+      const ropeY = isTop ? edgeY - 32 : edgeY + 9;
+      g.fillStyle = "#7a4f26";
+      for (let band = 0; band < 4; band += 1) {
+        g.fillRect(x, ropeY + band * 5, width, 3);
+      }
+      g.strokeStyle = "#4b311b";
+      g.lineWidth = 2;
+      g.strokeRect(x, ropeY - 2, width, 22);
+    }
+
+    function drawIceSegment(g, x, y, width, height, isTop) {
+      if (height <= 0) {
+        return;
+      }
+
+      const edgeY = isTop ? y + height : y;
+      const gradient = g.createLinearGradient(x, 0, x + width, 0);
+      gradient.addColorStop(0, "#6db4d2");
+      gradient.addColorStop(0.3, "#d5f7ff");
+      gradient.addColorStop(0.55, "#8dd9ed");
+      gradient.addColorStop(0.8, "#e9fdff");
+      gradient.addColorStop(1, "#5499bc");
+
+      g.save();
+      g.beginPath();
+      g.rect(x, y, width, height);
+      g.clip();
+      g.fillStyle = gradient;
+      g.fillRect(x, y, width, height);
+
+      // Large translucent facets break the column into frozen planes.
+      polygon(
+        g,
+        [[x, y], [x + width * 0.34, y], [x + width * 0.55, y + height], [x, y + height]],
+        "rgba(26, 112, 158, 0.2)"
+      );
+      polygon(
+        g,
+        [
+          [x + width * 0.56, y],
+          [x + width, y],
+          [x + width, y + height],
+          [x + width * 0.74, y + height]
+        ],
+        "rgba(255, 255, 255, 0.27)"
+      );
+
+      const crackDirection = isTop ? 1 : -1;
+      for (let index = 0; index < Math.min(5, Math.floor(height / 90)); index += 1) {
+        const crackY = isTop
+          ? y + 42 + index * 88
+          : y + height - 42 - index * 88;
+        line(
+          g,
+          [
+            [x + width * 0.2, crackY],
+            [x + width * 0.42, crackY + 14 * crackDirection],
+            [x + width * 0.35, crackY + 30 * crackDirection],
+            [x + width * 0.6, crackY + 43 * crackDirection]
+          ],
+          "rgba(40, 118, 162, 0.58)",
+          2.2
+        );
+      }
+      g.restore();
+
+      // The mouth terminates in uneven icicle teeth.
+      g.fillStyle = "#d9f8ff";
+      const toothWidth = width / 6;
+      for (let index = 0; index < 6; index += 1) {
+        const length = 12 + (index % 3) * 8;
+        const left = x + index * toothWidth;
+        const points = isTop
+          ? [[left, edgeY - 20], [left + toothWidth, edgeY - 20], [left + toothWidth * 0.5, edgeY - 20 + length]]
+          : [[left, edgeY + 20], [left + toothWidth, edgeY + 20], [left + toothWidth * 0.5, edgeY + 20 - length]];
+        polygon(g, points, index % 2 ? "#b9eaf7" : "#e6fbff");
+      }
+
+      g.fillStyle = "rgba(255, 255, 255, 0.58)";
+      g.fillRect(x, isTop ? edgeY - 25 : edgeY, width, 25);
+    }
+
+    function drawTechSegment(g, x, y, width, height, isTop) {
+      if (height <= 0) {
+        return;
+      }
+
+      const edgeY = isTop ? y + height : y;
+      const mouthHeight = Math.min(46, height * 0.28);
+      const mouthY = isTop ? edgeY - mouthHeight : edgeY;
+      const gradient = g.createLinearGradient(x, 0, x + width, 0);
+      gradient.addColorStop(0, "#263345");
+      gradient.addColorStop(0.24, "#61738a");
+      gradient.addColorStop(0.55, "#34465c");
+      gradient.addColorStop(1, "#172232");
+
+      g.save();
+      g.beginPath();
+      g.rect(x, y, width, height);
+      g.clip();
+      g.fillStyle = gradient;
+      g.fillRect(x, y, width, height);
+
+      // Armored panel boundaries, vents, and bolts create a machine chassis.
+      const panelHeight = 78;
+      for (let panelY = y + 10; panelY < y + height; panelY += panelHeight) {
+        g.fillStyle = "rgba(5, 13, 24, 0.23)";
+        g.fillRect(x + 9, panelY, width - 18, panelHeight - 10);
+        g.strokeStyle = "rgba(170, 207, 230, 0.25)";
+        g.lineWidth = 2;
+        g.strokeRect(x + 9, panelY, width - 18, panelHeight - 10);
+
+        circle(g, x + 17, panelY + 9, 3, "#b9ccd7");
+        circle(g, x + width - 17, panelY + 9, 3, "#b9ccd7");
+
+        for (let vent = 0; vent < 3; vent += 1) {
+          g.fillStyle = "rgba(0, 0, 0, 0.35)";
+          g.fillRect(x + width * 0.32, panelY + 20 + vent * 9, width * 0.36, 4);
+        }
+      }
+      g.restore();
+
+      g.fillStyle = "#111b29";
+      g.fillRect(x, mouthY, width, mouthHeight);
+      g.strokeStyle = "#758ca2";
+      g.lineWidth = 4;
+      g.strokeRect(x + 2, mouthY + 2, width - 4, mouthHeight - 4);
+
+      // Hazard striping marks the physical mouth of the gate.
+      g.save();
+      g.beginPath();
+      g.rect(x + 6, mouthY + 7, width - 12, 13);
+      g.clip();
+      for (let stripeX = x - 20; stripeX < x + width + 20; stripeX += 24) {
+        polygon(
+          g,
+          [[stripeX, mouthY + 20], [stripeX + 11, mouthY + 20], [stripeX + 25, mouthY + 7], [stripeX + 14, mouthY + 7]],
+          "#f3ba37"
+        );
+      }
+      g.restore();
+
+      g.save();
+      g.shadowColor = "#42e4ff";
+      g.shadowBlur = 12;
+      g.fillStyle = "#55e7ff";
+      g.fillRect(x + 12, isTop ? edgeY - 9 : edgeY + 5, width - 24, 4);
+      g.restore();
+    }
+
+    function drawTempleSegment(g, x, y, width, height, isTop) {
+      if (height <= 0) {
+        return;
+      }
+
+      const edgeY = isTop ? y + height : y;
+      const lintelHeight = Math.min(50, height * 0.28);
+      const lintelY = isTop ? edgeY - lintelHeight : edgeY;
+
+      g.save();
+      g.beginPath();
+      g.rect(x, y, width, height);
+      g.clip();
+      g.fillStyle = "#777561";
+      g.fillRect(x, y, width, height);
+
+      // Uneven stone courses make each obstacle feel assembled from blocks.
+      const courseHeight = 40;
+      for (let row = Math.floor(y / courseHeight); row * courseHeight < y + height; row += 1) {
+        const rowY = row * courseHeight;
+        const blockWidth = row % 3 === 0 ? 68 : 55;
+        const offset = row % 2 ? -blockWidth * 0.42 : 0;
+        for (let blockX = x + offset; blockX < x + width; blockX += blockWidth) {
+          g.fillStyle = (row + Math.round(blockX)) % 2
+            ? "rgba(255, 244, 194, 0.055)"
+            : "rgba(22, 30, 25, 0.07)";
+          g.fillRect(blockX + 3, rowY + 3, blockWidth - 6, courseHeight - 6);
+          g.strokeStyle = "#545749";
+          g.lineWidth = 2.5;
+          g.strokeRect(blockX, rowY, blockWidth, courseHeight);
+        }
+      }
+
+      // Cracks fork across multiple blocks.
+      for (let index = 0; index < Math.min(4, Math.floor(height / 105)); index += 1) {
+        const crackY = y + 35 + index * 103;
+        line(
+          g,
+          [
+            [x + width * 0.72, crackY],
+            [x + width * 0.58, crackY + 18],
+            [x + width * 0.64, crackY + 34],
+            [x + width * 0.48, crackY + 48]
+          ],
+          "rgba(42, 44, 37, 0.7)",
+          3
+        );
+      }
+      g.restore();
+
+      // A carved lintel and moss fringe define the ruin entrance.
+      g.fillStyle = "#92907a";
+      g.fillRect(x, lintelY, width, lintelHeight);
+      g.strokeStyle = "#4d5145";
+      g.lineWidth = 4;
+      g.strokeRect(x + 2, lintelY + 2, width - 4, lintelHeight - 4);
+      line(
+        g,
+        [[x + 17, lintelY + lintelHeight / 2], [x + width / 2, lintelY + 12], [x + width - 17, lintelY + lintelHeight / 2], [x + width / 2, lintelY + lintelHeight - 10], [x + 17, lintelY + lintelHeight / 2]],
+        "#666957",
+        3
+      );
+
+      const mossY = isTop ? edgeY - 8 : edgeY;
+      for (let index = 0; index < 7; index += 1) {
+        const mossX = x + index * (width / 7);
+        const mossLength = 6 + (index % 3) * 5;
+        g.fillStyle = index % 2 ? "#506d35" : "#607d3d";
+        if (isTop) {
+          g.fillRect(mossX, mossY, width / 7 + 2, mossLength);
+        } else {
+          g.fillRect(mossX, mossY - mossLength + 7, width / 7 + 2, mossLength);
+        }
+      }
+    }
+
+    const PIPE_RENDERERS = Object.freeze({
+      garden: drawGardenSegment,
+      brick: drawBrickSegment,
+      bamboo: drawBambooSegment,
+      ice: drawIceSegment,
+      tech: drawTechSegment,
+      temple: drawTempleSegment
+    });
+
+    function renderPipe(g, pipe, styleId = SaveManager.data.selectedPipes, alpha = 1) {
+      const renderer = PIPE_RENDERERS[styleId] || PIPE_RENDERERS.garden;
+      const bottomY = pipe.top + pipe.gap;
+      const bottomHeight = pipe.worldHeight - pipe.groundHeight - bottomY;
+
+      g.save();
+      g.globalAlpha = alpha;
+      g.shadowColor = "rgba(0, 0, 0, 0.22)";
+      g.shadowBlur = 9;
+      renderer(g, pipe.x, 0, pipe.width, pipe.top, true);
+      renderer(g, pipe.x, bottomY, pipe.width, bottomHeight, false);
+      g.restore();
+    }
+
+    // -------------------------------------------------------------------------
+    // World sizing, simulation, collisions, particles, and scene drawing
+    // -------------------------------------------------------------------------
+
+    function applyDifficultyPhysics() {
+      const difficulty = currentDifficulty();
+
+      bird.width = 72 * worldUnit;
+      bird.height = 56 * worldUnit;
+      bird.gravity = difficulty.gravity * worldUnit;
+      bird.flapStrength = difficulty.flap * worldUnit;
+
+      pipeSettings.width = 128 * worldUnit;
+      pipeSettings.gap = (
+        landscape
+          ? difficulty.gapLandscape
+          : difficulty.gapPortrait
+      ) * worldUnit;
+      pipeSettings.speed = (
+        landscape
+          ? difficulty.speedLandscape
+          : difficulty.speedPortrait
+      ) * worldUnit;
+      pipeSettings.spacing = (
+        landscape
+          ? difficulty.spacingLandscape
+          : difficulty.spacingPortrait
+      ) * worldUnit;
+    }
+
+    function buildClouds() {
+      clouds = [
+        { x: WORLD_WIDTH * 0.1, y: WORLD_HEIGHT * 0.16, scale: 1.05, speed: 11 },
+        { x: WORLD_WIDTH * 0.42, y: WORLD_HEIGHT * 0.08, scale: 0.58, speed: 7 },
+        { x: WORLD_WIDTH * 0.7, y: WORLD_HEIGHT * 0.28, scale: 0.76, speed: 9 },
+        { x: WORLD_WIDTH * 0.9, y: WORLD_HEIGHT * 0.11, scale: 0.46, speed: 6 }
+      ];
+    }
+
+    function resizeGame() {
+      const oldWidth = WORLD_WIDTH;
+      const oldHeight = WORLD_HEIGHT;
+      const ratioX = oldWidth ? bird.x / oldWidth : 0.23;
+      const ratioY = oldHeight ? bird.y / oldHeight : 0.48;
+
+      landscape = window.innerWidth > window.innerHeight;
+      WORLD_WIDTH = landscape ? 1600 : 900;
+      WORLD_HEIGHT = landscape ? 900 : 1600;
+      worldUnit = Math.min(WORLD_WIDTH, WORLD_HEIGHT) / 900;
+      groundHeight = (landscape ? 88 : 112) * worldUnit;
+
+      canvas.width = WORLD_WIDTH;
+      canvas.height = WORLD_HEIGHT;
+
+      applyDifficultyPhysics();
+      buildClouds();
+
+      bird.x = clamp(ratioX * WORLD_WIDTH, WORLD_WIDTH * 0.17, WORLD_WIDTH * 0.3);
+      bird.y = clamp(
+        ratioY * WORLD_HEIGHT,
+        bird.height,
+        WORLD_HEIGHT - groundHeight - bird.height
+      );
+
+      for (const pipe of pipes) {
+        pipe.width = pipeSettings.width;
+        pipe.gap = pipeSettings.gap;
+        pipe.worldHeight = WORLD_HEIGHT;
+        pipe.groundHeight = groundHeight;
+        pipe.top = clamp(
+          pipe.top,
+          WORLD_HEIGHT * 0.1,
+          WORLD_HEIGHT - groundHeight - pipe.gap - WORLD_HEIGHT * 0.1
+        );
+      }
+
+      if (["menu", "shop", "help"].includes(phase)) {
+        bird.x = WORLD_WIDTH * 0.23;
+        bird.y = WORLD_HEIGHT * 0.47;
+      }
     }
 
     function createPipe(x) {
-        const minTop =
-            WORLD_HEIGHT *
-            0.13;
+      const safeMargin = landscape ? WORLD_HEIGHT * 0.12 : WORLD_HEIGHT * 0.15;
+      const minimumTop = safeMargin;
+      const maximumTop = WORLD_HEIGHT - groundHeight - pipeSettings.gap - safeMargin;
+      const baseTop = randomBetween(minimumTop, Math.max(minimumTop, maximumTop));
 
-        const maxTop =
-            WORLD_HEIGHT -
-            groundHeight -
-            pipeSettings.gap -
-            WORLD_HEIGHT *
-            0.13;
+      pipes.push({
+        x,
+        top: baseTop,
+        baseTop,
+        gap: pipeSettings.gap,
+        width: pipeSettings.width,
+        passed: false,
+        driftPhase: Math.random() * Math.PI * 2,
+        driftSpeed: randomBetween(0.7, 1.15),
+        worldHeight: WORLD_HEIGHT,
+        groundHeight
+      });
+    }
 
-        const topHeight =
-            minTop +
-            Math.random() *
-            (
-                maxTop -
-                minTop
-            );
+    function resetRun() {
+      score = 0;
+      runTime = 0;
+      shakeStrength = 0;
+      newRecord = false;
+      particles = [];
+      floatingTexts = [];
+      pipes = [];
 
-        pipes.push({
-            x,
-            top: topHeight,
-            gap: pipeSettings.gap,
-            width: pipeSettings.width,
-            passed: false
+      scoreElement.textContent = "0";
+      bird.x = WORLD_WIDTH * 0.23;
+      bird.y = WORLD_HEIGHT * 0.47;
+      bird.velocityY = 0;
+      bird.rotation = 0;
+      bird.wingPhase = 0;
+
+      let pipeX = WORLD_WIDTH * (landscape ? 0.76 : 0.9);
+      for (let index = 0; index < 5; index += 1) {
+        createPipe(pipeX);
+        pipeX += pipeSettings.spacing;
+      }
+    }
+
+    function beginRun() {
+      SoundManager.click();
+      applyDifficultyPhysics();
+      resetRun();
+      hideAllOverlays();
+      phase = "ready";
+      gameContainer.classList.add("is-active");
+      readyMessage.classList.remove("hidden");
+      updateHud();
+    }
+
+    function abandonRun() {
+      phase = "menu";
+      gameContainer.classList.remove("is-active");
+      readyMessage.classList.add("hidden");
+      hideAllOverlays();
+      menuScreen.classList.remove("hidden");
+      resetRun();
+      updateAllInterface();
+    }
+
+    function spawnFlapParticles() {
+      const skin = SaveManager.data.selectedBird;
+      const palette = {
+        sunny: ["#ffe36a", "#e9a828"],
+        owl: ["#bbaed1", "#6d5b8e"],
+        rocket: ["#55e8ff", "#ff8a3d"],
+        glider: ["#ffffff", "#a9d8e8"],
+        clockwork: ["#f2c768", "#966328"],
+        phoenix: ["#ffd44f", "#ff5735"]
+      }[skin] || ["#ffffff", "#ffd64a"];
+
+      for (let index = 0; index < 6; index += 1) {
+        particles.push({
+          x: bird.x - bird.width * 0.38,
+          y: bird.y + randomBetween(-bird.height * 0.2, bird.height * 0.25),
+          vx: randomBetween(-155, -55) * worldUnit,
+          vy: randomBetween(-60, 70) * worldUnit,
+          life: randomBetween(0.22, 0.42),
+          maximumLife: 0.42,
+          size: randomBetween(3, 7) * worldUnit,
+          color: palette[index % palette.length],
+          gravity: 80 * worldUnit,
+          shape: skin === "clockwork" ? "square" : "circle"
         });
+      }
+    }
+
+    function spawnScoreBurst(pipe) {
+      const centerX = pipe.x + pipe.width / 2;
+      const centerY = pipe.top + pipe.gap / 2;
+
+      for (let index = 0; index < 12; index += 1) {
+        const angle = (index / 12) * Math.PI * 2;
+        const speed = randomBetween(70, 155) * worldUnit;
+        particles.push({
+          x: centerX,
+          y: centerY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 0.52,
+          maximumLife: 0.52,
+          size: randomBetween(3, 6) * worldUnit,
+          color: index % 2 ? "#ffffff" : "#ffd64a",
+          gravity: 80 * worldUnit,
+          shape: "diamond"
+        });
+      }
+
+      floatingTexts.push({
+        x: centerX,
+        y: centerY,
+        text: "+1",
+        life: 0.7,
+        maximumLife: 0.7
+      });
+    }
+
+    function spawnCrashBurst() {
+      for (let index = 0; index < 24; index += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = randomBetween(90, 310) * worldUnit;
+        particles.push({
+          x: bird.x,
+          y: bird.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: randomBetween(0.45, 0.9),
+          maximumLife: 0.9,
+          size: randomBetween(4, 10) * worldUnit,
+          color: index % 3 === 0 ? "#ff6684" : index % 2 ? "#ffffff" : "#ffd64a",
+          gravity: 420 * worldUnit,
+          shape: index % 2 ? "diamond" : "circle"
+        });
+      }
     }
 
     function flap() {
-        if (!gameStarted) {
-            startGame();
-            return;
-        }
+      if (phase === "ready") {
+        phase = "playing";
+        readyMessage.classList.add("hidden");
+      }
 
-        if (!running) {
-            return;
-        }
+      if (phase !== "playing") {
+        return;
+      }
 
-        bird.velocityY =
-            bird.flapStrength;
+      bird.velocityY = bird.flapStrength;
+      bird.wingPhase += 1.4;
+      spawnFlapParticles();
+      SoundManager.flap();
     }
 
-    function startGame() {
-        startScreen.classList.add("hidden");
-        gameOverScreen.classList.add("hidden");
-        readyMessage.classList.add("hidden");
+    function pauseGame() {
+      if (!['playing', 'ready'].includes(phase)) {
+        return;
+      }
 
-        resetGame();
+      phase = phase === "ready" ? "paused-ready" : "paused";
+      readyMessage.classList.add("hidden");
+      pauseScreen.classList.remove("hidden");
+      SoundManager.click();
+    }
 
-        gameStarted = true;
-        running = true;
+    function resumeGame() {
+      if (!['paused', 'paused-ready'].includes(phase)) {
+        return;
+      }
 
-        lastTime =
-            performance.now();
-
-        cancelAnimationFrame(
-            animationFrame
-        );
-
-        animationFrame =
-            requestAnimationFrame(
-                gameLoop
-            );
-
-        flap();
+      const wasReady = phase === "paused-ready";
+      phase = wasReady ? "ready" : "playing";
+      pauseScreen.classList.add("hidden");
+      readyMessage.classList.toggle("hidden", !wasReady);
+      lastTime = performance.now();
+      SoundManager.click();
     }
 
     function endGame() {
-        if (!running) {
-            return;
+      if (phase !== "playing") {
+        return;
+      }
+
+      phase = "gameover";
+      gameContainer.classList.remove("is-active");
+      readyMessage.classList.add("hidden");
+      shakeStrength = 24 * worldUnit;
+      spawnCrashBurst();
+      SoundManager.crash();
+
+      const difficulty = currentDifficulty();
+      const previousBest = currentBest();
+      newRecord = score > previousBest;
+
+      if (newRecord) {
+        SaveManager.data.bestScores[difficulty.id] = score;
+      }
+
+      const earned = score > 0
+        ? Math.max(1, Math.round(score * difficulty.multiplier + Math.sqrt(score) * 1.5))
+        : 0;
+
+      SaveManager.data.credits += earned;
+      SaveManager.data.gamesPlayed += 1;
+      SaveManager.save();
+
+      finalScoreElement.textContent = String(score);
+      finalBestElement.textContent = String(currentBest());
+      earnedCreditsElement.textContent = String(earned);
+      resultDetailElement.textContent = `${difficulty.name} · ${difficulty.multiplier.toFixed(2)}x reward`;
+      recordBanner.classList.toggle("visible", newRecord);
+
+      updateAllInterface();
+      window.setTimeout(() => {
+        if (phase === "gameover") {
+          gameOverScreen.classList.remove("hidden");
         }
-
-        running = false;
-        gameStarted = false;
-
-        if (score > best) {
-            best = score;
-
-            localStorage.setItem(
-                "flappyBirdBest",
-                best
-            );
-        }
-
-        finalScoreElement.textContent =
-            score;
-
-        finalBestElement.textContent =
-            best;
-
-        bestElement.textContent =
-            best;
-
-        gameOverScreen.classList.remove(
-            "hidden"
-        );
-    }
-
-    function updateBird(dt) {
-        bird.velocityY +=
-            bird.gravity * dt;
-
-        bird.y +=
-            bird.velocityY * dt;
-
-        const targetRotation =
-            Math.max(
-                -0.45,
-                Math.min(
-                    1.25,
-                    bird.velocityY / 700
-                )
-            );
-
-        bird.rotation +=
-            (
-                targetRotation -
-                bird.rotation
-            ) *
-            Math.min(
-                1,
-                dt * 8
-            );
-
-        if (
-            bird.y -
-            bird.height / 2 <
-            0
-        ) {
-            bird.y =
-                bird.height / 2;
-
-            bird.velocityY = 0;
-        }
-
-        if (
-            bird.y +
-            bird.height / 2 >
-            WORLD_HEIGHT -
-            groundHeight
-        ) {
-            endGame();
-        }
-    }
-
-    function updatePipes(dt) {
-        for (const pipe of pipes) {
-            pipe.x -=
-                pipeSettings.speed * dt;
-
-            if (
-                !pipe.passed &&
-                pipe.x +
-                pipe.width <
-                bird.x
-            ) {
-                pipe.passed = true;
-
-                score++;
-
-                scoreElement.textContent =
-                    score;
-            }
-        }
-
-        while (
-            pipes.length &&
-            pipes[0].x +
-            pipes[0].width <
-            -100
-        ) {
-            pipes.shift();
-        }
-
-        const lastPipe =
-            pipes[pipes.length - 1];
-
-        if (
-            lastPipe &&
-            lastPipe.x <
-            WORLD_WIDTH -
-            pipeSettings.spacing
-        ) {
-            createPipe(
-                lastPipe.x +
-                pipeSettings.spacing
-            );
-        }
+      }, 220);
     }
 
     function checkCollision() {
-        const bx =
-            bird.x -
-            bird.width / 2;
+      const hitboxWidth = bird.width * 0.62;
+      const hitboxHeight = bird.height * 0.58;
+      const left = bird.x - hitboxWidth / 2;
+      const right = bird.x + hitboxWidth / 2;
+      const top = bird.y - hitboxHeight / 2;
+      const bottom = bird.y + hitboxHeight / 2;
 
-        const by =
-            bird.y -
-            bird.height / 2;
+      if (top <= 0 || bottom >= WORLD_HEIGHT - groundHeight) {
+        return true;
+      }
 
-        const bw =
-            bird.width;
-
-        const bh =
-            bird.height;
-
-        for (const pipe of pipes) {
-            if (
-                bx + bw >
-                    pipe.x &&
-                bx <
-                    pipe.x +
-                    pipe.width
-            ) {
-                const bottomOfTopPipe =
-                    pipe.top;
-
-                const topOfBottomPipe =
-                    pipe.top +
-                    pipe.gap;
-
-                if (
-                    by <
-                        bottomOfTopPipe ||
-                    by + bh >
-                        topOfBottomPipe
-                ) {
-                    endGame();
-                    return;
-                }
-            }
+      for (const pipe of pipes) {
+        const overlapsX = right > pipe.x && left < pipe.x + pipe.width;
+        if (!overlapsX) {
+          continue;
         }
+
+        const bottomOfTop = pipe.top;
+        const topOfBottom = pipe.top + pipe.gap;
+        if (top < bottomOfTop || bottom > topOfBottom) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function updateBird(dt) {
+      bird.velocityY += bird.gravity * dt;
+      bird.y += bird.velocityY * dt;
+      bird.wingPhase += dt * (bird.velocityY < 0 ? 15 : 8);
+
+      const targetRotation = clamp(bird.velocityY / (780 * worldUnit), -0.48, 1.25);
+      bird.rotation = lerp(
+        bird.rotation,
+        targetRotation,
+        Math.min(1, dt * 8.5)
+      );
+    }
+
+    function updatePipes(dt) {
+      const difficulty = currentDifficulty();
+      const driftAmount = difficulty.id === "nightmare"
+        ? difficulty.drift * worldUnit
+        : difficulty.id === "expert"
+          ? difficulty.drift * 0.18 * worldUnit
+          : 0;
+
+      for (const pipe of pipes) {
+        pipe.x -= pipeSettings.speed * dt;
+
+        if (driftAmount > 0) {
+          const safeMargin = WORLD_HEIGHT * 0.1;
+          const proposedTop = pipe.baseTop + Math.sin(
+            runTime * pipe.driftSpeed + pipe.driftPhase
+          ) * driftAmount;
+          pipe.top = clamp(
+            proposedTop,
+            safeMargin,
+            WORLD_HEIGHT - groundHeight - pipe.gap - safeMargin
+          );
+        }
+
+        if (!pipe.passed && pipe.x + pipe.width < bird.x) {
+          pipe.passed = true;
+          score += 1;
+          scoreElement.textContent = String(score);
+          spawnScoreBurst(pipe);
+          SoundManager.score();
+        }
+      }
+
+      while (pipes.length && pipes[0].x + pipes[0].width < -40) {
+        pipes.shift();
+      }
+
+      const lastPipe = pipes[pipes.length - 1];
+      if (!lastPipe || lastPipe.x < WORLD_WIDTH + pipeSettings.spacing) {
+        createPipe(lastPipe ? lastPipe.x + pipeSettings.spacing : WORLD_WIDTH);
+      }
+    }
+
+    function updateParticles(dt) {
+      for (const particle of particles) {
+        particle.life -= dt;
+        particle.vy += particle.gravity * dt;
+        particle.x += particle.vx * dt;
+        particle.y += particle.vy * dt;
+      }
+      particles = particles.filter((particle) => particle.life > 0);
+
+      for (const text of floatingTexts) {
+        text.life -= dt;
+        text.y -= 65 * worldUnit * dt;
+      }
+      floatingTexts = floatingTexts.filter((text) => text.life > 0);
     }
 
     function updateClouds(dt) {
-        for (const cloud of clouds) {
-            cloud.x -=
-                20 *
-                cloud.scale *
-                dt;
-
-            if (
-                cloud.x <
-                -200
-            ) {
-                cloud.x =
-                    WORLD_WIDTH + 200;
-
-                cloud.y =
-                    WORLD_HEIGHT *
-                    (
-                        0.05 +
-                        Math.random() *
-                        0.35
-                    );
-            }
+      const difficultySpeed = currentDifficulty().id === "nightmare" ? 1.45 : 1;
+      for (const cloud of clouds) {
+        cloud.x -= cloud.speed * difficultySpeed * dt;
+        if (cloud.x < -170 * cloud.scale) {
+          cloud.x = WORLD_WIDTH + randomBetween(80, 240);
+          cloud.y = randomBetween(WORLD_HEIGHT * 0.07, WORLD_HEIGHT * 0.34);
         }
+      }
     }
 
-    function update(dt) {
-        updateBird(dt);
+    function updateWorld(dt) {
+      updateClouds(dt);
+      updateParticles(dt);
+      shakeStrength = Math.max(0, shakeStrength - 48 * worldUnit * dt);
 
-        if (!running) {
-            return;
+      if (phase === "ready") {
+        bird.y = WORLD_HEIGHT * 0.47 + Math.sin(visualTime * 3.2) * 11 * worldUnit;
+        bird.rotation = Math.sin(visualTime * 2.1) * 0.045;
+        bird.wingPhase += dt * 8;
+        return;
+      }
+
+      if (phase !== "playing") {
+        return;
+      }
+
+      runTime += dt;
+      updateBird(dt);
+      updatePipes(dt);
+
+      if (checkCollision()) {
+        endGame();
+      }
+    }
+
+    function drawSky(g, width = WORLD_WIDTH, height = WORLD_HEIGHT) {
+      const colors = currentDifficulty().sky;
+      const gradient = g.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, colors[0]);
+      gradient.addColorStop(0.62, colors[1]);
+      gradient.addColorStop(1, colors[2]);
+      g.fillStyle = gradient;
+      g.fillRect(0, 0, width, height);
+
+      const nightmare = currentDifficulty().id === "nightmare";
+      if (nightmare) {
+        for (let index = 0; index < 55; index += 1) {
+          const starX = (Math.sin(index * 93.17) * 0.5 + 0.5) * width;
+          const starY = (Math.sin(index * 37.71 + 2) * 0.5 + 0.5) * height * 0.62;
+          const twinkle = 0.28 + (Math.sin(visualTime * 2 + index) + 1) * 0.24;
+          circle(g, starX, starY, index % 7 === 0 ? 2.1 : 1.2, `rgba(255, 244, 213, ${twinkle})`);
         }
 
-        updatePipes(dt);
-        updateClouds(dt);
-        checkCollision();
+        g.save();
+        g.shadowColor = "rgba(255, 236, 184, 0.5)";
+        g.shadowBlur = 24;
+        circle(g, width * 0.78, height * 0.16, Math.min(width, height) * 0.052, "#ffe8ad");
+        circle(g, width * 0.8, height * 0.145, Math.min(width, height) * 0.052, colors[0]);
+        g.restore();
+      } else {
+        const sunX = width * 0.78;
+        const sunY = height * 0.15;
+        const sunRadius = Math.min(width, height) * 0.075;
+        g.save();
+        g.shadowColor = "rgba(255, 232, 132, 0.55)";
+        g.shadowBlur = 38;
+        circle(g, sunX, sunY, sunRadius, "rgba(255, 244, 184, 0.78)");
+        g.restore();
+      }
+
+      // Layered distant hills add depth without external image assets.
+      g.fillStyle = nightmare ? "rgba(33, 24, 56, 0.42)" : "rgba(70, 153, 161, 0.24)";
+      g.beginPath();
+      g.moveTo(0, height);
+      g.lineTo(0, height * 0.72);
+      for (let x = 0; x <= width + 120; x += 120) {
+        g.quadraticCurveTo(x + 60, height * (0.64 + (x / 120 % 2) * 0.035), x + 120, height * 0.72);
+      }
+      g.lineTo(width, height);
+      g.closePath();
+      g.fill();
     }
 
-    function drawSky() {
-        const gradient =
-            ctx.createLinearGradient(
-                0,
-                0,
-                0,
-                WORLD_HEIGHT
-            );
-
-        gradient.addColorStop(
-            0,
-            "#58bce8"
-        );
-
-        gradient.addColorStop(
-            0.55,
-            "#8bd8f1"
-        );
-
-        gradient.addColorStop(
-            1,
-            "#c9f0fa"
-        );
-
-        ctx.fillStyle =
-            gradient;
-
-        ctx.fillRect(
-            0,
-            0,
-            WORLD_WIDTH,
-            WORLD_HEIGHT
-        );
+    function drawCloud(g, cloud) {
+      const opacity = currentDifficulty().id === "nightmare" ? 0.16 : 0.42;
+      const size = 85 * cloud.scale * worldUnit;
+      g.save();
+      g.globalAlpha = opacity;
+      g.fillStyle = "#ffffff";
+      ellipse(g, cloud.x, cloud.y, size * 0.72, size * 0.3, "#ffffff");
+      circle(g, cloud.x - size * 0.36, cloud.y - size * 0.08, size * 0.28, "#ffffff");
+      circle(g, cloud.x + size * 0.06, cloud.y - size * 0.2, size * 0.38, "#ffffff");
+      circle(g, cloud.x + size * 0.42, cloud.y - size * 0.05, size * 0.25, "#ffffff");
+      g.restore();
     }
 
-    function drawCloud(cloud) {
-        ctx.save();
+    function drawGround(g) {
+      const y = WORLD_HEIGHT - groundHeight;
+      const nightmare = currentDifficulty().id === "nightmare";
+      const grassHeight = groundHeight * 0.28;
 
+      g.fillStyle = nightmare ? "#334454" : "#69b843";
+      g.fillRect(0, y, WORLD_WIDTH, grassHeight);
+
+      g.fillStyle = nightmare ? "#526174" : "#8bda55";
+      for (let x = -40; x < WORLD_WIDTH + 40; x += 50) {
+        polygon(
+          g,
+          [[x, y + 2], [x + 18, y + 2], [x + 7, y + 18], [x - 10, y + 18]],
+          nightmare ? "#526174" : "#8bda55"
+        );
+      }
+
+      const dirt = g.createLinearGradient(0, y + grassHeight, 0, WORLD_HEIGHT);
+      dirt.addColorStop(0, nightmare ? "#3d3545" : "#c99146");
+      dirt.addColorStop(1, nightmare ? "#201c2b" : "#865128");
+      g.fillStyle = dirt;
+      g.fillRect(0, y + grassHeight, WORLD_WIDTH, groundHeight - grassHeight);
+
+      g.fillStyle = "rgba(255, 255, 255, 0.08)";
+      for (let x = 10; x < WORLD_WIDTH; x += 78) {
+        circle(g, x, y + grassHeight + 24 + (x % 3) * 8, 4, "rgba(255, 255, 255, 0.1)");
+      }
+    }
+
+    function drawParticles(g) {
+      for (const particle of particles) {
+        const alpha = clamp(particle.life / particle.maximumLife, 0, 1);
+        g.save();
+        g.globalAlpha = alpha;
+        g.fillStyle = particle.color;
+        g.translate(particle.x, particle.y);
+
+        if (particle.shape === "square") {
+          g.rotate(visualTime * 4 + particle.x * 0.01);
+          g.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
+        } else if (particle.shape === "diamond") {
+          g.rotate(Math.PI / 4 + visualTime * 2);
+          g.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
+        } else {
+          circle(g, 0, 0, particle.size, particle.color);
+        }
+        g.restore();
+      }
+
+      for (const text of floatingTexts) {
+        const alpha = clamp(text.life / text.maximumLife, 0, 1);
+        g.save();
+        g.globalAlpha = alpha;
+        g.fillStyle = "#ffffff";
+        g.font = `1000 ${32 * worldUnit}px Arial`;
+        g.textAlign = "center";
+        g.shadowColor = "rgba(0, 0, 0, 0.45)";
+        g.shadowBlur = 6;
+        g.fillText(text.text, text.x, text.y);
+        g.restore();
+      }
+    }
+
+    function drawWorld() {
+      ctx.save();
+
+      if (shakeStrength > 0) {
         ctx.translate(
-            cloud.x,
-            cloud.y
+          randomBetween(-shakeStrength, shakeStrength),
+          randomBetween(-shakeStrength, shakeStrength)
         );
+      }
 
-        ctx.scale(
-            cloud.scale,
-            cloud.scale
+      ctx.clearRect(-40, -40, WORLD_WIDTH + 80, WORLD_HEIGHT + 80);
+      drawSky(ctx);
+      for (const cloud of clouds) {
+        drawCloud(ctx, cloud);
+      }
+
+      for (const pipe of pipes) {
+        renderPipe(ctx, pipe);
+      }
+
+      drawGround(ctx);
+      drawParticles(ctx);
+
+      if (!["menu", "shop", "help"].includes(phase)) {
+        renderBird(
+          ctx,
+          SaveManager.data.selectedBird,
+          bird.x,
+          bird.y,
+          bird.rotation,
+          bird.width / 72,
+          bird.wingPhase,
+          phase === "gameover" ? 0.82 : 1
         );
+      }
 
-        ctx.fillStyle =
-            "rgba(255,255,255,0.72)";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            0,
-            20,
-            40,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.arc(
-            45,
-            0,
-            55,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.arc(
-            100,
-            22,
-            40,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fillRect(
-            0,
-            20,
-            100,
-            35
-        );
-
-        ctx.fill();
-
-        ctx.restore();
+      ctx.restore();
     }
 
-    function drawClouds() {
-        for (const cloud of clouds) {
-            drawCloud(cloud);
+    // -------------------------------------------------------------------------
+    // Menus, difficulty selection, shop ownership, and canvas previews
+    // -------------------------------------------------------------------------
+
+    function hideAllOverlays() {
+      menuScreen.classList.add("hidden");
+      shopScreen.classList.add("hidden");
+      howScreen.classList.add("hidden");
+      pauseScreen.classList.add("hidden");
+      gameOverScreen.classList.add("hidden");
+    }
+
+    function updateHud() {
+      const difficulty = currentDifficulty();
+      bestElement.textContent = String(currentBest());
+      hudCreditsElement.textContent = String(SaveManager.data.credits);
+      hudDifficultyElement.textContent = difficulty.name.toUpperCase();
+      hudDifficultyElement.title = difficulty.name;
+    }
+
+    function updateCurrencyLabels() {
+      const text = `${SaveManager.data.credits} CREDITS`;
+      menuCreditsElement.textContent = text;
+      shopCreditsElement.textContent = text;
+    }
+
+    function updateLoadoutLabel() {
+      const birdSkin = BIRD_SKINS[SaveManager.data.selectedBird];
+      const pipeSkin = PIPE_SKINS[SaveManager.data.selectedPipes];
+      previewLoadoutElement.textContent = `${birdSkin.name.toUpperCase()} + ${pipeSkin.name.toUpperCase()}`;
+    }
+
+    function updateSoundButton() {
+      soundButton.textContent = SaveManager.data.sound ? "SFX" : "OFF";
+      soundButton.setAttribute(
+        "aria-label",
+        SaveManager.data.sound ? "Mute sound" : "Enable sound"
+      );
+      soundButton.title = SaveManager.data.sound ? "Sound on" : "Sound off";
+    }
+
+    function renderDifficultyGrid() {
+      difficultyGrid.innerHTML = Object.values(DIFFICULTIES)
+        .map((difficulty) => {
+          const selected = difficulty.id === SaveManager.data.selectedDifficulty;
+          const best = SaveManager.data.bestScores[difficulty.id] || 0;
+          return `
+            <button
+              class="difficulty-card${selected ? " selected" : ""}"
+              type="button"
+              data-difficulty="${difficulty.id}"
+              aria-pressed="${selected}"
+            >
+              <span class="multiplier">${difficulty.multiplier.toFixed(2)}x</span>
+              <strong>${difficulty.name.toUpperCase()}</strong>
+              <small>${difficulty.summary}</small>
+              <small>BEST ${best}</small>
+            </button>
+          `;
+        })
+        .join("");
+    }
+
+    function selectDifficulty(id) {
+      if (!Object.hasOwn(DIFFICULTIES, id)) {
+        return;
+      }
+
+      SaveManager.data.selectedDifficulty = id;
+      SaveManager.save();
+      applyDifficultyPhysics();
+      resetRun();
+      renderDifficultyGrid();
+      updateHud();
+      SoundManager.click();
+    }
+
+    function drawMenuPreview(time) {
+      const width = menuPreview.width;
+      const height = menuPreview.height;
+      const difficulty = currentDifficulty();
+      const gradient = previewContext.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, difficulty.sky[0]);
+      gradient.addColorStop(0.68, difficulty.sky[1]);
+      gradient.addColorStop(1, difficulty.sky[2]);
+
+      previewContext.clearRect(0, 0, width, height);
+      previewContext.fillStyle = gradient;
+      previewContext.fillRect(0, 0, width, height);
+
+      // A simplified cloud layer keeps the preview readable.
+      previewContext.save();
+      previewContext.globalAlpha = difficulty.id === "nightmare" ? 0.17 : 0.35;
+      circle(previewContext, 86, 69, 31, "#ffffff");
+      circle(previewContext, 121, 73, 25, "#ffffff");
+      ellipse(previewContext, 104, 87, 61, 22, "#ffffff");
+      circle(previewContext, 407, 108, 24, "#ffffff");
+      ellipse(previewContext, 430, 120, 51, 17, "#ffffff");
+      previewContext.restore();
+
+      const previewPipe = {
+        x: 402,
+        top: 84,
+        gap: 150,
+        width: 72,
+        worldHeight: height,
+        groundHeight: 28
+      };
+      renderPipe(
+        previewContext,
+        previewPipe,
+        SaveManager.data.selectedPipes,
+        0.96
+      );
+
+      const floatY = 168 + Math.sin(time * 0.003) * 9;
+      const tilt = Math.sin(time * 0.0022) * 0.08;
+      renderBird(
+        previewContext,
+        SaveManager.data.selectedBird,
+        185,
+        floatY,
+        tilt,
+        1.35,
+        time * 0.012
+      );
+
+      previewContext.fillStyle = "rgba(5, 17, 29, 0.18)";
+      previewContext.fillRect(0, height - 29, width, 29);
+      previewContext.fillStyle = "rgba(255, 255, 255, 0.18)";
+      previewContext.fillRect(0, height - 29, width, 4);
+    }
+
+    function drawBirdShopPreview(previewCanvas, id) {
+      const g = previewCanvas.getContext("2d");
+      const width = previewCanvas.width;
+      const height = previewCanvas.height;
+      const gradient = g.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, "#63c9ec");
+      gradient.addColorStop(1, "#e8d8a1");
+      g.fillStyle = gradient;
+      g.fillRect(0, 0, width, height);
+
+      g.save();
+      g.globalAlpha = 0.3;
+      circle(g, width * 0.18, height * 0.25, 18, "#ffffff");
+      ellipse(g, width * 0.31, height * 0.32, 38, 14, "#ffffff");
+      g.restore();
+
+      renderBird(
+        g,
+        id,
+        width / 2,
+        height / 2 + 5,
+        -0.06,
+        1.22,
+        1.4
+      );
+    }
+
+    function drawPipeShopPreview(previewCanvas, id) {
+      const g = previewCanvas.getContext("2d");
+      const width = previewCanvas.width;
+      const height = previewCanvas.height;
+      const gradient = g.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, "#5dc7ec");
+      gradient.addColorStop(1, "#efcf94");
+      g.fillStyle = gradient;
+      g.fillRect(0, 0, width, height);
+
+      const pipe = {
+        x: width / 2 - 36,
+        top: height * 0.29,
+        gap: height * 0.42,
+        width: 72,
+        worldHeight: height,
+        groundHeight: 0
+      };
+      renderPipe(g, pipe, id);
+    }
+
+    function renderShop() {
+      const isBirdTab = currentShopTab === "birds";
+      const catalogue = isBirdTab ? BIRD_SKINS : PIPE_SKINS;
+      const owned = isBirdTab
+        ? SaveManager.data.ownedBirds
+        : SaveManager.data.ownedPipes;
+      const selected = isBirdTab
+        ? SaveManager.data.selectedBird
+        : SaveManager.data.selectedPipes;
+
+      birdTab.classList.toggle("active", isBirdTab);
+      pipeTab.classList.toggle("active", !isBirdTab);
+      birdTab.setAttribute("aria-selected", String(isBirdTab));
+      pipeTab.setAttribute("aria-selected", String(!isBirdTab));
+
+      shopGrid.innerHTML = Object.values(catalogue)
+        .map((item) => {
+          const isOwned = owned.includes(item.id);
+          const isSelected = selected === item.id;
+          let actionClass = "locked";
+          let actionText = `${item.price} CREDITS`;
+
+          if (isSelected) {
+            actionClass = "current";
+            actionText = "EQUIPPED";
+          } else if (isOwned) {
+            actionClass = "equip";
+            actionText = "EQUIP";
+          }
+
+          return `
+            <article class="shop-card${isSelected ? " equipped" : ""}">
+              <canvas
+                width="240"
+                height="140"
+                data-preview-id="${item.id}"
+                aria-label="${item.name} preview"
+              ></canvas>
+              <div class="shop-card-body">
+                <h3>${item.name.toUpperCase()}</h3>
+                <p>${item.description}</p>
+                <button
+                  class="${actionClass}"
+                  type="button"
+                  data-shop-id="${item.id}"
+                  data-shop-type="${isBirdTab ? "birds" : "pipes"}"
+                  ${isSelected ? "disabled" : ""}
+                >
+                  ${actionText}
+                </button>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+
+      for (const previewCanvas of shopGrid.querySelectorAll("canvas[data-preview-id]")) {
+        const id = previewCanvas.dataset.previewId;
+        if (isBirdTab) {
+          drawBirdShopPreview(previewCanvas, id);
+        } else {
+          drawPipeShopPreview(previewCanvas, id);
         }
+      }
+
+      updateCurrencyLabels();
     }
 
-    function drawPipe(pipe) {
-        const x =
-            pipe.x;
+    function handleShopAction(type, id) {
+      const isBird = type === "birds";
+      const catalogue = isBird ? BIRD_SKINS : PIPE_SKINS;
+      const item = catalogue[id];
 
-        const width =
-            pipe.width;
+      if (!item) {
+        return;
+      }
 
-        const topHeight =
-            pipe.top;
+      const ownedKey = isBird ? "ownedBirds" : "ownedPipes";
+      const selectedKey = isBird ? "selectedBird" : "selectedPipes";
+      const owned = SaveManager.data[ownedKey];
 
-        const bottomY =
-            pipe.top +
-            pipe.gap;
-
-        const bottomHeight =
-            WORLD_HEIGHT -
-            groundHeight -
-            bottomY;
-
-        const capHeight =
-            55 *
-            (
-                pipe.width /
-                125
-            );
-
-        const capExtra =
-            12 *
-            (
-                pipe.width /
-                125
-            );
-
-        const gradient =
-            ctx.createLinearGradient(
-                x,
-                0,
-                x + width,
-                0
-            );
-
-        gradient.addColorStop(
-            0,
-            "#247c31"
-        );
-
-        gradient.addColorStop(
-            0.25,
-            "#49b64e"
-        );
-
-        gradient.addColorStop(
-            0.55,
-            "#69ca5b"
-        );
-
-        gradient.addColorStop(
-            1,
-            "#176328"
-        );
-
-        ctx.fillStyle =
-            gradient;
-
-        ctx.fillRect(
-            x,
-            0,
-            width,
-            topHeight
-        );
-
-        ctx.fillRect(
-            x,
-            bottomY,
-            width,
-            bottomHeight
-        );
-
-        ctx.fillStyle =
-            "#3da443";
-
-        ctx.fillRect(
-            x - capExtra,
-            topHeight - capHeight,
-            width + capExtra * 2,
-            capHeight
-        );
-
-        ctx.fillRect(
-            x - capExtra,
-            bottomY,
-            width + capExtra * 2,
-            capHeight
-        );
-
-        ctx.strokeStyle =
-            "rgba(0,0,0,0.2)";
-
-        ctx.lineWidth = 5;
-
-        ctx.strokeRect(
-            x,
-            0,
-            width,
-            topHeight
-        );
-
-        ctx.strokeRect(
-            x,
-            bottomY,
-            width,
-            bottomHeight
-        );
-    }
-
-    function drawPipes() {
-        for (const pipe of pipes) {
-            drawPipe(pipe);
-        }
-    }
-
-    function drawGround() {
-        const y =
-            WORLD_HEIGHT -
-            groundHeight;
-
-        const grassHeight =
-            groundHeight *
-            0.3;
-
-        ctx.fillStyle =
-            "#7bcb3e";
-
-        ctx.fillRect(
-            0,
-            y,
-            WORLD_WIDTH,
-            grassHeight
-        );
-
-        ctx.fillStyle =
-            "#55a82f";
-
-        for (
-            let x = -40;
-            x < WORLD_WIDTH + 40;
-            x += 55
-        ) {
-            ctx.beginPath();
-
-            ctx.moveTo(
-                x,
-                y
-            );
-
-            ctx.lineTo(
-                x + 25,
-                y
-            );
-
-            ctx.lineTo(
-                x + 8,
-                y + 18
-            );
-
-            ctx.lineTo(
-                x - 15,
-                y + 18
-            );
-
-            ctx.closePath();
-
-            ctx.fill();
+      if (!owned.includes(id)) {
+        if (SaveManager.data.credits < item.price) {
+          showToast(`You need ${item.price - SaveManager.data.credits} more credits.`);
+          SoundManager.click();
+          return;
         }
 
-        const gradient =
-            ctx.createLinearGradient(
-                0,
-                y + grassHeight,
-                0,
-                WORLD_HEIGHT
-            );
+        SaveManager.data.credits -= item.price;
+        owned.push(id);
+        SaveManager.data[selectedKey] = id;
+        SaveManager.save();
+        SoundManager.purchase();
+        showToast(`${item.name} unlocked and equipped.`);
+      } else {
+        SaveManager.data[selectedKey] = id;
+        SaveManager.save();
+        SoundManager.click();
+        showToast(`${item.name} equipped.`);
+      }
 
-        gradient.addColorStop(
-            0,
-            "#d69b45"
-        );
-
-        gradient.addColorStop(
-            1,
-            "#a86c2d"
-        );
-
-        ctx.fillStyle =
-            gradient;
-
-        ctx.fillRect(
-            0,
-            y + grassHeight,
-            WORLD_WIDTH,
-            groundHeight -
-            grassHeight
-        );
+      renderShop();
+      updateAllInterface();
     }
 
-    function drawBird() {
-        ctx.save();
-
-        ctx.translate(
-            bird.x,
-            bird.y
-        );
-
-        ctx.rotate(
-            bird.rotation
-        );
-
-        ctx.shadowColor =
-            "rgba(0,0,0,0.25)";
-
-        ctx.shadowBlur = 12;
-
-        ctx.fillStyle =
-            "#f7d53f";
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-            0,
-            0,
-            bird.width / 2,
-            bird.height / 2,
-            0,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-
-        ctx.fillStyle =
-            "#f0b92c";
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-            -8,
-            bird.height * 0.25,
-            bird.width * 0.3,
-            bird.height * 0.2,
-            -0.25,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-        ctx.fillStyle =
-            "#ffffff";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            bird.width * 0.26,
-            -bird.height * 0.21,
-            bird.height * 0.18,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-        ctx.fillStyle =
-            "#111111";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            bird.width * 0.29,
-            -bird.height * 0.21,
-            bird.height * 0.08,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-        ctx.fillStyle =
-            "#f07832";
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            bird.width * 0.4,
-            0
-        );
-
-        ctx.lineTo(
-            bird.width * 0.78,
-            bird.height * 0.14
-        );
-
-        ctx.lineTo(
-            bird.width * 0.4,
-            bird.height * 0.25
-        );
-
-        ctx.closePath();
-
-        ctx.fill();
-
-        ctx.restore();
+    function openShop(tab = currentShopTab) {
+      currentShopTab = tab;
+      phase = "shop";
+      hideAllOverlays();
+      shopScreen.classList.remove("hidden");
+      renderShop();
+      SoundManager.click();
     }
 
-    function draw() {
-        ctx.clearRect(
-            0,
-            0,
-            WORLD_WIDTH,
-            WORLD_HEIGHT
-        );
-
-        drawSky();
-        drawClouds();
-        drawPipes();
-        drawGround();
-        drawBird();
+    function openHowToPlay() {
+      phase = "help";
+      hideAllOverlays();
+      howScreen.classList.remove("hidden");
+      SoundManager.click();
     }
+
+    function openMenu() {
+      phase = "menu";
+      gameContainer.classList.remove("is-active");
+      hideAllOverlays();
+      menuScreen.classList.remove("hidden");
+      readyMessage.classList.add("hidden");
+      resetRun();
+      updateAllInterface();
+      SoundManager.click();
+    }
+
+    function updateAllInterface() {
+      updateHud();
+      updateCurrencyLabels();
+      updateLoadoutLabel();
+      updateSoundButton();
+      renderDifficultyGrid();
+    }
+
+    // -------------------------------------------------------------------------
+    // Input routing, lifecycle safety, and the permanent animation loop
+    // -------------------------------------------------------------------------
+
+    $("#play-button").addEventListener("click", beginRun);
+    $("#shop-button").addEventListener("click", () => openShop("birds"));
+    $("#how-button").addEventListener("click", openHowToPlay);
+    $("#shop-back-button").addEventListener("click", openMenu);
+    $("#how-back-button").addEventListener("click", openMenu);
+
+    $("#resume-button").addEventListener("click", resumeGame);
+    $("#pause-restart-button").addEventListener("click", beginRun);
+    $("#pause-menu-button").addEventListener("click", abandonRun);
+
+    $("#restart-button").addEventListener("click", beginRun);
+    $("#game-over-menu-button").addEventListener("click", openMenu);
+
+    pauseButton.addEventListener("click", pauseGame);
+
+    soundButton.addEventListener("click", () => {
+      SaveManager.data.sound = !SaveManager.data.sound;
+      SaveManager.save();
+      updateSoundButton();
+      if (SaveManager.data.sound) {
+        SoundManager.click();
+        showToast("Sound enabled.");
+      } else {
+        showToast("Sound muted.");
+      }
+    });
+
+    difficultyGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-difficulty]");
+      if (button) {
+        selectDifficulty(button.dataset.difficulty);
+      }
+    });
+
+    birdTab.addEventListener("click", () => {
+      currentShopTab = "birds";
+      renderShop();
+      SoundManager.click();
+    });
+
+    pipeTab.addEventListener("click", () => {
+      currentShopTab = "pipes";
+      renderShop();
+      SoundManager.click();
+    });
+
+    shopGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-shop-id]");
+      if (!button || button.disabled) {
+        return;
+      }
+      handleShopAction(button.dataset.shopType, button.dataset.shopId);
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      flap();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      const flightKeys = ["Space", "ArrowUp", "KeyW"];
+
+      if (flightKeys.includes(event.code)) {
+        event.preventDefault();
+        if (!event.repeat) {
+          flap();
+        }
+        return;
+      }
+
+      if (["KeyP", "Escape"].includes(event.code)) {
+        event.preventDefault();
+
+        if (["playing", "ready"].includes(phase)) {
+          pauseGame();
+        } else if (["paused", "paused-ready"].includes(phase)) {
+          resumeGame();
+        } else if (["shop", "help"].includes(phase)) {
+          openMenu();
+        }
+      }
+    });
+
+    window.addEventListener("resize", resizeGame);
+
+    window.addEventListener("blur", () => {
+      if (["playing", "ready"].includes(phase)) {
+        pauseGame();
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && ["playing", "ready"].includes(phase)) {
+        pauseGame();
+      }
+    });
+
+    document.addEventListener("contextmenu", (event) => {
+      if (event.target === canvas) {
+        event.preventDefault();
+      }
+    });
 
     function gameLoop(time) {
-        const dt =
-            Math.min(
-                (time - lastTime) / 1000,
-                0.035
-            );
+      const dt = Math.min(0.033, Math.max(0, (time - lastTime) / 1000 || 0));
+      lastTime = time;
+      visualTime += dt;
 
-        lastTime = time;
+      updateWorld(dt);
+      drawWorld();
+      drawMenuPreview(time);
 
-        update(dt);
-        draw();
-
-        if (running) {
-            animationFrame =
-                requestAnimationFrame(
-                    gameLoop
-                );
-        }
+      requestAnimationFrame(gameLoop);
     }
 
-    startButton.addEventListener(
-        "click",
-        event => {
-            event.stopPropagation();
-            startGame();
-        }
-    );
-
-    restartButton.addEventListener(
-        "click",
-        event => {
-            event.stopPropagation();
-            startGame();
-        }
-    );
-
-    menuButton.addEventListener(
-        "click",
-        event => {
-            event.stopPropagation();
-
-            running = false;
-            gameStarted = false;
-
-            gameOverScreen.classList.add(
-                "hidden"
-            );
-
-            startScreen.classList.remove(
-                "hidden"
-            );
-
-            readyMessage.classList.remove(
-                "hidden"
-            );
-
-            resetGame();
-            draw();
-        }
-    );
-
-    document.addEventListener(
-        "pointerdown",
-        event => {
-            if (
-                event.target.tagName ===
-                "BUTTON"
-            ) {
-                return;
-            }
-
-            event.preventDefault();
-            flap();
-        }
-    );
-
-    document.addEventListener(
-        "keydown",
-        event => {
-            if (
-                event.code === "Space" ||
-                event.code === "ArrowUp"
-            ) {
-                event.preventDefault();
-
-                if (!event.repeat) {
-                    flap();
-                }
-            }
-        }
-    );
-
-    window.addEventListener(
-        "resize",
-        () => {
-            const wasRunning =
-                running;
-
-            resizeGame();
-
-            if (!wasRunning) {
-                resetGame();
-            }
-
-            draw();
-        }
-    );
-
+    SaveManager.load();
     resizeGame();
-    resetGame();
-    draw();
-
+    resetRun();
+    updateAllInterface();
+    requestAnimationFrame(gameLoop);
   </script>
 </body>
 </html>

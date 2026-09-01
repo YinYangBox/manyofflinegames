@@ -1,10 +1,106 @@
 [
   {
+    "id": "tictactoe",
+    "name": "Tic Tac Toe",
+    "description": "Classic Tic Tac Toe",
+    "cost": 50,
+    "icon": "⭕",
+    "path": "/.netlify/functions/proxy?game=tictactoe"
+  },
+  {
+    "id": "bouncy-ball",
+    "name": "Bouncy Ball",
+    "description": "Simple Bouncy Ball",
+    "cost": 75,
+    "icon": "🏀",
+    "path": "/.netlify/functions/proxy?game=bouncy-ball"
+  },
+  {
     "id": "pong",
     "name": "Pong",
     "description": "Classic Pong",
     "cost": 100,
     "icon": "🏓",
     "path": "/.netlify/functions/proxy?game=pong"
+  },
+  {
+    "id": "snake",
+    "name": "Snake",
+    "description": "Classic Snake Game",
+    "cost": 120,
+    "icon": "🐍",
+    "path": "/.netlify/functions/proxy?game=snake"
+  },
+  {
+    "id": "flappy-bird",
+    "name": "Flappy Bird",
+    "description": "Flappy Bird Clone",
+    "cost": 150,
+    "icon": "🐦",
+    "path": "/.netlify/functions/proxy?game=flappy-bird"
+  },
+  {
+    "id": "2048",
+    "name": "2048",
+    "description": "Addictive 2048 Puzzle",
+    "cost": 180,
+    "icon": "🔢",
+    "path": "/.netlify/functions/proxy?game=2048"
+  },
+  {
+    "id": "doodle",
+    "name": "Doodle Jump",
+    "description": "Doodle Jump Adventure",
+    "cost": 200,
+    "icon": "🦘",
+    "path": "/.netlify/functions/proxy?game=doodle"
+  },
+  {
+    "id": "minesweeper",
+    "name": "Minesweeper",
+    "description": "Classic Minesweeper",
+    "cost": 220,
+    "icon": "💣",
+    "path": "/.netlify/functions/proxy?game=minesweeper"
+  },
+  {
+    "id": "tetris",
+    "name": "Tetris",
+    "description": "Classic Tetris Blocks",
+    "cost": 250,
+    "icon": "🧱",
+    "path": "/.netlify/functions/proxy?game=tetris"
+  },
+  {
+    "id": "pacman",
+    "name": "Pac-Man",
+    "description": "Classic Pac-Man Maze",
+    "cost": 280,
+    "icon": "👻",
+    "path": "/.netlify/functions/proxy?game=pacman"
+  },
+  {
+    "id": "maze-runner",
+    "name": "Maze Runner",
+    "description": "Escape the Maze Runner",
+    "cost": 300,
+    "icon": "🌀",
+    "path": "/.netlify/functions/proxy?game=maze-runner"
+  },
+  {
+    "id": "space-invaders",
+    "name": "Space Invaders",
+    "description": "Retro Space Invaders",
+    "cost": 350,
+    "icon": "👾",
+    "path": "/.netlify/functions/proxy?game=space-invaders"
+  },
+  {
+    "id": "chess",
+    "name": "Chess",
+    "description": "Classic Chess with AI",
+    "cost": 500,
+    "icon": "♟️",
+    "path": "/.netlify/functions/proxy?game=chess"
   }
 ]

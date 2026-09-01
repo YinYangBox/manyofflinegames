@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -196,31 +196,6 @@ button:active {
   color: #aaa;
 }
 
-#scoreBoard {
-  position: absolute;
-  z-index: 4;
-  top: 25px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 35px;
-  color: white;
-  font-size: clamp(40px, 7vw, 75px);
-  font-weight: 900;
-  line-height: 1;
-  text-shadow:
-    3px 3px 0 #000,
-    0 0 20px rgba(255,255,255,0.25);
-  pointer-events: none;
-}
-
-.scoreLine {
-  width: 3px;
-  height: 45px;
-  background: rgba(255,255,255,0.45);
-}
-
 #winner {
   margin-bottom: 30px;
   font-size: clamp(35px, 7vw, 65px);
@@ -254,36 +229,6 @@ button:active {
   margin: 5px;
 }
 
-#mobileControls {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-}
-
-#leftControl,
-#rightControl {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50%;
-  pointer-events: auto;
-}
-
-#leftControl {
-  left: 0;
-}
-
-#rightControl {
-  right: 0;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  #mobileControls {
-    display: none;
-  }
-}
-
 @media (max-width: 650px) {
   #game {
     width: 100vw;
@@ -310,7 +255,7 @@ button:active {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-/* ===== MAZE RUNNER // GAME POLISH ===== */
+
 #gameCanvas {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -516,8 +461,6 @@ button:active {
   #pauseBtn { right: 8px; bottom: 8px; }
 }
 
-
-/* ===== PERSISTENT COINS + SKIN SHOP ===== */
 #bankedCoinsMenu {
   display:flex;
   align-items:center;
@@ -698,14 +641,14 @@ button:active {
       </p>
 
       <div class="difficultyButtons" id="difficultyButtons">
-        <button data-size="21" data-coins="8" data-speed="650" data-vision="7" data-alert="1400" data-info="21×21 · 8 coins · 3×3 & 4×4 open areas · slow guardian" class="active">EASY</button>
-        <button data-size="25" data-coins="11" data-speed="540" data-vision="8" data-alert="1700" data-info="25×25 · 11 coins · more open areas · balanced guardian">NORMAL</button>
-        <button data-size="29" data-coins="14" data-speed="410" data-vision="9" data-alert="2000" data-info="29×29 · 14 coins · open map · fast guardian">HARD</button>
-        <button data-size="21" data-coins="10" data-speed="270" data-vision="10" data-alert="2600" data-info="21×21 · same size as Easy · aggressive AI · 10-tile vision" >NIGHTMARE</button>
+        <button data-size="21" data-coins="8" data-speed="650" data-vision="7" data-alert="1400" data-player-vision="8" data-info="21×21 · 8 coins · 8-block vision · slow guardian" class="active">EASY</button>
+        <button data-size="25" data-coins="11" data-speed="540" data-vision="8" data-alert="1700" data-player-vision="6" data-info="25×25 · 11 coins · 6-block vision · balanced guardian">NORMAL</button>
+        <button data-size="29" data-coins="14" data-speed="410" data-vision="9" data-alert="2000" data-player-vision="4" data-info="29×29 · 14 coins · 4-block vision · fast guardian">HARD</button>
+        <button data-size="21" data-coins="10" data-speed="270" data-vision="10" data-alert="2600" data-player-vision="3" data-info="21×21 · 10 coins · 3-block vision (DARKNESS) · aggressive AI">NIGHTMARE</button>
       </div>
 
       <div class="difficultyInfo" id="difficultyInfo">
-        21×21 · 8 coins · 3×3 & 4×4 open areas · slow guardian
+        21×21 · 8 coins · 8-block vision · slow guardian
       </div>
 
       <div id="bankedCoinsMenu">
@@ -724,7 +667,6 @@ button:active {
       </div>
     </div>
   </div>
-
 
   <div id="skinShopScreen" class="screen hidden">
     <div class="card skinShopCard">
@@ -759,7 +701,6 @@ button:active {
 </div>
 
 <script>
-
 (() => {
   "use strict";
 
@@ -797,7 +738,7 @@ button:active {
   const infoEl = $("difficultyInfo");
   const directionArrow = $("directionArrow");
 
-  let cfg = { size: 21, coins: 8, monsterMs: 650, vision: 7, alertMs: 1400 };
+  let cfg = { size: 21, coins: 8, monsterMs: 650, vision: 7, alertMs: 1400, playerVision: 8 };
   let maze = [];
   let floorCells = [];
   let coinList = [];
@@ -817,64 +758,154 @@ button:active {
   let lastFrame = 0;
   let shake = 0;
   let flash = 0;
+  let flashColor = "rgba(255,255,255,";
+  let jumpscareAnim = 0;
   let particles = [];
-  let dragStart = null;
   let showControls = false;
   let audioCtx = null;
 
-  const SAVE_KEY = "mazeRunnerArcadeSave_v3";
   const SKINS = [
-    { id:"classic", name:"CLASSIC", cost:0, desc:"Original runner",
-      main:"#c0c0c0", dark:"#303030", accent:"#ffffff", visor:"#0a0a0a" },
-    { id:"shadow", name:"SHADOW", cost:40, desc:"Stealth suit",
-      main:"#4b4b4b", dark:"#111111", accent:"#8b8b8b", visor:"#050505" },
-    { id:"chrome", name:"CHROME", cost:90, desc:"Polished armor",
-      main:"#eeeeee", dark:"#707070", accent:"#ffffff", visor:"#222222" },
-    { id:"ember", name:"EMBER", cost:160, desc:"Hot-run gear",
-      main:"#777777", dark:"#2a2a2a", accent:"#f2f2f2", visor:"#090909" },
-    { id:"wraith", name:"WRAITH", cost:250, desc:"Ghost protocol",
-      main:"#666666", dark:"#181818", accent:"#bdbdbd", visor:"#010101" },
-    { id:"void", name:"VOID", cost:400, desc:"Endgame armor",
-      main:"#222222", dark:"#050505", accent:"#9e9e9e", visor:"#000000" }
+    { id:"classic", name:"CLASSIC", cost:0, desc:"Original runner", main:"#c0c0c0", dark:"#303030", accent:"#ffffff", visor:"#0a0a0a" },
+    { id:"shadow", name:"SHADOW", cost:40, desc:"Stealth suit", main:"#4b4b4b", dark:"#111111", accent:"#8b8b8b", visor:"#050505" },
+    { id:"chrome", name:"CHROME", cost:90, desc:"Polished armor", main:"#eeeeee", dark:"#707070", accent:"#ffffff", visor:"#222222" },
+    { id:"ember", name:"EMBER", cost:160, desc:"Hot-run gear", main:"#777777", dark:"#2a2a2a", accent:"#f2f2f2", visor:"#090909" },
+    { id:"wraith", name:"WRAITH", cost:250, desc:"Ghost protocol", main:"#666666", dark:"#181818", accent:"#bdbdbd", visor:"#010101" },
+    { id:"void", name:"VOID", cost:400, desc:"Endgame armor", main:"#222222", dark:"#050505", accent:"#9e9e9e", visor:"#000000" }
   ];
 
-  let save = {
-    coins: 0,
-    owned: ["classic"],
-    equipped: "classic"
-  };
+  class SaveManager {
+    static STORAGE_KEY = "ARCADE_GAMES";
+    static GAME_KEY = "maze-runner";
+    static LEGACY_KEY = "maze-runner-legacy";
 
-  try {
-    const stored = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
-    if (stored && typeof stored === "object") {
-      save = {
-        coins: Math.max(0, Number(stored.coins) || 0),
-        owned: Array.isArray(stored.owned) && stored.owned.length ? [...new Set(stored.owned)] : ["classic"],
-        equipped: typeof stored.equipped === "string" ? stored.equipped : "classic"
-      };
-      if (!save.owned.includes("classic")) save.owned.unshift("classic");
-      if (!SKINS.some(s => s.id === save.equipped) || !save.owned.includes(save.equipped)) save.equipped = "classic";
+    static data = {
+      version: 1,
+      credits: 0,
+      owned: ["classic"],
+      equipped: "classic"
+    };
+
+    static readArcadeData() {
+      try {
+        const stored = localStorage.getItem(this.STORAGE_KEY);
+        const parsed = stored ? JSON.parse(stored) : {};
+
+        return parsed &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed)
+          ? parsed
+          : {};
+      } catch (error) {
+        console.warn(
+          "Could not read the shared arcade save data; using a clean object.",
+          error
+        );
+        return {};
+      }
     }
-  } catch (_) {}
 
-  function persistSave() {
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (_) {}
-    updateCoinDisplays();
-    renderSkinShop();
+    static load() {
+      const defaults = {
+        ...this.data,
+        owned: [...this.data.owned]
+      };
+
+      try {
+        const arcadeData = this.readArcadeData();
+        let parsed = arcadeData[this.GAME_KEY];
+        let migratedLegacySave = false;
+
+        if (!parsed) {
+          const legacyStored = localStorage.getItem(this.LEGACY_KEY);
+          parsed = legacyStored ? JSON.parse(legacyStored) : null;
+          migratedLegacySave = Boolean(parsed);
+        }
+
+        if (parsed && typeof parsed === "object") {
+          this.data = {
+            ...defaults,
+            ...parsed
+          };
+        } else {
+          this.data = defaults;
+        }
+
+        this.data.version = Number(this.data.version) || 1;
+        this.data.coins = Math.max(0, Number(this.data.coins) || 0);
+        this.data.owned = Array.isArray(this.data.owned)
+          ? [...new Set(["classic", ...this.data.owned])]
+          : ["classic"];
+
+        const equippedExists = SKINS.some(
+          (skin) => skin.id === this.data.equipped
+        );
+
+        if (!equippedExists || !this.data.owned.includes(this.data.equipped)) {
+          this.data.equipped = "classic";
+        }
+
+        if (migratedLegacySave) {
+          this.save();
+        }
+      } catch (error) {
+        console.warn("Could not load the Maze Runner save; using defaults.", error);
+        this.data = defaults;
+      }
+    }
+
+    static save() {
+      try {
+        const arcadeData = this.readArcadeData();
+
+        arcadeData[this.GAME_KEY] = {
+          version: this.data.version,
+          coins: this.data.coins,
+          owned: [...this.data.owned],
+          equipped: this.data.equipped
+        };
+
+        localStorage.setItem(
+          this.STORAGE_KEY,
+          JSON.stringify(arcadeData)
+        );
+        localStorage.removeItem(this.LEGACY_KEY);
+      } catch (error) {
+        console.warn("Could not save Maze Runner data to localStorage.", error);
+      }
+    }
+
+    static addCoins(amount) {
+      const normalizedAmount = Math.max(
+        0,
+        Math.floor(Number(amount) || 0)
+      );
+
+      if (!normalizedAmount) {
+        return false;
+      }
+
+      this.data.coins += normalizedAmount;
+      this.save();
+      return true;
+    }
+
+    static ownsSkin(skinId) {
+      return this.data.owned.includes(skinId);
+    }
   }
 
+  SaveManager.load();
+
   function updateCoinDisplays() {
-    bankedCoinsValue.textContent = String(save.coins);
-    shopCoinsValue.textContent = String(save.coins);
+    bankedCoinsValue.textContent = String(SaveManager.data.coins);
+    shopCoinsValue.textContent = String(SaveManager.data.coins);
   }
 
   function addBankedCoins(amount) {
-    amount = Math.max(0, Math.floor(Number(amount) || 0));
-    if (!amount) return;
-    save.coins += amount;
-    persistSave();
+    if (!SaveManager.addCoins(amount)) return;
+    updateCoinDisplays();
+    renderSkinShop();
   }
-
 
   function openSkinShop() {
     running = false;
@@ -904,15 +935,13 @@ button:active {
     skinGrid.innerHTML = "";
     for (const skin of SKINS) {
       const item = document.createElement("div");
-      item.className = "skinItem" + (save.equipped === skin.id ? " active" : "");
+      item.className = "skinItem" + (SaveManager.data.equipped === skin.id ? " active" : "");
 
       const preview = document.createElement("div");
       preview.className = "skinPreview";
       const c = document.createElement("canvas");
-      c.width = 80;
-      c.height = 92;
-      c.style.width = "80px";
-      c.style.height = "92px";
+      c.width = 80; c.height = 92;
+      c.style.width = "80px"; c.style.height = "92px";
       const pctx = c.getContext("2d");
       pctx.imageSmoothingEnabled = false;
       drawPlayerIcon(pctx, 40, 50, skin, 1.65);
@@ -928,8 +957,8 @@ button:active {
 
       const btn = document.createElement("button");
       btn.className = "skinBtn";
-      const owned = save.owned.includes(skin.id);
-      if (save.equipped === skin.id) {
+      const owned = SaveManager.ownsSkin(skin.id);
+      if (SaveManager.data.equipped === skin.id) {
         btn.textContent = "EQUIPPED";
         btn.disabled = true;
       } else if (owned) {
@@ -940,15 +969,17 @@ button:active {
 
       btn.addEventListener("click", () => {
         if (!owned) {
-          if (save.coins < skin.cost) {
+          if (SaveManager.data.coins < skin.cost) {
             beep(110,0.08,"square",0.02);
             return;
           }
-          save.coins -= skin.cost;
-          save.owned.push(skin.id);
+          SaveManager.data.coins -= skin.cost;
+          SaveManager.data.owned.push(skin.id);
         }
-        save.equipped = skin.id;
-        persistSave();
+        SaveManager.data.equipped = skin.id;
+        SaveManager.save();
+        updateCoinDisplays();
+        renderSkinShop();
         beep(580,0.07);
       });
 
@@ -991,10 +1022,9 @@ button:active {
 
   updateCoinDisplays();
 
-
   const TILE = 32;
   const colors = {
-    bg: "#070707",
+    bg: "#000000",
     floor: "#111111",
     floor2: "#151515",
     wall: "#292929",
@@ -1019,13 +1049,8 @@ button:active {
   window.addEventListener("resize", resize, { passive: true });
   resize();
 
-  function randInt(n) {
-    return Math.floor(Math.random() * n);
-  }
-
-  function key(x, y) {
-    return y + "," + x;
-  }
+  function randInt(n) { return Math.floor(Math.random() * n); }
+  function key(x, y) { return y + "," + x; }
 
   function shuffledDirs() {
     const a = [[2,0],[-2,0],[0,2],[0,-2]];
@@ -1045,19 +1070,9 @@ button:active {
     roomList.push({ x: rx, y: ry, w: rw, h: rh });
   }
 
-  function nearestFloorFrom(x, y, dx, dy, maxSteps = 8) {
-    let cx = x, cy = y;
-    for (let i = 0; i < maxSteps; i++) {
-      cx += dx; cy += dy;
-      if (!inBounds(cx, cy)) break;
-      if (maze[cy][cx] === 0) return { x: cx, y: cy };
-    }
-    return null;
-  }
-
   function connectRoom(room) {
     const sides = ["top", "bottom", "left", "right"].sort(() => Math.random() - 0.5);
-    const wanted = 2 + randInt(3); // 2–4 entrances.
+    const wanted = 2 + randInt(3);
     let made = 0;
 
     function inside(px,py) {
@@ -1109,7 +1124,6 @@ button:active {
       if (made >= wanted) break;
     }
 
-    // Absolute fallback: carve a door directly to the nearest edge corridor.
     if (made < 2) {
       const options=[
         [room.x+Math.floor(room.w/2),room.y-1],
@@ -1125,7 +1139,6 @@ button:active {
   }
 
   function openLoops(size) {
-    // A few openings between neighboring corridors create alternate escape routes.
     const candidates=[];
     for (let y=1;y<size-1;y++) {
       for (let x=1;x<size-1;x++) {
@@ -1150,7 +1163,6 @@ button:active {
     const stack = [[1,1]];
     maze[1][1] = 0;
 
-    // Base maze: every carved corridor is connected to the entrance.
     while (stack.length) {
       const [x,y] = stack[stack.length - 1];
       let carved = false;
@@ -1167,7 +1179,6 @@ button:active {
       if (!carved) stack.pop();
     }
 
-    // Open plazas: carve 3x3 and 4x4 clearings, then give each multiple entrances.
     const roomCount = Math.max(3, Math.floor(size / 6));
     let attempts = roomCount * 12;
     while (roomList.length < roomCount && attempts-- > 0) {
@@ -1186,10 +1197,8 @@ button:active {
       connectRoom(roomList[roomList.length - 1]);
     }
 
-    // Break a few walls to remove the “single snake corridor” feeling.
     openLoops(size);
 
-    // Exit: always on the outside edge and connected to the interior.
     exitCell = { x: size - 2, y: size - 1 };
     maze[size - 2][size - 2] = 0;
     maze[size - 1][size - 2] = 0;
@@ -1204,7 +1213,6 @@ button:active {
     player = { x:1, y:1, px:1, py:1, dir:"down", anim:0 };
     monster = chooseMonsterSpawn();
 
-    // Chests go in the heart of plazas and give a chunky coin payout.
     chestList = roomList.map((r, i) => ({
       x: r.x + Math.floor(r.w/2),
       y: r.y + Math.floor(r.h/2),
@@ -1340,6 +1348,7 @@ button:active {
     monsterTimer = 0;
     shake = 0;
     flash = 0;
+    jumpscareAnim = 0;
     particles = [];
     updateHud();
   }
@@ -1393,24 +1402,45 @@ button:active {
   function endGame(won) {
     running = false;
     paused = false;
-    shake = won ? 0 : 13;
-    flash = won ? 850 : 450;
-    winner.textContent = won ? "YOU ESCAPED!" : "YOU GOT CAUGHT!";
-    statusEl.textContent = won ? "EXIT FOUND" : "GAME OVER";
-    finalCoins.textContent = coinScore;
-    finalTime.textContent = elapsed.toFixed(1) + "s";
-    showScreen(gameOver,true);
-    pauseBtn.classList.add("hidden");
-    exitBtn.classList.add("hidden");
-    dpad.classList.remove("show");
-    touchHint.classList.add("hidden");
+
     if (won) {
+      shake = 0;
+      flash = 850;
+      flashColor = "rgba(255,255,255,";
+      winner.textContent = "YOU ESCAPED!";
+      statusEl.textContent = "EXIT FOUND";
+      finalCoins.textContent = coinScore;
+      finalTime.textContent = elapsed.toFixed(1) + "s";
+      showScreen(gameOver,true);
+      pauseBtn.classList.add("hidden");
+      exitBtn.classList.add("hidden");
+      dpad.classList.remove("show");
+      touchHint.classList.add("hidden");
       beep(660,0.1);
       setTimeout(()=>beep(880,0.14),90);
       spawnParticles(exitCell.x, exitCell.y, 28, 900);
     } else {
-      beep(90,0.24,"sawtooth",0.035);
-      spawnParticles(player.x, player.y, 22, 700);
+      // MINI JUMPSCARE
+      jumpscareAnim = 1;
+      shake = 28;
+      flash = 600;
+      flashColor = "rgba(255,0,0,";
+      beep(80, 0.4, "sawtooth", 0.08);
+      setTimeout(() => beep(50, 0.5, "sawtooth", 0.09), 80);
+      spawnParticles(player.x, player.y, 35, 800);
+
+      setTimeout(() => {
+        jumpscareAnim = 0;
+        winner.textContent = "YOU GOT CAUGHT!";
+        statusEl.textContent = "GAME OVER";
+        finalCoins.textContent = coinScore;
+        finalTime.textContent = elapsed.toFixed(1) + "s";
+        showScreen(gameOver,true);
+        pauseBtn.classList.add("hidden");
+        exitBtn.classList.add("hidden");
+        dpad.classList.remove("show");
+        touchHint.classList.add("hidden");
+      }, 650);
     }
   }
 
@@ -1577,12 +1607,10 @@ button:active {
       }
     }
 
-    // MARCO exterior
     ctx.strokeStyle = "#4b4b4b";
     ctx.lineWidth = 3;
     ctx.strokeRect(ox+1,oy+1,size*tile-2,size*tile-2);
 
-    // EXIT: casilla de puerta grande, contrastada y siempre visible.
     const ex=ox+exitCell.x*tile, ey=oy+exitCell.y*tile;
     drawPixelRect(ex+2,ey+2,tile-4,tile-4,colors.exitDark);
     drawPixelRect(ex+5,ey+4,tile-10,3,colors.exit);
@@ -1628,7 +1656,7 @@ button:active {
 
   function drawPlayer(p,ox,oy,tile,t) {
     const skin =
-      (save.owned.includes(save.equipped) && SKINS.find(s => s.id === save.equipped))
+      (SaveManager.ownsSkin(SaveManager.data.equipped) && SKINS.find(s => s.id === SaveManager.data.equipped))
       || SKINS[0];
     const bob = p.anim * Math.sin(t*0.02) * 2;
     const cx=ox+p.x*tile+tile/2;
@@ -1643,39 +1671,32 @@ button:active {
     r(-11,12,22,5,"#000");
     r(-7,12,14,3,"#222");
 
-    // legs / boots
     r(-9,7,7,8,skin.dark);
     r(2,7,7,8,skin.dark);
     r(-10,14,8,3,"#050505");
     r(2,14,9,3,"#050505");
 
-    // suit
     r(-10,-4,20,15,skin.dark);
     r(-7,-2,14,13,skin.main);
     r(-3,-1,6,12,skin.visor);
     r(-12,0,4,9,skin.dark);
     r(8,0,4,9,skin.dark);
 
-    // belt + backpack
     r(-9,6,18,3,"#111");
     r(-12,-2,4,12,skin.dark);
     r(8,-2,4,12,skin.dark);
 
-    // helmet
     r(-10,-16,20,13,skin.dark);
     r(-8,-18,16,3,"#111");
     r(-7,-14,14,10,skin.main);
 
-    // visor
     r(-8,-12,16,6,skin.visor);
     r(-6,-11,5,3,skin.accent);
     r(2,-11,5,3,skin.accent);
     r(-3,-8,6,2,skin.dark);
 
-    // chest emblem differs per skin
     r(-4,-1,8,4,skin.accent);
 
-    // tiny skin-specific shoulder mark
     if (skin.id === "shadow") r(-13,-3,2,6,"#777");
     if (skin.id === "chrome") r(11,-3,2,6,"#fff");
     if (skin.id === "ember") r(-13,3,2,5,"#ddd");
@@ -1695,55 +1716,46 @@ button:active {
     ctx.translate(cx,cy);
     ctx.scale(s,s);
 
-    // sombra
     drawPixelRect(-13,12,26,5,"#000");
 
-    // aura
     ctx.globalAlpha=.11;
     ctx.fillStyle="#fff";
     ctx.fillRect(-17,-19,34,36);
     ctx.globalAlpha=1;
 
-    // patas / garras
     drawPixelRect(-12,11,6,7,"#0d0d0d");
     drawPixelRect(6,11,6,7,"#0d0d0d");
     drawPixelRect(-15,16,8,2,"#9a9a9a");
     drawPixelRect(7,16,8,2,"#9a9a9a");
 
-    // cuerpo blindado
     drawPixelRect(-13,-6,26,19,"#242424");
     drawPixelRect(-11,-9,22,20,"#4b4b4b");
     drawPixelRect(-8,-6,16,15,"#626262");
     drawPixelRect(-5,-3,10,11,"#1b1b1b");
     drawPixelRect(-4,0,8,4,"#e5e5e5");
 
-    // brazos, garras
     drawPixelRect(-17,-3,5,16,"#1d1d1d");
     drawPixelRect(12,-3,5,16,"#1d1d1d");
     drawPixelRect(-20,10,6,3,"#bdbdbd");
     drawPixelRect(14,10,6,3,"#bdbdbd");
 
-    // cabeza y cuernos
     drawPixelRect(-10,-18,20,14,"#333");
     drawPixelRect(-8,-20,16,4,"#5a5a5a");
     drawPixelRect(-13,-21,6,6,"#777");
     drawPixelRect(7,-21,6,6,"#777");
     drawPixelRect(-9,-15,18,10,"#777");
 
-    // ojos
     drawPixelRect(-7,-13,5,4,"#fafafa");
     drawPixelRect(2,-13,5,4,"#fafafa");
     drawPixelRect(-6,-12,3,2,"#111");
     drawPixelRect(3,-12,3,2,"#111");
 
-    // jaw
     drawPixelRect(-7,-6,14,5,"#151515");
     drawPixelRect(-5,-4,3,3,"#d8d8d8");
     drawPixelRect(2,-4,3,3,"#d8d8d8");
 
     ctx.restore();
   }
-
 
   function drawChest(c,ox,oy,tile,t) {
     const x=ox+c.x*tile+tile/2;
@@ -1755,18 +1767,15 @@ button:active {
     ctx.globalAlpha=1;
 
     if (!c.opened) {
-      // lid
       drawPixelRect(x-11,y-10,22,7,"#171717");
       drawPixelRect(x-9,y-8,18,4,"#8a8a8a");
       drawPixelRect(x-9,y-2,18,10,"#5a5a5a");
       drawPixelRect(x-10,y-1,20,3,"#bcbcbc");
       drawPixelRect(x-2,y-1,4,7,"#111");
-      // coin pile visible above the chest
       drawPixelRect(x-6,y-13,5,5,"#ddd");
       drawPixelRect(x+1,y-15,5,5,"#fff");
       drawPixelRect(x+5,y-11,4,4,"#aaa");
     } else {
-      // open chest + empty inside
       drawPixelRect(x-11,y-8,22,5,"#4d4d4d");
       drawPixelRect(x-9,y-2,18,10,"#252525");
       drawPixelRect(x-10,y-1,20,3,"#999");
@@ -1794,6 +1803,19 @@ button:active {
     particles = particles.filter(p=>p.life>0);
   }
 
+  function drawFogOfWar(w, h, px, py, tile) {
+    const radius = cfg.playerVision * tile;
+    
+    // Gradient that fades the light smoothly
+    const fog = ctx.createRadialGradient(px, py, radius * 0.4, px, py, radius);
+    fog.addColorStop(0, "rgba(0, 0, 0, 0)");
+    fog.addColorStop(0.7, "rgba(0, 0, 0, 0.82)");
+    fog.addColorStop(1, "rgba(0, 0, 0, 1)");
+
+    ctx.fillStyle = fog;
+    ctx.fillRect(0, 0, w, h);
+  }
+
   function cameraAndDraw(t,dt) {
     const w=canvas.clientWidth, h=canvas.clientHeight;
     ctx.clearRect(0,0,w,h);
@@ -1805,8 +1827,19 @@ button:active {
     let tile = Math.max(10, TILE*scale);
     let ox=(w-maze.length*tile)/2, oy=(h-maze.length*tile)/2;
 
-    // vignette and gentle camera follow
-    const jx=ox+player.x*tile+tile/2, jy=oy+player.y*tile+tile/2;
+    let targetX = player.x;
+    let targetY = player.y;
+
+    // During a jumpscare, the camera instantly focuses on the monster
+    if (jumpscareAnim > 0) {
+      targetX = monster.x;
+      targetY = monster.y;
+      tile *= 2.2; // Strong jumpscare zoom
+      ox = (w - maze.length * tile) / 2;
+      oy = (h - maze.length * tile) / 2;
+    }
+
+    const jx=ox+targetX*tile+tile/2, jy=oy+targetY*tile+tile/2;
     const targetCx=w/2, targetCy=h/2;
     let cxShift=(targetCx-jx)*0.12;
     let cyShift=(targetCy-jy)*0.12;
@@ -1827,12 +1860,18 @@ button:active {
     drawPlayer(player,ox,oy,tile,t);
     drawParticles(ox,oy,tile,dt);
 
-    // make the exit zone unmistakable
     const ex=ox+exitCell.x*tile+tile/2, ey=oy+exitCell.y*tile+tile/2;
     ctx.globalAlpha=.12 + .06*Math.sin(t*.008);
     ctx.fillStyle="#fff";
     ctx.fillRect(ex-tile*.75,ey-tile*.75,tile*1.5,tile*1.5);
     ctx.globalAlpha=1;
+
+    // FOG OF WAR (PLAYER VISION)
+    if (jumpscareAnim === 0) {
+      const playerCenterX = ox + player.x * tile + tile / 2;
+      const playerCenterY = oy + player.y * tile + tile / 2;
+      drawFogOfWar(w * 2, h * 2, playerCenterX, playerCenterY, tile);
+    }
 
     ctx.restore();
 
@@ -1843,7 +1882,7 @@ button:active {
     ctx.fillRect(0,0,w,h);
 
     if (flash>0) {
-      ctx.fillStyle = `rgba(255,255,255,${Math.min(.28,flash/1600)})`;
+      ctx.fillStyle = `${flashColor}${Math.min(.55,flash/1000)})`;
       ctx.fillRect(0,0,w,h);
     }
   }
@@ -1872,7 +1911,6 @@ button:active {
     raf=requestAnimationFrame(loop);
   }
 
-  // ===== CONTROLES =====
   document.addEventListener("keydown", (e) => {
     const map = {
       ArrowUp:[0,-1], w:[0,-1], W:[0,-1],
@@ -1889,9 +1927,6 @@ button:active {
       tryMove(...map[e.key]);
     }
   }, { passive:false });
-
-  // Mobile movement is deliberately NOT swipe + buttons combined.
-  // The menu's SHOW CONTROLS switch chooses the on-screen D-pad mode.
 
   function bindControl(btn, dx, dy) {
     btn.addEventListener("pointerdown", (e) => {
@@ -1934,7 +1969,8 @@ button:active {
         coins:Number(btn.dataset.coins),
         monsterMs:Number(btn.dataset.speed),
         vision:Number(btn.dataset.vision),
-        alertMs:Number(btn.dataset.alert)
+        alertMs:Number(btn.dataset.alert),
+        playerVision:Number(btn.dataset.playerVision)
       };
       infoEl.textContent = btn.dataset.info;
     });
@@ -1945,18 +1981,15 @@ button:active {
   menuButton.addEventListener("click", toMenu);
   exitBtn.addEventListener("click", toMenu);
 
-  // Prevent browser scrolling while using the game.
   document.addEventListener("touchmove", e => e.preventDefault(), {passive:false});
 
-  // initialization
   updateCoinDisplays();
   renderSkinShop();
-  persistSave();
+  SaveManager.save();
   resetGame();
   cancelAnimationFrame(raf);
   raf = requestAnimationFrame(loop);
 })();
-
 </script>
 </body>
 </html>
