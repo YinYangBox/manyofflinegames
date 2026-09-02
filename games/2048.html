@@ -1,0 +1,2564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#090b12">
+  <title>2048</title>
+  <style>
+    :root {
+      --ink: #f7f8ff;
+      --muted: #8b91a8;
+      --panel: #121622;
+      --panel-2: #181d2b;
+      --line: rgba(255, 255, 255, .09);
+      --violet: #9c7cff;
+      --cyan: #55e6ff;
+      --gold: #ffd76b;
+      --danger: #ff6685;
+      --success: #66f2ad;
+      --shadow: 0 28px 80px rgba(0, 0, 0, .48);
+      --board-size: min(66vh, 620px);
+      --gap: 10px;
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 12%, rgba(85, 230, 255, .11), transparent 29%),
+        radial-gradient(circle at 85% 80%, rgba(156, 124, 255, .13), transparent 32%),
+        #070910;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(85, 230, 255, .72);
+      outline-offset: 3px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .app {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      width: min(1180px, 100vw);
+      height: min(840px, 100dvh);
+      margin: auto;
+      overflow: hidden;
+      background: linear-gradient(145deg, rgba(18, 22, 34, .97), rgba(8, 10, 17, .98));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 5;
+      height: 74px;
+      flex: 0 0 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 9, 16, .68);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 22px;
+      font-weight: 1000;
+      letter-spacing: -.8px;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: linear-gradient(145deg, var(--cyan), var(--violet));
+      box-shadow: 0 0 26px rgba(85, 230, 255, .22);
+      transform: rotate(-5deg);
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      border-radius: 6px;
+      background: #111522;
+    }
+
+    .brand-mark::before {
+      width: 13px;
+      height: 13px;
+      left: 6px;
+      top: 6px;
+    }
+
+    .brand-mark::after {
+      width: 9px;
+      height: 9px;
+      right: 6px;
+      bottom: 6px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .credit-pill,
+    .mode-pill {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .05);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .credit-dot {
+      width: 18px;
+      height: 18px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #241900;
+      background: linear-gradient(145deg, #fff0a9, #ffb938);
+      box-shadow: 0 0 16px rgba(255, 215, 107, .25);
+      font-size: 10px;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .05);
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .icon-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(85, 230, 255, .34);
+      background: rgba(85, 230, 255, .09);
+    }
+
+    .game-layout {
+      min-height: 0;
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 318px;
+    }
+
+    .stage {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      border-right: 1px solid var(--line);
+    }
+
+    .score-row {
+      width: min(var(--board-size), 100%);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .score-card {
+      min-width: 0;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .045);
+    }
+
+    .score-card span {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .score-card strong {
+      display: block;
+      overflow: hidden;
+      font-size: clamp(17px, 2.4vw, 27px);
+      line-height: 1.1;
+      text-overflow: ellipsis;
+    }
+
+    .score-card.combo-card strong {
+      color: var(--cyan);
+    }
+
+    .board-shell {
+      position: relative;
+      width: min(var(--board-size), 100%);
+      aspect-ratio: 1;
+      flex: 0 1 auto;
+      filter: drop-shadow(0 26px 36px rgba(0, 0, 0, .34));
+    }
+
+    .board {
+      position: absolute;
+      inset: 0;
+      padding: var(--gap);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, .08), transparent 35%),
+        #222838;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .board::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, transparent 49.7%, rgba(255, 255, 255, .025) 50%, transparent 50.3%),
+        linear-gradient(transparent 49.7%, rgba(255, 255, 255, .025) 50%, transparent 50.3%);
+      background-size: 34px 34px;
+      opacity: .5;
+    }
+
+    .cell-layer,
+    .tile-layer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(var(--size), minmax(0, 1fr));
+      grid-template-rows: repeat(var(--size), minmax(0, 1fr));
+      gap: var(--gap);
+    }
+
+    .tile-layer {
+      position: absolute;
+      inset: var(--gap);
+      width: auto;
+      height: auto;
+      pointer-events: none;
+    }
+
+    .cell {
+      min-width: 0;
+      min-height: 0;
+      border: 1px solid rgba(255, 255, 255, .035);
+      border-radius: calc(var(--radius) * .44);
+      background: rgba(4, 6, 12, .32);
+      box-shadow: inset 0 5px 12px rgba(0, 0, 0, .18);
+    }
+
+    .tile {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      isolation: isolate;
+    }
+
+    .tile-inner {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--tile-ink);
+      background: var(--tile-bg);
+      border: 1px solid var(--tile-line);
+      box-shadow: var(--tile-shadow);
+      transform: translateZ(0);
+    }
+
+    .tile-value {
+      position: relative;
+      z-index: 4;
+      font-size: var(--tile-font);
+      font-weight: 1000;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      text-shadow: var(--number-shadow, none);
+    }
+
+    .tile.new .tile-inner {
+      animation: tileSpawn .2s cubic-bezier(.2, .9, .25, 1.25) both;
+    }
+
+    .tile.merged .tile-inner {
+      animation: tileMerge .3s cubic-bezier(.2, .8, .25, 1.3) both;
+    }
+
+    @keyframes tileSpawn {
+      from { opacity: 0; transform: scale(.25) rotate(-8deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    @keyframes tileMerge {
+      0% { transform: scale(.82); filter: brightness(1); }
+      55% { transform: scale(1.13); filter: brightness(1.45); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    /* Classic: solid rounded blocks. */
+    .skin-classic .tile-inner {
+      border-radius: calc(var(--radius) * .44);
+    }
+
+    .skin-classic .tile-inner::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: inherit;
+      border-top: 2px solid rgba(255, 255, 255, .23);
+      opacity: .7;
+    }
+
+    /* Neon: an octagonal energy frame with a hollow inner ring. */
+    .skin-neon .tile-inner {
+      inset: 2px;
+      clip-path: polygon(16% 0, 84% 0, 100% 16%, 100% 84%, 84% 100%, 16% 100%, 0 84%, 0 16%);
+      background:
+        radial-gradient(circle, rgba(7, 10, 18, .94) 0 47%, transparent 49%),
+        var(--tile-bg);
+      border: 0;
+      box-shadow: none;
+    }
+
+    .skin-neon .tile-inner::before {
+      content: "";
+      position: absolute;
+      inset: 8%;
+      clip-path: inherit;
+      border: 2px solid rgba(255, 255, 255, .38);
+      filter: drop-shadow(0 0 7px var(--tile-bg));
+    }
+
+    .skin-neon .tile-value {
+      text-shadow: 0 0 10px var(--tile-bg), 0 2px 4px #000;
+    }
+
+    /* Circuit: clipped board with traces and corner nodes. */
+    .skin-circuit .tile-inner {
+      border-radius: 8px;
+      clip-path: polygon(0 0, 76% 0, 100% 24%, 100% 100%, 24% 100%, 0 76%);
+      background:
+        linear-gradient(90deg, transparent 46%, rgba(255,255,255,.14) 47% 50%, transparent 51%),
+        linear-gradient(transparent 46%, rgba(255,255,255,.14) 47% 50%, transparent 51%),
+        var(--tile-bg);
+    }
+
+    .skin-circuit .tile-inner::before,
+    .skin-circuit .tile-inner::after {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border: 2px solid rgba(255, 255, 255, .45);
+      border-radius: 50%;
+    }
+
+    .skin-circuit .tile-inner::before {
+      left: 9%;
+      top: 9%;
+    }
+
+    .skin-circuit .tile-inner::after {
+      right: 9%;
+      bottom: 9%;
+    }
+
+    /* Crystal: faceted gemstone, not a recolored square. */
+    .skin-crystal .tile-inner {
+      inset: 1px;
+      clip-path: polygon(50% 0, 88% 10%, 100% 45%, 78% 100%, 22% 100%, 0 45%, 12% 10%);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.35), transparent 30%),
+        linear-gradient(35deg, transparent 45%, rgba(255,255,255,.18) 46% 52%, transparent 53%),
+        var(--tile-bg);
+      border: 0;
+      box-shadow: none;
+      filter: drop-shadow(0 8px 8px rgba(0, 0, 0, .23));
+    }
+
+    .skin-crystal .tile-inner::before {
+      content: "";
+      position: absolute;
+      inset: 13%;
+      clip-path: polygon(50% 0, 100% 40%, 76% 100%, 24% 100%, 0 40%);
+      border: 2px solid rgba(255, 255, 255, .22);
+    }
+
+    /* Arcade: pixel-cartridge silhouette and inset display. */
+    .skin-arcade .tile-inner {
+      inset: 2px;
+      border-radius: 3px;
+      clip-path: polygon(10% 0, 90% 0, 90% 7%, 100% 7%, 100% 90%, 93% 90%, 93% 100%, 7% 100%, 7% 93%, 0 93%, 0 10%, 10% 10%);
+      border: 0;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0 2px, transparent 2px 5px),
+        var(--tile-bg);
+      box-shadow: inset 0 -7px 0 rgba(0,0,0,.18);
+    }
+
+    .skin-arcade .tile-inner::after {
+      content: "";
+      position: absolute;
+      inset: 13%;
+      border: 2px solid rgba(7, 10, 18, .34);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.13);
+    }
+
+    .skin-arcade .tile-value {
+      font-family: "Courier New", monospace;
+      letter-spacing: -2px;
+    }
+
+    .board-flash {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle, rgba(85, 230, 255, .25), transparent 64%);
+    }
+
+    .board-flash.active {
+      animation: boardFlash .44s ease;
+    }
+
+    @keyframes boardFlash {
+      0% { opacity: 0; }
+      25% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .combo-pop {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 8;
+      color: var(--cyan);
+      font-size: clamp(27px, 5vw, 58px);
+      font-weight: 1000;
+      letter-spacing: -2px;
+      text-shadow: 0 6px 18px #000, 0 0 24px rgba(85, 230, 255, .65);
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .combo-pop.active {
+      animation: comboPop .8s cubic-bezier(.16, .8, .2, 1) both;
+    }
+
+    @keyframes comboPop {
+      0% { opacity: 0; transform: translate(-50%, -35%) scale(.55); }
+      25% { opacity: 1; transform: translate(-50%, -60%) scale(1.08); }
+      100% { opacity: 0; transform: translate(-50%, -115%) scale(.92); }
+    }
+
+    .side-panel {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 22px;
+      background: rgba(7, 9, 16, .38);
+    }
+
+    .run-title {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 1000;
+      letter-spacing: -1.6px;
+    }
+
+    .run-status {
+      margin: 5px 0 20px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status-card {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .status-line span {
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .status-line strong {
+      text-align: right;
+      font-size: 13px;
+    }
+
+    .credit-state.on {
+      color: var(--success);
+    }
+
+    .credit-state.off {
+      color: var(--muted);
+    }
+
+    .combo-meter {
+      margin-top: 16px;
+      padding: 15px;
+      border: 1px solid rgba(85, 230, 255, .16);
+      border-radius: 17px;
+      background: linear-gradient(145deg, rgba(85, 230, 255, .07), rgba(156, 124, 255, .04));
+    }
+
+    .combo-meter-head {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .meter-track {
+      height: 7px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .meter-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      box-shadow: 0 0 16px rgba(85, 230, 255, .35);
+      transition: width .24s ease;
+    }
+
+    .side-spacer {
+      flex: 1;
+    }
+
+    .run-actions {
+      display: grid;
+      gap: 9px;
+    }
+
+    .btn {
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: .5px;
+      cursor: pointer;
+      transition: transform .16s ease, filter .16s ease, border-color .16s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.07);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px) scale(.985);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: .42;
+    }
+
+    .btn-primary {
+      color: #070910;
+      background: linear-gradient(135deg, var(--cyan), #a68aff);
+      box-shadow: 0 10px 24px rgba(85, 230, 255, .15);
+    }
+
+    .btn-secondary {
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: rgba(255, 255, 255, .055);
+    }
+
+    .btn-danger {
+      border: 1px solid rgba(255, 102, 133, .2);
+      color: #ff9bad;
+      background: rgba(255, 102, 133, .07);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(4, 5, 10, .76);
+      backdrop-filter: blur(16px);
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .overlay.hidden {
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .menu-panel {
+      width: min(510px, 100%);
+      max-height: min(720px, calc(100dvh - 36px));
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .11);
+      border-radius: 27px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, .055), transparent 38%),
+        #111521;
+      box-shadow: var(--shadow);
+    }
+
+    .menu-wallet {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 12px 18px 0;
+    }
+
+    .menu-wallet-label {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+    }
+
+    .menu-wallet .credit-pill {
+      min-height: 34px;
+      padding: 0 12px;
+      border-color: rgba(255, 215, 107, .2);
+      background: rgba(255, 215, 107, .07);
+    }
+
+    .menu-view {
+      display: none;
+      max-height: calc(min(720px, calc(100dvh - 36px)) - 54px);
+      overflow-y: auto;
+      padding: 18px 30px 30px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.18) transparent;
+    }
+
+    .menu-view.active {
+      display: block;
+      animation: viewIn .22s ease both;
+    }
+
+    @keyframes viewIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .menu-logo {
+      width: 82px;
+      height: 82px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 14px;
+      border-radius: 23px;
+      color: #090b12;
+      background: linear-gradient(145deg, var(--gold), #ff8f70);
+      box-shadow: 0 16px 30px rgba(255, 174, 83, .18);
+      font-size: 27px;
+      font-weight: 1000;
+      transform: rotate(-4deg);
+    }
+
+    .menu-title {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(42px, 9vw, 68px);
+      line-height: .92;
+      letter-spacing: -4px;
+    }
+
+    .menu-subtitle {
+      margin: 10px 0 24px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .menu-mode {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 13px;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .menu-mode-copy strong,
+    .menu-mode-copy span {
+      display: block;
+    }
+
+    .menu-mode-copy strong {
+      font-size: 14px;
+    }
+
+    .menu-mode-copy span {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 750;
+    }
+
+    .mode-tag {
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: var(--success);
+      background: rgba(102, 242, 173, .1);
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .7px;
+      white-space: nowrap;
+    }
+
+    .mode-tag.custom {
+      color: var(--muted);
+      background: rgba(255, 255, 255, .06);
+    }
+
+    .menu-buttons {
+      display: grid;
+      gap: 9px;
+    }
+
+    .menu-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 9px;
+    }
+
+    .menu-row .btn {
+      min-width: 0;
+      padding: 0 8px;
+      font-size: 10px;
+    }
+
+    .view-head {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 24px;
+    }
+
+    .view-head h2 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -1px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 19px 0 9px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .size-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .size-option {
+      position: relative;
+      min-height: 82px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .035);
+      text-align: left;
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .size-option:hover {
+      transform: translateY(-2px);
+      border-color: rgba(85, 230, 255, .28);
+    }
+
+    .size-option.active {
+      border-color: rgba(85, 230, 255, .7);
+      background: rgba(85, 230, 255, .08);
+      box-shadow: inset 0 0 0 1px rgba(85, 230, 255, .12);
+    }
+
+    .size-option strong,
+    .size-option span {
+      display: block;
+    }
+
+    .size-option strong {
+      font-size: 22px;
+    }
+
+    .size-option span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .size-option.classic::after {
+      content: "CREDITS ON";
+      position: absolute;
+      right: 9px;
+      top: 9px;
+      color: var(--success);
+      font-size: 8px;
+      font-weight: 1000;
+      letter-spacing: .5px;
+    }
+
+    .setting-line {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .setting-line strong {
+      font-size: 13px;
+    }
+
+    .switch {
+      position: relative;
+      width: 48px;
+      height: 27px;
+      padding: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .1);
+      cursor: pointer;
+      transition: background .18s ease;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      width: 21px;
+      height: 21px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
+      transition: transform .18s ease;
+    }
+
+    .switch.on {
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+    }
+
+    .switch.on::after {
+      transform: translateX(21px);
+    }
+
+    .skin-grid {
+      display: grid;
+      gap: 11px;
+    }
+
+    .skin-card {
+      display: grid;
+      grid-template-columns: 94px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 13px;
+      min-height: 92px;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .035);
+      transition: border-color .16s ease, background .16s ease;
+    }
+
+    .skin-card.selected {
+      border-color: rgba(85, 230, 255, .64);
+      background: rgba(85, 230, 255, .07);
+    }
+
+    .skin-preview {
+      height: 68px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      padding: 6px;
+      border-radius: 12px;
+      background: #242a38;
+    }
+
+    .preview-tile {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #fff;
+      background: var(--preview);
+      font-size: 10px;
+      font-weight: 1000;
+    }
+
+    .preview-classic .preview-tile {
+      border-radius: 7px;
+      box-shadow: inset 0 2px rgba(255,255,255,.24);
+    }
+
+    .preview-neon .preview-tile {
+      clip-path: polygon(18% 0, 82% 0, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0 82%, 0 18%);
+      background: radial-gradient(circle, #0c101a 0 42%, transparent 45%), var(--preview);
+    }
+
+    .preview-circuit .preview-tile {
+      clip-path: polygon(0 0, 72% 0, 100% 28%, 100% 100%, 28% 100%, 0 72%);
+      background: linear-gradient(90deg, transparent 47%, rgba(255,255,255,.22) 48% 51%, transparent 52%), var(--preview);
+    }
+
+    .preview-crystal .preview-tile {
+      clip-path: polygon(50% 0, 90% 12%, 100% 48%, 76% 100%, 24% 100%, 0 48%, 10% 12%);
+      background: linear-gradient(135deg, rgba(255,255,255,.38), transparent 38%), var(--preview);
+    }
+
+    .preview-arcade .preview-tile {
+      clip-path: polygon(12% 0, 88% 0, 88% 9%, 100% 9%, 100% 88%, 91% 88%, 91% 100%, 9% 100%, 9% 91%, 0 91%, 0 12%, 12% 12%);
+      font-family: monospace;
+    }
+
+    .skin-info {
+      min-width: 0;
+    }
+
+    .skin-info strong,
+    .skin-info span {
+      display: block;
+    }
+
+    .skin-info strong {
+      font-size: 14px;
+    }
+
+    .skin-info span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .skin-action {
+      min-width: 77px;
+      min-height: 37px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .06);
+      font-size: 9px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .skin-action.buy {
+      color: #241900;
+      background: linear-gradient(135deg, #fff0a9, #ffbe48);
+    }
+
+    .skin-action:disabled {
+      cursor: default;
+      opacity: .65;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .stat-box {
+      min-height: 83px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .stat-box span {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+    }
+
+    .stat-box strong {
+      margin-top: 4px;
+      font-size: 24px;
+    }
+
+    .modal-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 45;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(4, 5, 10, .74);
+      backdrop-filter: blur(12px);
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .modal-layer.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .modal {
+      width: min(410px, 100%);
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 24px;
+      background: #131722;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .modal-icon {
+      width: 60px;
+      height: 60px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 14px;
+      border-radius: 19px;
+      color: #081016;
+      background: linear-gradient(145deg, var(--cyan), var(--violet));
+      font-size: 23px;
+      font-weight: 1000;
+    }
+
+    .modal h2 {
+      margin: 0;
+      font-size: 31px;
+      letter-spacing: -1.4px;
+    }
+
+    .modal p {
+      margin: 7px 0 20px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 0 0 20px;
+    }
+
+    .result-item {
+      padding: 11px 5px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .result-item span,
+    .result-item strong {
+      display: block;
+    }
+
+    .result-item span {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .result-item strong {
+      margin-top: 3px;
+      font-size: 20px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .toast-stack {
+      position: absolute;
+      z-index: 70;
+      right: 18px;
+      top: 86px;
+      width: min(300px, calc(100% - 36px));
+      display: grid;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 13px;
+      background: rgba(18, 22, 34, .96);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
+      font-size: 11px;
+      font-weight: 850;
+      animation: toastIn .28s ease both, toastOut .28s ease 2.35s both;
+    }
+
+    .toast b {
+      color: var(--gold);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(22px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes toastOut {
+      to { opacity: 0; transform: translateX(20px); }
+    }
+
+    @media (max-width: 820px) {
+      :root {
+        --board-size: min(56vh, calc(100vw - 26px));
+        --gap: clamp(5px, 1.5vw, 9px);
+        --radius: 19px;
+      }
+
+      .app {
+        border: 0;
+      }
+
+      .topbar {
+        height: 60px;
+        flex-basis: 60px;
+        padding: 0 13px;
+      }
+
+      .brand {
+        font-size: 18px;
+      }
+
+      .brand-mark {
+        width: 31px;
+        height: 31px;
+      }
+
+      .mode-pill {
+        display: none;
+      }
+
+      .game-layout {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stage {
+        flex: 1;
+        min-height: 0;
+        justify-content: center;
+        padding: 10px 13px 7px;
+        border: 0;
+      }
+
+      .score-row {
+        margin-bottom: 8px;
+        gap: 7px;
+      }
+
+      .score-card {
+        padding: 7px 9px;
+        border-radius: 11px;
+      }
+
+      .side-panel {
+        flex: 0 0 auto;
+        display: block;
+        padding: 7px 13px 11px;
+        background: transparent;
+      }
+
+      .run-title,
+      .run-status,
+      .status-card,
+      .combo-meter,
+      .side-spacer {
+        display: none;
+      }
+
+      .run-actions {
+        width: min(var(--board-size), 100%);
+        grid-template-columns: 1fr 1fr;
+        margin: auto;
+      }
+
+      .run-actions .btn {
+        min-height: 42px;
+      }
+
+      .toast-stack {
+        top: 68px;
+        right: 10px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .menu-view {
+        padding: 14px 22px 22px;
+      }
+
+      .menu-panel {
+        border-radius: 22px;
+      }
+
+      .skin-card {
+        grid-template-columns: 82px minmax(0, 1fr);
+      }
+
+      .skin-action {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
+
+      .tile-value {
+        letter-spacing: -1px;
+      }
+    }
+
+    @media (max-height: 610px) and (orientation: landscape) {
+      :root {
+        --board-size: min(70vh, 490px);
+      }
+
+      .topbar {
+        height: 54px;
+        flex-basis: 54px;
+      }
+
+      .game-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 255px;
+      }
+
+      .stage {
+        padding: 8px 15px;
+        border-right: 1px solid var(--line);
+      }
+
+      .side-panel {
+        display: flex;
+        padding: 14px;
+      }
+
+      .run-title,
+      .run-status,
+      .status-card,
+      .combo-meter,
+      .side-spacer {
+        display: initial;
+      }
+
+      .status-card,
+      .combo-meter {
+        display: grid;
+      }
+
+      .run-title {
+        font-size: 24px;
+      }
+
+      .run-status {
+        margin-bottom: 11px;
+      }
+
+      .combo-meter {
+        margin-top: 9px;
+      }
+
+      .run-actions {
+        width: 100%;
+        grid-template-columns: 1fr;
+      }
+
+      .score-row {
+        margin-bottom: 6px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>2048</span>
+      </div>
+      <div class="top-actions">
+        <span class="mode-pill" id="top-mode">4×4 CLASSIC</span>
+        <span class="credit-pill"><span class="credit-dot">C</span><span data-credits>0</span></span>
+        <button class="icon-btn" id="sound-button" aria-label="Toggle sound">♪</button>
+      </div>
+    </header>
+
+    <div class="game-layout">
+      <section class="stage">
+        <div class="score-row">
+          <div class="score-card"><span>Score</span><strong id="score">0</strong></div>
+          <div class="score-card"><span>Best</span><strong id="best">0</strong></div>
+          <div class="score-card combo-card"><span>Combo</span><strong id="combo">×0</strong></div>
+        </div>
+
+        <div class="board-shell" id="board-shell">
+          <div class="board skin-classic" id="board" style="--size:4">
+            <div class="cell-layer" id="cell-layer"></div>
+            <div class="tile-layer" id="tile-layer"></div>
+            <div class="board-flash" id="board-flash"></div>
+          </div>
+          <div class="combo-pop" id="combo-pop">COMBO ×2</div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <h1 class="run-title">2048</h1>
+        <p class="run-status" id="run-status">Classic board</p>
+
+        <div class="status-card">
+          <div class="status-line"><span>Board</span><strong id="side-size">4×4</strong></div>
+          <div class="status-line"><span>Skin</span><strong id="side-skin">Classic</strong></div>
+          <div class="status-line"><span>Run credits</span><strong id="run-credits">0</strong></div>
+          <div class="status-line"><span>Rewards</span><strong class="credit-state on" id="credit-state">CREDITS ON</strong></div>
+        </div>
+
+        <div class="combo-meter">
+          <div class="combo-meter-head"><span>Combo chain</span><strong id="combo-label">0 / 5</strong></div>
+          <div class="meter-track"><div class="meter-fill" id="combo-fill"></div></div>
+        </div>
+
+        <div class="side-spacer"></div>
+        <div class="run-actions">
+          <button class="btn btn-primary" id="new-button">NEW GAME</button>
+          <button class="btn btn-secondary" id="menu-button">MENU</button>
+        </div>
+      </aside>
+    </div>
+
+    <section class="overlay" id="menu-overlay">
+      <div class="menu-panel">
+        <div class="menu-wallet" aria-label="Credit balance">
+          <span class="menu-wallet-label">Credits</span>
+          <span class="credit-pill"><span class="credit-dot">C</span><span data-credits>0</span></span>
+        </div>
+        <div class="menu-view active" id="home-view">
+          <div class="menu-logo">2048</div>
+          <h1 class="menu-title">2048</h1>
+          <p class="menu-subtitle">MERGE · COMBO · GROW</p>
+
+          <div class="menu-mode">
+            <div class="menu-mode-copy">
+              <strong id="menu-size-name">4×4 Classic</strong>
+              <span id="menu-size-copy">Combos earn credits</span>
+            </div>
+            <span class="mode-tag" id="menu-mode-tag">CREDITS ON</span>
+          </div>
+
+          <div class="menu-buttons">
+            <button class="btn btn-primary" id="play-button">PLAY</button>
+            <button class="btn btn-secondary" id="continue-button">CONTINUE</button>
+          </div>
+          <div class="menu-row">
+            <button class="btn btn-secondary" data-view="settings-view">SETTINGS</button>
+            <button class="btn btn-secondary" data-view="skins-view">SKINS</button>
+            <button class="btn btn-secondary" data-view="stats-view">STATS</button>
+          </div>
+        </div>
+
+        <div class="menu-view" id="settings-view">
+          <div class="view-head">
+            <button class="icon-btn" data-view="home-view" aria-label="Back">‹</button>
+            <h2>Settings</h2>
+          </div>
+
+          <div class="section-label"><span>Board size</span></div>
+          <div class="size-grid" id="size-grid">
+            <button class="size-option" data-size="3"><strong>3×3</strong><span>Quick</span></button>
+            <button class="size-option classic active" data-size="4"><strong>4×4</strong><span>Classic</span></button>
+            <button class="size-option" data-size="5"><strong>5×5</strong><span>Wide</span></button>
+            <button class="size-option" data-size="6"><strong>6×6</strong><span>Giant</span></button>
+          </div>
+
+          <div class="section-label"><span>Audio</span></div>
+          <div class="setting-line">
+            <strong>Sound</strong>
+            <button class="switch on" id="settings-sound" role="switch" aria-checked="true" aria-label="Toggle sound"></button>
+          </div>
+        </div>
+
+        <div class="menu-view" id="skins-view">
+          <div class="view-head">
+            <button class="icon-btn" data-view="home-view" aria-label="Back">‹</button>
+            <h2>Skins</h2>
+          </div>
+          <div class="skin-grid" id="skin-grid"></div>
+        </div>
+
+        <div class="menu-view" id="stats-view">
+          <div class="view-head">
+            <button class="icon-btn" data-view="home-view" aria-label="Back">‹</button>
+            <h2>Stats</h2>
+          </div>
+          <div class="stats-grid" id="stats-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="modal-layer hidden" id="gameover-modal">
+      <div class="modal">
+        <div class="modal-icon">×</div>
+        <h2>Game over</h2>
+        <p>No moves left.</p>
+        <div class="result-row">
+          <div class="result-item"><span>Score</span><strong id="final-score">0</strong></div>
+          <div class="result-item"><span>Combo</span><strong id="final-combo">×0</strong></div>
+          <div class="result-item"><span>Credits</span><strong id="final-credits">0</strong></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="gameover-menu">MENU</button>
+          <button class="btn btn-primary" id="gameover-again">AGAIN</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="modal-layer hidden" id="win-modal">
+      <div class="modal">
+        <div class="modal-icon">2K</div>
+        <h2>2048!</h2>
+        <p>Keep growing or start again.</p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="win-again">NEW GAME</button>
+          <button class="btn btn-primary" id="win-continue">CONTINUE</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="modal-layer hidden" id="confirm-modal">
+      <div class="modal">
+        <div class="modal-icon">?</div>
+        <h2>New game?</h2>
+        <p>The current board will be replaced.</p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="confirm-no">CANCEL</button>
+          <button class="btn btn-danger" id="confirm-yes">NEW GAME</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+  </main>
+
+  <script>
+  "use strict";
+
+  /* ---------- Persistent data ---------- */
+
+  class SaveManager {
+    static ROOT_KEY = "ARCADE_GAMES";
+    static GAME_KEY = "2048";
+
+    constructor() {
+      this.defaults = {
+        version: 1,
+        credits: 0,
+        selectedSkin: "classic",
+        ownedSkins: ["classic"],
+        boardSize: 4,
+        sound: true,
+        bestScores: { 3: 0, 4: 0, 5: 0, 6: 0 },
+        stats: {
+          gamesPlayed: 0,
+          totalMoves: 0,
+          totalMerges: 0,
+          highestTile: 0,
+          bestCombo: 0,
+          creditsEarned: 0
+        },
+        currentRun: null
+      };
+
+      this.root = this.readRoot();
+      this.data = this.sanitize(this.root[SaveManager.GAME_KEY]);
+      this.persist();
+    }
+
+    readRoot() {
+      try {
+        const raw = localStorage.getItem(SaveManager.ROOT_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    sanitize(value) {
+      const source = value && typeof value === "object" ? value : {};
+      const clean = { ...this.defaults, ...source };
+
+      clean.credits = this.cleanInt(clean.credits, 0);
+      clean.boardSize = [3, 4, 5, 6].includes(Number(clean.boardSize)) ? Number(clean.boardSize) : 4;
+      clean.sound = clean.sound !== false;
+      clean.selectedSkin = typeof clean.selectedSkin === "string" ? clean.selectedSkin : "classic";
+      clean.ownedSkins = Array.isArray(clean.ownedSkins)
+        ? [...new Set(clean.ownedSkins.filter(item => typeof item === "string"))]
+        : ["classic"];
+
+      if (!clean.ownedSkins.includes("classic")) clean.ownedSkins.unshift("classic");
+      if (!clean.ownedSkins.includes(clean.selectedSkin)) clean.selectedSkin = "classic";
+
+      clean.bestScores = { ...this.defaults.bestScores, ...(source.bestScores || {}) };
+      [3, 4, 5, 6].forEach(size => {
+        clean.bestScores[size] = this.cleanInt(clean.bestScores[size], 0);
+      });
+
+      clean.stats = { ...this.defaults.stats, ...(source.stats || {}) };
+      Object.keys(this.defaults.stats).forEach(key => {
+        clean.stats[key] = this.cleanInt(clean.stats[key], 0);
+      });
+
+      clean.currentRun = this.cleanRun(source.currentRun);
+      return clean;
+    }
+
+    cleanInt(value, fallback) {
+      const number = Number(value);
+      return Number.isFinite(number) ? Math.max(0, Math.floor(number)) : fallback;
+    }
+
+    cleanRun(run) {
+      if (!run || typeof run !== "object") return null;
+
+      const size = Number(run.size);
+      if (![3, 4, 5, 6].includes(size)) return null;
+      if (!Array.isArray(run.board) || run.board.length !== size) return null;
+
+      const board = run.board.map(row => {
+        if (!Array.isArray(row) || row.length !== size) return null;
+        return row.map(value => {
+          const number = this.cleanInt(value, 0);
+          return number === 0 || this.isPowerOfTwo(number) ? number : 0;
+        });
+      });
+
+      if (board.some(row => row === null)) return null;
+
+      return {
+        size,
+        board,
+        score: this.cleanInt(run.score, 0),
+        combo: this.cleanInt(run.combo, 0),
+        bestCombo: this.cleanInt(run.bestCombo, 0),
+        earned: this.cleanInt(run.earned, 0),
+        moves: this.cleanInt(run.moves, 0),
+        wonShown: Boolean(run.wonShown),
+        active: run.active !== false
+      };
+    }
+
+    isPowerOfTwo(value) {
+      return value > 0 && (value & (value - 1)) === 0;
+    }
+
+    persist() {
+      try {
+        this.root[SaveManager.GAME_KEY] = this.data;
+        localStorage.setItem(SaveManager.ROOT_KEY, JSON.stringify(this.root));
+      } catch (_) {
+        /* Offline play still works when storage is unavailable. */
+      }
+      refreshCredits(this.data);
+    }
+
+    update(patch) {
+      Object.assign(this.data, patch);
+      this.persist();
+    }
+
+    mutate(callback) {
+      callback(this.data);
+      this.persist();
+    }
+
+    ownsSkin(id) {
+      return this.data.ownedSkins.includes(id);
+    }
+
+    buySkin(id, price) {
+      if (this.ownsSkin(id) || this.data.credits < price) return false;
+      this.data.credits -= price;
+      this.data.ownedSkins = [...this.data.ownedSkins, id];
+      this.data.selectedSkin = id;
+      this.persist();
+      return true;
+    }
+
+    addCredits(amount) {
+      const safe = this.cleanInt(amount, 0);
+      if (!safe) return;
+      this.data.credits += safe;
+      this.data.stats.creditsEarned += safe;
+      this.persist();
+    }
+  }
+
+  /* ---------- Configuration ---------- */
+
+  const SKINS = {
+    classic: {
+      name: "Classic",
+      price: 0,
+      copy: "Rounded blocks",
+      preview: ["#eee4da", "#f2b179", "#f65e3b"]
+    },
+    neon: {
+      name: "Neon Core",
+      price: 300,
+      copy: "Energy octagons",
+      preview: ["#49dce9", "#9c7cff", "#ff5ea8"]
+    },
+    circuit: {
+      name: "Circuit",
+      price: 750,
+      copy: "Cut boards and traces",
+      preview: ["#42e6a4", "#24abc2", "#7568ef"]
+    },
+    crystal: {
+      name: "Crystal",
+      price: 1400,
+      copy: "Faceted gems",
+      preview: ["#75efff", "#7794ff", "#d06dff"]
+    },
+    arcade: {
+      name: "Arcade",
+      price: 2300,
+      copy: "Pixel cartridges",
+      preview: ["#ffe066", "#ff8d55", "#ef476f"]
+    }
+  };
+
+  const SIZE_NAMES = {
+    3: "3×3 Quick",
+    4: "4×4 Classic",
+    5: "5×5 Wide",
+    6: "6×6 Giant"
+  };
+
+  const CLASSIC_SIZE = 4;
+
+  const TILE_COLORS = [
+    { bg: "#e9e5dc", ink: "#323542", line: "rgba(255,255,255,.48)" },
+    { bg: "#cfd8ff", ink: "#2e3150", line: "rgba(255,255,255,.48)" },
+    { bg: "#68dce5", ink: "#102a31", line: "rgba(255,255,255,.4)" },
+    { bg: "#49bcce", ink: "#071f28", line: "rgba(255,255,255,.35)" },
+    { bg: "#8a81f2", ink: "#ffffff", line: "rgba(255,255,255,.28)" },
+    { bg: "#ae6ce6", ink: "#ffffff", line: "rgba(255,255,255,.25)" },
+    { bg: "#e960a6", ink: "#ffffff", line: "rgba(255,255,255,.23)" },
+    { bg: "#ff6b78", ink: "#ffffff", line: "rgba(255,255,255,.22)" },
+    { bg: "#ff9462", ink: "#2a1210", line: "rgba(255,255,255,.24)" },
+    { bg: "#ffc85c", ink: "#2b2005", line: "rgba(255,255,255,.3)" },
+    { bg: "#ffe781", ink: "#2b2508", line: "rgba(255,255,255,.35)" },
+    { bg: "#6af0a8", ink: "#08271a", line: "rgba(255,255,255,.35)" }
+  ];
+
+  /* ---------- Elements ---------- */
+
+  const elements = {
+    app: document.getElementById("app"),
+    board: document.getElementById("board"),
+    boardShell: document.getElementById("board-shell"),
+    cellLayer: document.getElementById("cell-layer"),
+    tileLayer: document.getElementById("tile-layer"),
+    boardFlash: document.getElementById("board-flash"),
+    comboPop: document.getElementById("combo-pop"),
+    score: document.getElementById("score"),
+    best: document.getElementById("best"),
+    combo: document.getElementById("combo"),
+    comboLabel: document.getElementById("combo-label"),
+    comboFill: document.getElementById("combo-fill"),
+    sideSize: document.getElementById("side-size"),
+    sideSkin: document.getElementById("side-skin"),
+    runCredits: document.getElementById("run-credits"),
+    runStatus: document.getElementById("run-status"),
+    creditState: document.getElementById("credit-state"),
+    topMode: document.getElementById("top-mode"),
+    soundButton: document.getElementById("sound-button"),
+    settingsSound: document.getElementById("settings-sound"),
+    menuOverlay: document.getElementById("menu-overlay"),
+    menuSizeName: document.getElementById("menu-size-name"),
+    menuSizeCopy: document.getElementById("menu-size-copy"),
+    menuModeTag: document.getElementById("menu-mode-tag"),
+    playButton: document.getElementById("play-button"),
+    continueButton: document.getElementById("continue-button"),
+    newButton: document.getElementById("new-button"),
+    menuButton: document.getElementById("menu-button"),
+    sizeGrid: document.getElementById("size-grid"),
+    skinGrid: document.getElementById("skin-grid"),
+    statsGrid: document.getElementById("stats-grid"),
+    gameoverModal: document.getElementById("gameover-modal"),
+    winModal: document.getElementById("win-modal"),
+    confirmModal: document.getElementById("confirm-modal"),
+    finalScore: document.getElementById("final-score"),
+    finalCombo: document.getElementById("final-combo"),
+    finalCredits: document.getElementById("final-credits"),
+    toastStack: document.getElementById("toast-stack")
+  };
+
+  const save = new SaveManager();
+
+  let game = createEmptyGame(save.data.boardSize);
+  let gameIsVisible = false;
+  let inputLocked = false;
+  let confirmAction = null;
+  let newestCell = null;
+  let mergedCells = new Set();
+  let audioContext = null;
+
+  /* ---------- Game model ---------- */
+
+  function createEmptyGame(size) {
+    return {
+      size,
+      board: Array.from({ length: size }, () => Array(size).fill(0)),
+      score: 0,
+      combo: 0,
+      bestCombo: 0,
+      earned: 0,
+      moves: 0,
+      wonShown: false,
+      active: true
+    };
+  }
+
+  function startNewGame(force = false) {
+    if (!force && gameIsVisible && game.active && game.moves > 0) {
+      openConfirm(() => startNewGame(true));
+      return;
+    }
+
+    game = createEmptyGame(save.data.boardSize);
+    addRandomTile(false);
+    addRandomTile(false);
+    save.mutate(data => {
+      data.stats.gamesPlayed += 1;
+      data.currentRun = snapshotGame();
+    });
+
+    newestCell = null;
+    mergedCells.clear();
+    closeAllModals();
+    closeMenu();
+    gameIsVisible = true;
+    renderAll();
+    playTone("start");
+  }
+
+  function continueSavedGame() {
+    const run = save.data.currentRun;
+    if (!run || !run.active) return;
+
+    game = {
+      ...run,
+      board: run.board.map(row => [...row])
+    };
+    newestCell = null;
+    mergedCells.clear();
+    closeAllModals();
+    closeMenu();
+    gameIsVisible = true;
+    renderAll();
+  }
+
+  function snapshotGame() {
+    return {
+      size: game.size,
+      board: game.board.map(row => [...row]),
+      score: game.score,
+      combo: game.combo,
+      bestCombo: game.bestCombo,
+      earned: game.earned,
+      moves: game.moves,
+      wonShown: game.wonShown,
+      active: game.active
+    };
+  }
+
+  function addRandomTile(markNew = true) {
+    const empty = [];
+    for (let row = 0; row < game.size; row += 1) {
+      for (let col = 0; col < game.size; col += 1) {
+        if (game.board[row][col] === 0) empty.push({ row, col });
+      }
+    }
+
+    if (!empty.length) return false;
+    const chosen = empty[Math.floor(Math.random() * empty.length)];
+    game.board[chosen.row][chosen.col] = Math.random() < .9 ? 2 : 4;
+    newestCell = markNew ? cellKey(chosen.row, chosen.col) : null;
+    return true;
+  }
+
+  function move(direction) {
+    if (!gameIsVisible || inputLocked || !game.active || !elements.menuOverlay.classList.contains("hidden")) return;
+
+    const before = serializeBoard(game.board);
+    let scoreGain = 0;
+    let mergeCount = 0;
+    const nextMerged = new Set();
+
+    for (let index = 0; index < game.size; index += 1) {
+      const line = readLine(direction, index);
+      const result = mergeLine(line);
+      scoreGain += result.scoreGain;
+      mergeCount += result.mergeCount;
+      writeLine(direction, index, result.values, result.mergedIndices, nextMerged);
+    }
+
+    if (before === serializeBoard(game.board)) {
+      playTone("blocked");
+      return;
+    }
+
+    inputLocked = true;
+    game.moves += 1;
+    game.score += scoreGain;
+    game.combo = mergeCount > 0 ? game.combo + 1 : 0;
+    game.bestCombo = Math.max(game.bestCombo, game.combo);
+    mergedCells = nextMerged;
+
+    const creditReward = calculateComboCredits(mergeCount);
+    if (creditReward > 0) {
+      game.earned += creditReward;
+      save.addCredits(creditReward);
+      showComboReward(creditReward);
+    }
+
+    addRandomTile(true);
+    const highest = highestTile(game.board);
+
+    save.mutate(data => {
+      data.stats.totalMoves += 1;
+      data.stats.totalMerges += mergeCount;
+      data.stats.highestTile = Math.max(data.stats.highestTile, highest);
+      data.stats.bestCombo = Math.max(data.stats.bestCombo, game.bestCombo);
+      data.bestScores[game.size] = Math.max(data.bestScores[game.size] || 0, game.score);
+      data.currentRun = snapshotGame();
+    });
+
+    renderAll();
+
+    if (mergeCount > 0) {
+      flashBoard();
+      playTone(game.combo >= 2 ? "combo" : "merge");
+    } else {
+      playTone("move");
+    }
+
+    window.setTimeout(() => {
+      newestCell = null;
+      mergedCells.clear();
+      inputLocked = false;
+
+      if (highest >= 2048 && !game.wonShown) {
+        game.wonShown = true;
+        save.mutate(data => { data.currentRun = snapshotGame(); });
+        elements.winModal.classList.remove("hidden");
+        playTone("win");
+        return;
+      }
+
+      if (!hasMoves()) finishGame();
+    }, 230);
+  }
+
+  function readLine(direction, index) {
+    const values = [];
+    for (let offset = 0; offset < game.size; offset += 1) {
+      if (direction === "left") values.push(game.board[index][offset]);
+      if (direction === "right") values.push(game.board[index][game.size - 1 - offset]);
+      if (direction === "up") values.push(game.board[offset][index]);
+      if (direction === "down") values.push(game.board[game.size - 1 - offset][index]);
+    }
+    return values;
+  }
+
+  function mergeLine(line) {
+    const compact = line.filter(Boolean);
+    const values = [];
+    const mergedIndices = [];
+    let scoreGain = 0;
+    let mergeCount = 0;
+
+    for (let index = 0; index < compact.length; index += 1) {
+      if (compact[index] === compact[index + 1]) {
+        const merged = compact[index] * 2;
+        values.push(merged);
+        mergedIndices.push(values.length - 1);
+        scoreGain += merged;
+        mergeCount += 1;
+        index += 1;
+      } else {
+        values.push(compact[index]);
+      }
+    }
+
+    while (values.length < game.size) values.push(0);
+    return { values, mergedIndices, scoreGain, mergeCount };
+  }
+
+  function writeLine(direction, index, values, lineMergedIndices, nextMerged) {
+    values.forEach((value, offset) => {
+      let row;
+      let col;
+
+      if (direction === "left") [row, col] = [index, offset];
+      if (direction === "right") [row, col] = [index, game.size - 1 - offset];
+      if (direction === "up") [row, col] = [offset, index];
+      if (direction === "down") [row, col] = [game.size - 1 - offset, index];
+
+      game.board[row][col] = value;
+      if (lineMergedIndices.includes(offset)) nextMerged.add(cellKey(row, col));
+    });
+  }
+
+  function calculateComboCredits(mergeCount) {
+    if (game.size !== CLASSIC_SIZE || mergeCount === 0 || game.combo < 2) return 0;
+    const chainReward = Math.min(8, game.combo - 1);
+    const multiMergeBonus = Math.max(0, mergeCount - 1);
+    return chainReward + multiMergeBonus;
+  }
+
+  function highestTile(board) {
+    return Math.max(...board.flat());
+  }
+
+  function serializeBoard(board) {
+    return board.map(row => row.join(",")).join("|");
+  }
+
+  function cellKey(row, col) {
+    return `${row}:${col}`;
+  }
+
+  function hasMoves() {
+    for (let row = 0; row < game.size; row += 1) {
+      for (let col = 0; col < game.size; col += 1) {
+        const value = game.board[row][col];
+        if (value === 0) return true;
+        if (row + 1 < game.size && value === game.board[row + 1][col]) return true;
+        if (col + 1 < game.size && value === game.board[row][col + 1]) return true;
+      }
+    }
+    return false;
+  }
+
+  function finishGame() {
+    game.active = false;
+    save.mutate(data => { data.currentRun = snapshotGame(); });
+    elements.finalScore.textContent = formatNumber(game.score);
+    elements.finalCombo.textContent = `×${game.bestCombo}`;
+    elements.finalCredits.textContent = formatNumber(game.earned);
+    elements.gameoverModal.classList.remove("hidden");
+    refreshMenu();
+    playTone("over");
+  }
+
+  /* ---------- Rendering ---------- */
+
+  function renderAll() {
+    renderBoard();
+    refreshHud();
+    refreshMenu();
+    refreshSettings();
+    refreshSkinShop();
+    refreshStats();
+    refreshSound();
+  }
+
+  function renderBoard() {
+    const size = game.size;
+    elements.board.style.setProperty("--size", size);
+    elements.board.className = `board skin-${save.data.selectedSkin}`;
+    elements.cellLayer.replaceChildren();
+    elements.tileLayer.replaceChildren();
+
+    for (let index = 0; index < size * size; index += 1) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      elements.cellLayer.appendChild(cell);
+    }
+
+    for (let row = 0; row < size; row += 1) {
+      for (let col = 0; col < size; col += 1) {
+        const value = game.board[row][col];
+        if (!value) continue;
+
+        const tile = document.createElement("div");
+        const key = cellKey(row, col);
+        tile.className = "tile";
+        if (key === newestCell) tile.classList.add("new");
+        if (mergedCells.has(key)) tile.classList.add("merged");
+        tile.style.gridRow = String(row + 1);
+        tile.style.gridColumn = String(col + 1);
+
+        const color = tileColor(value);
+        const font = tileFontSize(value, size);
+        tile.style.setProperty("--tile-bg", color.bg);
+        tile.style.setProperty("--tile-ink", color.ink);
+        tile.style.setProperty("--tile-line", color.line);
+        tile.style.setProperty("--tile-shadow", `0 8px 16px ${color.bg}24, inset 0 -5px 10px rgba(0,0,0,.12)`);
+        tile.style.setProperty("--tile-font", font);
+
+        const inner = document.createElement("div");
+        inner.className = "tile-inner";
+
+        const number = document.createElement("span");
+        number.className = "tile-value";
+        number.textContent = String(value);
+
+        inner.appendChild(number);
+        tile.appendChild(inner);
+        elements.tileLayer.appendChild(tile);
+      }
+    }
+  }
+
+  function tileColor(value) {
+    const exponent = Math.max(1, Math.log2(value));
+    const base = TILE_COLORS[Math.min(TILE_COLORS.length - 1, exponent - 1)];
+    if (exponent <= TILE_COLORS.length) return base;
+
+    const hue = (exponent * 37) % 360;
+    return {
+      bg: `hsl(${hue} 78% 58%)`,
+      ink: "#ffffff",
+      line: "rgba(255,255,255,.28)"
+    };
+  }
+
+  function tileFontSize(value, size) {
+    const digits = String(value).length;
+    const sizeScale = { 3: 1.25, 4: 1, 5: .76, 6: .61 }[size] || 1;
+    const digitScale = digits <= 2 ? 1 : digits === 3 ? .84 : digits === 4 ? .67 : .52;
+    return `clamp(10px, ${4.2 * sizeScale * digitScale}vw, ${43 * sizeScale * digitScale}px)`;
+  }
+
+  function refreshHud() {
+    const classic = game.size === CLASSIC_SIZE;
+    const best = save.data.bestScores[game.size] || 0;
+    const skin = SKINS[save.data.selectedSkin] || SKINS.classic;
+
+    elements.score.textContent = formatNumber(game.score);
+    elements.best.textContent = formatNumber(best);
+    elements.combo.textContent = `×${game.combo}`;
+    elements.comboLabel.textContent = `${Math.min(game.combo, 5)} / 5`;
+    elements.comboFill.style.width = `${Math.min(100, game.combo * 20)}%`;
+    elements.sideSize.textContent = `${game.size}×${game.size}`;
+    elements.sideSkin.textContent = skin.name;
+    elements.runCredits.textContent = formatNumber(game.earned);
+    elements.runStatus.textContent = classic ? "Classic board" : "Custom board";
+    elements.topMode.textContent = `${game.size}×${game.size} ${classic ? "CLASSIC" : "CUSTOM"}`;
+    elements.creditState.textContent = classic ? "CREDITS ON" : "NO CREDITS";
+    elements.creditState.className = `credit-state ${classic ? "on" : "off"}`;
+  }
+
+  function refreshMenu() {
+    const size = save.data.boardSize;
+    const classic = size === CLASSIC_SIZE;
+    const run = save.data.currentRun;
+    const canContinue = Boolean(run && run.active);
+
+    elements.menuSizeName.textContent = SIZE_NAMES[size];
+    elements.menuSizeCopy.textContent = classic ? "Combos earn credits" : "Custom board · no credits";
+    elements.menuModeTag.textContent = classic ? "CREDITS ON" : "NO CREDITS";
+    elements.menuModeTag.classList.toggle("custom", !classic);
+    elements.continueButton.classList.toggle("hidden", !canContinue);
+  }
+
+  function refreshSettings() {
+    elements.sizeGrid.querySelectorAll("[data-size]").forEach(button => {
+      button.classList.toggle("active", Number(button.dataset.size) === save.data.boardSize);
+    });
+  }
+
+  function refreshSkinShop() {
+    elements.skinGrid.replaceChildren();
+
+    Object.entries(SKINS).forEach(([id, skin]) => {
+      const owned = save.ownsSkin(id);
+      const selected = save.data.selectedSkin === id;
+      const card = document.createElement("article");
+      card.className = `skin-card${selected ? " selected" : ""}`;
+
+      const preview = document.createElement("div");
+      preview.className = `skin-preview preview-${id}`;
+      [2, 8, 64].forEach((value, index) => {
+        const tile = document.createElement("div");
+        tile.className = "preview-tile";
+        tile.style.setProperty("--preview", skin.preview[index]);
+        tile.textContent = String(value);
+        preview.appendChild(tile);
+      });
+
+      const info = document.createElement("div");
+      info.className = "skin-info";
+      info.innerHTML = `<strong>${skin.name}</strong><span>${skin.copy}</span>`;
+
+      const action = document.createElement("button");
+      action.className = `skin-action${!owned ? " buy" : ""}`;
+      action.dataset.skin = id;
+
+      if (selected) {
+        action.textContent = "SELECTED";
+        action.disabled = true;
+      } else if (owned) {
+        action.textContent = "USE";
+      } else {
+        action.innerHTML = `<span class="credit-dot">C</span> ${skin.price}`;
+        action.disabled = save.data.credits < skin.price;
+      }
+
+      card.append(preview, info, action);
+      elements.skinGrid.appendChild(card);
+    });
+  }
+
+  function refreshStats() {
+    const stats = save.data.stats;
+    const items = [
+      ["Best 4×4", save.data.bestScores[4]],
+      ["Highest tile", stats.highestTile],
+      ["Best combo", `×${stats.bestCombo}`],
+      ["Games", stats.gamesPlayed],
+      ["Moves", stats.totalMoves],
+      ["Merges", stats.totalMerges],
+      ["Credits earned", stats.creditsEarned],
+      ["Skins", `${save.data.ownedSkins.length}/${Object.keys(SKINS).length}`]
+    ];
+
+    elements.statsGrid.innerHTML = items.map(([label, value]) => `
+      <div class="stat-box">
+        <span>${label}</span>
+        <strong>${typeof value === "number" ? formatNumber(value) : value}</strong>
+      </div>
+    `).join("");
+  }
+
+  function refreshCredits(currentData) {
+    if (!elements.app || !currentData) return;
+    document.querySelectorAll("[data-credits]").forEach(node => {
+      node.textContent = formatNumber(currentData.credits);
+    });
+  }
+
+  function refreshSound() {
+    const on = save.data.sound;
+    elements.soundButton.textContent = on ? "♪" : "×";
+    elements.soundButton.setAttribute("aria-label", on ? "Mute sound" : "Enable sound");
+    elements.settingsSound.classList.toggle("on", on);
+    elements.settingsSound.setAttribute("aria-checked", String(on));
+  }
+
+  function formatNumber(value) {
+    return Math.max(0, Number(value) || 0).toLocaleString("en-US");
+  }
+
+  /* ---------- Menus and shop ---------- */
+
+  function showMenuView(id) {
+    document.querySelectorAll(".menu-view").forEach(view => {
+      view.classList.toggle("active", view.id === id);
+    });
+
+    if (id === "skins-view") refreshSkinShop();
+    if (id === "stats-view") refreshStats();
+    if (id === "settings-view") refreshSettings();
+  }
+
+  function openMenu() {
+    showMenuView("home-view");
+    refreshMenu();
+    elements.menuOverlay.classList.remove("hidden");
+  }
+
+  function closeMenu() {
+    elements.menuOverlay.classList.add("hidden");
+  }
+
+  function chooseSize(size) {
+    if (![3, 4, 5, 6].includes(size)) return;
+    save.update({ boardSize: size });
+    refreshSettings();
+    refreshMenu();
+    playTone("select");
+  }
+
+  function useOrBuySkin(id) {
+    const skin = SKINS[id];
+    if (!skin) return;
+
+    if (save.ownsSkin(id)) {
+      save.update({ selectedSkin: id });
+      renderAll();
+      playTone("select");
+      return;
+    }
+
+    if (save.buySkin(id, skin.price)) {
+      renderAll();
+      showToast(`<b>${skin.name}</b> unlocked`);
+      playTone("buy");
+    }
+  }
+
+  function toggleSound() {
+    save.update({ sound: !save.data.sound });
+    refreshSound();
+    if (save.data.sound) playTone("select");
+  }
+
+  function openConfirm(action) {
+    confirmAction = action;
+    elements.confirmModal.classList.remove("hidden");
+  }
+
+  function closeAllModals() {
+    elements.gameoverModal.classList.add("hidden");
+    elements.winModal.classList.add("hidden");
+    elements.confirmModal.classList.add("hidden");
+  }
+
+  function showToast(html) {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = html;
+    elements.toastStack.appendChild(toast);
+    window.setTimeout(() => toast.remove(), 2700);
+  }
+
+  function showComboReward(credits) {
+    elements.comboPop.textContent = `COMBO ×${game.combo}  +${credits}C`;
+    elements.comboPop.classList.remove("active");
+    void elements.comboPop.offsetWidth;
+    elements.comboPop.classList.add("active");
+  }
+
+  function flashBoard() {
+    elements.boardFlash.classList.remove("active");
+    void elements.boardFlash.offsetWidth;
+    elements.boardFlash.classList.add("active");
+  }
+
+  /* ---------- Input ---------- */
+
+  document.addEventListener("keydown", event => {
+    const directionByCode = {
+      ArrowLeft: "left",
+      KeyA: "left",
+      ArrowRight: "right",
+      KeyD: "right",
+      ArrowUp: "up",
+      KeyW: "up",
+      ArrowDown: "down",
+      KeyS: "down"
+    };
+
+    const direction = directionByCode[event.code];
+    if (direction) {
+      event.preventDefault();
+      move(direction);
+    }
+
+    if (event.code === "Escape" && gameIsVisible) {
+      if (elements.menuOverlay.classList.contains("hidden")) openMenu();
+      else closeMenu();
+    }
+  });
+
+  let pointerStart = null;
+
+  function beginSwipe(x, y) {
+    if (!gameIsVisible) return;
+    pointerStart = { x, y };
+  }
+
+  function endSwipe(x, y) {
+    if (!pointerStart) return;
+    const dx = x - pointerStart.x;
+    const dy = y - pointerStart.y;
+    pointerStart = null;
+
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? "right" : "left");
+    else move(dy > 0 ? "down" : "up");
+  }
+
+  elements.board.addEventListener("pointerdown", event => {
+    if (event.button !== undefined && event.button !== 0) return;
+    elements.board.setPointerCapture?.(event.pointerId);
+    beginSwipe(event.clientX, event.clientY);
+  });
+
+  elements.board.addEventListener("pointerup", event => {
+    endSwipe(event.clientX, event.clientY);
+  });
+
+  elements.board.addEventListener("pointercancel", () => {
+    pointerStart = null;
+  });
+
+  /* ---------- Generated sound ---------- */
+
+  function getAudioContext() {
+    if (!audioContext) {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return null;
+      audioContext = new AudioCtor();
+    }
+    if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+    return audioContext;
+  }
+
+  function playTone(type) {
+    if (!save.data.sound) return;
+    const context = getAudioContext();
+    if (!context) return;
+
+    const patterns = {
+      move: [[180, .025, .025]],
+      blocked: [[105, .018, .018]],
+      merge: [[330, .05, .04], [450, .04, .055]],
+      combo: [[410, .05, .04], [610, .06, .06]],
+      select: [[290, .035, .04]],
+      buy: [[420, .05, .04], [620, .06, .07], [830, .08, .1]],
+      start: [[260, .04, .04], [390, .05, .06]],
+      over: [[230, .07, .05], [165, .12, .08]],
+      win: [[392, .08, .05], [523, .08, .14], [659, .13, .24]]
+    };
+
+    const pattern = patterns[type] || patterns.select;
+    const start = context.currentTime;
+    pattern.forEach(([frequency, duration, delay]) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = type === "blocked" || type === "over" ? "triangle" : "sine";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(.0001, start + delay);
+      gain.gain.exponentialRampToValueAtTime(.045, start + delay + .008);
+      gain.gain.exponentialRampToValueAtTime(.0001, start + delay + duration + .05);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(start + delay);
+      oscillator.stop(start + delay + duration + .07);
+    });
+  }
+
+  /* ---------- Events ---------- */
+
+  elements.playButton.addEventListener("click", () => {
+    const current = save.data.currentRun;
+    if (current && current.active) openConfirm(() => startNewGame(true));
+    else startNewGame(true);
+  });
+
+  elements.continueButton.addEventListener("click", continueSavedGame);
+  elements.newButton.addEventListener("click", () => startNewGame(false));
+  elements.menuButton.addEventListener("click", openMenu);
+  elements.soundButton.addEventListener("click", toggleSound);
+  elements.settingsSound.addEventListener("click", toggleSound);
+
+  document.querySelectorAll("[data-view]").forEach(button => {
+    button.addEventListener("click", () => showMenuView(button.dataset.view));
+  });
+
+  elements.sizeGrid.addEventListener("click", event => {
+    const button = event.target.closest("[data-size]");
+    if (button) chooseSize(Number(button.dataset.size));
+  });
+
+  elements.skinGrid.addEventListener("click", event => {
+    const button = event.target.closest("[data-skin]");
+    if (button && !button.disabled) useOrBuySkin(button.dataset.skin);
+  });
+
+  document.getElementById("confirm-no").addEventListener("click", () => {
+    confirmAction = null;
+    elements.confirmModal.classList.add("hidden");
+  });
+
+  document.getElementById("confirm-yes").addEventListener("click", () => {
+    const action = confirmAction;
+    confirmAction = null;
+    elements.confirmModal.classList.add("hidden");
+    action?.();
+  });
+
+  document.getElementById("gameover-again").addEventListener("click", () => startNewGame(true));
+  document.getElementById("gameover-menu").addEventListener("click", () => {
+    elements.gameoverModal.classList.add("hidden");
+    openMenu();
+  });
+
+  document.getElementById("win-continue").addEventListener("click", () => {
+    elements.winModal.classList.add("hidden");
+    inputLocked = false;
+  });
+
+  document.getElementById("win-again").addEventListener("click", () => startNewGame(true));
+
+  /* ---------- Startup ---------- */
+
+  function boot() {
+    if (save.data.currentRun) {
+      game = {
+        ...save.data.currentRun,
+        board: save.data.currentRun.board.map(row => [...row])
+      };
+    } else {
+      game = createEmptyGame(save.data.boardSize);
+      addRandomTile(false);
+      addRandomTile(false);
+    }
+
+    renderAll();
+    openMenu();
+  }
+
+  boot();
+
+  window.Game2048 = {
+    newGame: () => startNewGame(true),
+    move,
+    getData: () => JSON.parse(JSON.stringify(save.data))
+  };
+  </script>
+</body>
+</html>

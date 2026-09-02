@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#07110d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Snake Arcade</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f3fff7;
+      --muted: #8ba398;
+      --lime: #9cf257;
+      --mint: #4ce5a5;
+      --yellow: #ffd95b;
+      --red: #ff6278;
+      --cyan: #57d9ff;
+      --panel: #0d1713;
+      --line: rgba(220,255,235,.13);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 50% -10%, #263f34 0, #101d17 35%, #050a08 78%),
+        #050a08;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      user-select: none;
+      touch-action: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--yellow);
+      outline-offset: 3px;
+    }
+
+    .app-shell {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      width: 100vw;
+      height: 100dvh;
+      padding: clamp(0px, 1.2vw, 12px);
+      place-items: center;
+    }
+
+    #game-container {
+      position: relative;
+      width: min(100%, 820px);
+      height: min(100%, 960px);
+      min-height: 420px;
+      overflow: hidden;
+      background: #07100c;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 18px;
+      box-shadow: 0 35px 100px rgba(0,0,0,.68), inset 0 1px rgba(255,255,255,.05);
+      isolation: isolate;
+    }
+
+    #gameCanvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hud {
+      position: absolute;
+      z-index: 7;
+      top: 11px;
+      left: 50%;
+      display: grid;
+      width: min(calc(100% - 128px), 560px);
+      grid-template-columns: repeat(3, 1fr);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .hud-stat {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hud-stat span {
+      color: var(--muted);
+      font-size: clamp(8px, 1.5vw, 10px);
+      font-weight: 950;
+      letter-spacing: .15em;
+    }
+
+    .hud-stat strong {
+      margin-top: 2px;
+      overflow: hidden;
+      color: var(--lime);
+      font-size: clamp(19px, 4vw, 30px);
+      font-weight: 1000;
+      line-height: 1;
+      text-overflow: ellipsis;
+      text-shadow: 0 0 16px rgba(156,242,87,.25);
+      white-space: nowrap;
+    }
+
+    .hud-stat.mode strong {
+      color: var(--yellow);
+      font-size: clamp(11px, 2vw, 16px);
+      line-height: 1.3;
+    }
+
+    .corner-actions {
+      position: absolute;
+      z-index: 8;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-button {
+      display: none;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      place-items: center;
+      color: var(--ink);
+      background: rgba(12,24,18,.82);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    #game-container.is-playing .icon-button {
+      display: grid;
+    }
+
+    .mobile-controls {
+      position: absolute;
+      z-index: 9;
+      bottom: 13px;
+      left: 50%;
+      display: none;
+      grid-template-columns: repeat(3, 58px);
+      grid-template-rows: repeat(2, 52px);
+      gap: 6px;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    #game-container.touch-enabled.is-playing .mobile-controls {
+      display: grid;
+    }
+
+    .direction-button {
+      display: grid;
+      padding: 0;
+      place-items: center;
+      color: rgba(255,255,255,.78);
+      background: rgba(10,22,16,.72);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      box-shadow: inset 0 1px rgba(255,255,255,.06);
+      font-size: 19px;
+      pointer-events: auto;
+    }
+
+    .direction-button:active {
+      color: var(--ink);
+      background: rgba(76,229,165,.25);
+      transform: scale(.95);
+    }
+
+    .direction-button.up { grid-column: 2; grid-row: 1; }
+    .direction-button.left { grid-column: 1; grid-row: 2; }
+    .direction-button.down { grid-column: 2; grid-row: 2; }
+    .direction-button.right { grid-column: 3; grid-row: 2; }
+
+    .screen {
+      position: absolute;
+      z-index: 20;
+      inset: 0;
+      display: grid;
+      padding: clamp(9px, 3vw, 24px);
+      overflow: auto;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 15%, rgba(53,92,72,.36), transparent 44%),
+        rgba(4,10,7,.86);
+      backdrop-filter: blur(11px);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .panel {
+      position: relative;
+      width: min(100%, 600px);
+      padding: clamp(18px, 4vw, 34px);
+      overflow: hidden;
+      background: linear-gradient(145deg, rgba(17,32,24,.98), rgba(7,14,10,.98));
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 18px;
+      box-shadow: 0 30px 90px rgba(0,0,0,.6), inset 0 1px rgba(255,255,255,.06);
+    }
+
+    .panel::before {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--mint), var(--lime), var(--yellow));
+      content: "";
+    }
+
+    .panel.wide {
+      width: min(100%, 720px);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--lime);
+      font-size: 9px;
+      font-weight: 1000;
+      letter-spacing: .22em;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1,
+    h2 {
+      margin-bottom: 7px;
+      font-size: clamp(30px, 7vw, 52px);
+      font-weight: 1000;
+      letter-spacing: -.055em;
+      line-height: .92;
+    }
+
+    h1 span {
+      color: var(--lime);
+    }
+
+    h3 {
+      margin-bottom: 4px;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .subtitle {
+      margin-bottom: 17px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .credit-chip {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      color: var(--yellow);
+      background: rgba(255,217,91,.07);
+      border: 1px solid rgba(255,217,91,.25);
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 1000;
+      letter-spacing: .08em;
+    }
+
+    .snake-preview {
+      position: relative;
+      height: 176px;
+      margin: 16px 0;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(156,242,87,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(156,242,87,.035) 1px, transparent 1px),
+        #07110d;
+      background-size: 22px 22px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+    }
+
+    #menu-preview {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .loadout-line {
+      display: flex;
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    .loadout-line strong {
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .button-grid.two {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .primary,
+    .secondary,
+    .danger,
+    .tab-button,
+    .skin-action,
+    .choice-button {
+      min-height: 46px;
+      padding: 10px 13px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: .07em;
+      transition: transform .12s, filter .12s, border-color .12s;
+    }
+
+    .primary:hover,
+    .secondary:hover,
+    .danger:hover,
+    .tab-button:hover,
+    .skin-action:hover,
+    .choice-button:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      color: #09110d;
+      background: var(--lime);
+      border: 1px solid var(--lime);
+    }
+
+    .secondary {
+      color: var(--ink);
+      background: rgba(255,255,255,.055);
+      border: 1px solid var(--line);
+    }
+
+    .danger {
+      color: #ff9aaa;
+      background: rgba(255,98,120,.08);
+      border: 1px solid rgba(255,98,120,.25);
+    }
+
+    .compact {
+      min-height: 38px;
+      padding: 7px 9px;
+      font-size: 9px;
+    }
+
+    .setting-list {
+      display: grid;
+      margin: 15px 0;
+      gap: 8px;
+    }
+
+    .setting-row {
+      display: grid;
+      min-height: 72px;
+      padding: 10px 12px;
+      grid-template-columns: 150px 1fr 72px;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .setting-copy strong {
+      display: block;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .06em;
+    }
+
+    .setting-copy small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.3;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      accent-color: var(--lime);
+      cursor: pointer;
+    }
+
+    .setting-value {
+      padding: 7px 4px;
+      color: var(--yellow);
+      background: rgba(255,217,91,.06);
+      border: 1px solid rgba(255,217,91,.18);
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 950;
+      text-align: center;
+    }
+
+    .mode-choices {
+      display: grid;
+      margin: 9px 0 15px;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .choice-button {
+      min-height: 58px;
+      color: var(--muted);
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .choice-button strong,
+    .choice-button small {
+      display: block;
+    }
+
+    .choice-button small {
+      margin-top: 4px;
+      font-size: 8px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .choice-button.selected {
+      color: var(--ink);
+      background: var(--lime);
+      border-color: var(--lime);
+    }
+
+    .choice-button.selected small {
+      color: rgba(9,17,13,.62);
+    }
+
+    .tabs {
+      display: grid;
+      margin: 13px 0 9px;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .tab-button {
+      min-height: 38px;
+      padding: 7px;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--line);
+      font-size: 9px;
+    }
+
+    .tab-button.active {
+      color: var(--ink);
+      background: var(--lime);
+      border-color: var(--lime);
+    }
+
+    .skin-grid {
+      display: grid;
+      max-height: calc(100dvh - 210px);
+      padding-right: 3px;
+      overflow: auto;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      scrollbar-color: #395044 transparent;
+    }
+
+    .skin-card {
+      min-width: 0;
+      overflow: hidden;
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .skin-card.selected {
+      border-color: var(--lime);
+      box-shadow: inset 0 0 0 1px var(--lime);
+    }
+
+    .skin-visual {
+      display: grid;
+      height: 106px;
+      overflow: hidden;
+      place-items: center;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        #06100b;
+      background-size: 15px 15px;
+    }
+
+    .skin-visual canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .fruit-visual {
+      font-size: clamp(43px, 8vw, 62px);
+      filter: drop-shadow(0 7px 5px rgba(0,0,0,.3));
+    }
+
+    .skin-copy {
+      padding: 9px;
+    }
+
+    .skin-copy p {
+      min-height: 26px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .skin-action {
+      width: 100%;
+      min-height: 34px;
+      padding: 6px;
+      color: var(--ink);
+      background: var(--lime);
+      border: 1px solid var(--lime);
+      font-size: 9px;
+    }
+
+    .skin-action.equip {
+      color: var(--ink);
+      background: var(--yellow);
+      border-color: var(--yellow);
+    }
+
+    .skin-action:disabled {
+      color: var(--lime);
+      background: rgba(156,242,87,.06);
+      border-color: rgba(156,242,87,.22);
+      cursor: default;
+    }
+
+    .fruit-card .skin-action {
+      color: var(--ink);
+      background: #dce8df;
+      border-color: #dce8df;
+    }
+
+    .fruit-card.selected .skin-action {
+      color: var(--ink);
+      background: var(--lime);
+      border-color: var(--lime);
+    }
+
+    .result-badge {
+      display: grid;
+      width: 112px;
+      height: 112px;
+      margin: 4px auto 13px;
+      place-items: center;
+      background: rgba(156,242,87,.06);
+      border: 1px solid rgba(156,242,87,.2);
+      border-radius: 50%;
+      font-size: 56px;
+    }
+
+    .result-grid,
+    .stats-grid {
+      display: grid;
+      margin: 15px 0;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .result-grid div,
+    .stats-grid div {
+      padding: 9px 5px;
+      text-align: center;
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .result-grid span,
+    .stats-grid span {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .1em;
+    }
+
+    .result-grid strong,
+    .stats-grid strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 18px;
+    }
+
+    #toast {
+      position: absolute;
+      z-index: 60;
+      right: 15px;
+      bottom: 14px;
+      left: 15px;
+      max-width: 440px;
+      margin: auto;
+      padding: 10px 13px;
+      color: var(--ink);
+      background: #1d2d25;
+      border: 1px solid rgba(255,255,255,.17);
+      border-radius: 9px;
+      box-shadow: 0 14px 35px rgba(0,0,0,.45);
+      font-size: 10px;
+      font-weight: 850;
+      text-align: center;
+      transform: translateY(80px);
+      transition: transform .2s;
+      pointer-events: none;
+    }
+
+    #toast.visible {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 610px) {
+      .app-shell { padding: 0; }
+      #game-container { width: 100%; height: 100%; border: 0; border-radius: 0; }
+      .panel { border-radius: 12px; }
+      .snake-preview { height: 145px; }
+      .skin-grid { grid-template-columns: repeat(2, 1fr); max-height: calc(100dvh - 194px); }
+      .panel.wide { max-height: calc(100dvh - 12px); padding: 14px 11px; }
+      .setting-row { min-height: 64px; grid-template-columns: 105px 1fr 58px; gap: 8px; }
+      .setting-copy small { display: none; }
+      .button-grid { grid-template-columns: 1.2fr 1fr 1fr; }
+    }
+
+    @media (max-height: 640px) and (orientation: landscape) {
+      .screen { padding: 6px; }
+      .panel { padding: 14px 18px; }
+      .snake-preview { display: none; }
+      .loadout-line { margin: 9px 0; }
+      .setting-list { grid-template-columns: repeat(3, 1fr); }
+      .setting-row { grid-template-columns: 1fr; gap: 5px; text-align: center; }
+      .setting-value { padding: 4px; }
+      .mode-choices { margin: 7px 0; }
+      .skin-grid { grid-template-columns: repeat(3, 1fr); max-height: calc(100dvh - 150px); }
+      .skin-visual { height: 70px; }
+      .skin-copy p { display: none; }
+      .skin-copy h3 { min-height: 28px; }
+      .mobile-controls { right: 16px; bottom: 12px; left: auto; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(2, 43px); transform: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        transition-duration: .001ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app-shell">
+    <section id="game-container" aria-label="Snake Arcade">
+      <canvas id="gameCanvas" aria-label="Snake game board"></canvas>
+
+      <header class="hud">
+        <div class="hud-stat"><span>SCORE</span><strong id="score">0</strong></div>
+        <div class="hud-stat mode"><span>MODE</span><strong id="hud-mode">CLASSIC</strong></div>
+        <div class="hud-stat"><span>BEST</span><strong id="best">0</strong></div>
+      </header>
+
+      <div class="corner-actions">
+        <button id="pause-button" class="icon-button" type="button" aria-label="Pause game">II</button>
+      </div>
+
+      <nav id="mobile-controls" class="mobile-controls" aria-label="Touch controls">
+        <button class="direction-button up" data-direction="up" type="button" aria-label="Move up">▲</button>
+        <button class="direction-button left" data-direction="left" type="button" aria-label="Move left">◀</button>
+        <button class="direction-button down" data-direction="down" type="button" aria-label="Move down">▼</button>
+        <button class="direction-button right" data-direction="right" type="button" aria-label="Move right">▶</button>
+      </nav>
+
+      <section id="menu-screen" class="screen" aria-labelledby="menu-title">
+        <div class="panel">
+          <div class="panel-header">
+            <div><p class="eyebrow">ARCADE</p><h1 id="menu-title">SNA<span>KE</span></h1></div>
+            <span id="menu-credits" class="credit-chip">0 CREDITS</span>
+          </div>
+
+          <div class="snake-preview">
+            <canvas id="menu-preview" width="560" height="176" aria-label="Selected snake preview"></canvas>
+          </div>
+
+          <div class="loadout-line">
+            <span>CURRENT SETUP</span>
+            <strong id="setup-label">24×24 · NORMAL · 1 FRUIT</strong>
+          </div>
+
+          <div class="button-grid">
+            <button id="play-button" class="primary" type="button">PLAY</button>
+            <button id="settings-button" class="secondary" type="button">SETTINGS</button>
+            <button id="skins-button" class="secondary" type="button">SKINS</button>
+          </div>
+          <div class="button-grid two" style="margin-top:8px">
+            <button id="stats-button" class="secondary compact" type="button">STATS</button>
+            <button id="sound-button" class="secondary compact" type="button">SOUND: ON</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings-screen" class="screen hidden" aria-labelledby="settings-title">
+        <div class="panel wide">
+          <p class="eyebrow">GAME SETUP</p>
+          <h2 id="settings-title">SETTINGS</h2>
+          <div class="setting-list">
+            <label class="setting-row">
+              <span class="setting-copy"><strong>MAP SIZE</strong><small>From 14×14 to 40×40</small></span>
+              <input id="size-input" type="range" min="14" max="40" step="2" value="24">
+              <output id="size-value" class="setting-value">24×24</output>
+            </label>
+            <label class="setting-row">
+              <span class="setting-copy"><strong>SPEED</strong><small>Movement speed</small></span>
+              <input id="speed-input" type="range" min="0" max="3" step="1" value="1">
+              <output id="speed-value" class="setting-value">NORMAL</output>
+            </label>
+            <label class="setting-row">
+              <span class="setting-copy"><strong>FRUIT COUNT</strong><small>Simultaneous fruit</small></span>
+              <input id="fruit-count-input" type="range" min="1" max="5" step="1" value="1">
+              <output id="fruit-count-value" class="setting-value">1</output>
+            </label>
+          </div>
+
+          <div class="mode-choices">
+            <button id="classic-mode" class="choice-button selected" type="button">
+              <strong>CLASSIC</strong><small>Eat, grow and avoid walls and your body.</small>
+            </button>
+            <button id="reverse-mode" class="choice-button" type="button">
+              <strong>REVERSE</strong><small>Every fruit turns your tail into your new head.</small>
+            </button>
+          </div>
+
+          <div class="button-grid two">
+            <button id="apply-settings-button" class="primary" type="button">APPLY</button>
+            <button id="settings-back-button" class="secondary" type="button">BACK</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="skins-screen" class="screen hidden" aria-labelledby="skins-title">
+        <div class="panel wide">
+          <div class="panel-header">
+            <div><p class="eyebrow">CUSTOMIZE</p><h2 id="skins-title">SKINS</h2></div>
+            <span id="shop-credits" class="credit-chip">0 CREDITS</span>
+          </div>
+          <div class="tabs" role="tablist">
+            <button id="snake-tab" class="tab-button active" type="button">SNAKES</button>
+            <button id="fruit-tab" class="tab-button" type="button">FRUIT</button>
+          </div>
+          <div id="skin-grid" class="skin-grid"></div>
+          <button id="skins-back-button" class="secondary compact" type="button" style="width:100%;margin-top:9px">BACK</button>
+        </div>
+      </section>
+
+      <section id="stats-screen" class="screen hidden" aria-labelledby="stats-title">
+        <div class="panel">
+          <p class="eyebrow">CAREER</p>
+          <h2 id="stats-title">STATS</h2>
+          <div class="stats-grid">
+            <div><span>GAMES</span><strong id="stat-games">0</strong></div>
+            <div><span>FRUIT</span><strong id="stat-fruit">0</strong></div>
+            <div><span>BEST</span><strong id="stat-best">0</strong></div>
+            <div><span>LONGEST</span><strong id="stat-longest">4</strong></div>
+            <div><span>CLASSIC</span><strong id="stat-classic">0</strong></div>
+            <div><span>REVERSE</span><strong id="stat-reverse">0</strong></div>
+          </div>
+          <button id="stats-back-button" class="secondary" type="button" style="width:100%">BACK</button>
+        </div>
+      </section>
+
+      <section id="pause-screen" class="screen hidden" aria-labelledby="pause-title">
+        <div class="panel">
+          <p class="eyebrow">GAME HELD</p>
+          <h2 id="pause-title">PAUSED</h2>
+          <div class="button-grid two">
+            <button id="resume-button" class="primary" type="button">RESUME</button>
+            <button id="pause-menu-button" class="danger" type="button">MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="gameover-screen" class="screen hidden" aria-labelledby="gameover-title">
+        <div class="panel" style="text-align:center">
+          <div id="result-emoji" class="result-badge">🐍</div>
+          <h2 id="gameover-title">GAME OVER</h2>
+          <p id="gameover-reason" class="subtitle">You hit the wall.</p>
+          <div class="result-grid">
+            <div><span>SCORE</span><strong id="final-score">0</strong></div>
+            <div><span>LENGTH</span><strong id="final-length">4</strong></div>
+            <div><span>EARNED</span><strong id="earned-credits">0</strong></div>
+          </div>
+          <div class="button-grid two">
+            <button id="restart-button" class="primary" type="button">PLAY AGAIN</button>
+            <button id="gameover-menu-button" class="secondary" type="button">MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="toast" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    const $ = (selector) => document.querySelector(selector);
+
+    const SPEEDS = Object.freeze([
+      { id: "relaxed", name: "Relaxed", interval: 165, multiplier: .75 },
+      { id: "normal", name: "Normal", interval: 118, multiplier: 1 },
+      { id: "fast", name: "Fast", interval: 86, multiplier: 1.35 },
+      { id: "extreme", name: "Extreme", interval: 62, multiplier: 1.8 }
+    ]);
+
+    const SNAKE_SKINS = Object.freeze({
+      garden: { id: "garden", name: "Garden Snake", price: 0, description: "Scales, eyes and tongue" },
+      circuit: { id: "circuit", name: "Circuit Serpent", price: 150, description: "Armored neon modules" },
+      dragon: { id: "dragon", name: "Little Dragon", price: 320, description: "Horns, plates and spines" },
+      skeleton: { id: "skeleton", name: "Bone Crawler", price: 500, description: "Skull and linked vertebrae" },
+      honeybee: { id: "honeybee", name: "Honey Runner", price: 720, description: "Striped body and wings" },
+      galaxy: { id: "galaxy", name: "Galaxy Coil", price: 980, description: "Planets, rings and stars" }
+    });
+
+    const FRUIT_SKINS = Object.freeze({
+      apple: { id: "apple", name: "Apple", emoji: "🍎" },
+      banana: { id: "banana", name: "Banana", emoji: "🍌" },
+      orange: { id: "orange", name: "Orange", emoji: "🍊" },
+      grapes: { id: "grapes", name: "Grapes", emoji: "🍇" },
+      strawberry: { id: "strawberry", name: "Strawberry", emoji: "🍓" },
+      cherries: { id: "cherries", name: "Cherries", emoji: "🍒" },
+      watermelon: { id: "watermelon", name: "Watermelon", emoji: "🍉" },
+      pineapple: { id: "pineapple", name: "Pineapple", emoji: "🍍" },
+      peach: { id: "peach", name: "Peach", emoji: "🍑" }
+    });
+
+    class SaveManager {
+      static STORAGE_KEY = "ARCADE_GAMES";
+      static GAME_KEY = "snake";
+
+      static data = {
+        version: 1,
+        credits: 0,
+        gamesPlayed: 0,
+        totalFruit: 0,
+        bestScore: 0,
+        longestSnake: 4,
+        bestByMode: { classic: 0, reverse: 0 },
+        selectedSnake: "garden",
+        ownedSnakes: ["garden"],
+        selectedFruits: ["apple"],
+        settings: {
+          boardSize: 24,
+          speed: "normal",
+          fruitCount: 1,
+          mode: "classic"
+        },
+        sound: true,
+        touchMode: "auto"
+      };
+
+      static readRoot() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || "{}");
+          return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+        } catch (error) {
+          console.warn("Snake could not read the shared save.", error);
+          return {};
+        }
+      }
+
+      static number(value, fallback = 0) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback;
+      }
+
+      static load() {
+        const defaults = JSON.parse(JSON.stringify(this.data));
+        const root = this.readRoot();
+        const stored = root[this.GAME_KEY];
+        if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+          this.data = {
+            ...defaults,
+            ...stored,
+            bestByMode: { ...defaults.bestByMode, ...(stored.bestByMode || {}) },
+            settings: { ...defaults.settings, ...(stored.settings || {}) }
+          };
+        }
+
+        for (const key of ["credits", "gamesPlayed", "totalFruit", "bestScore", "longestSnake"]) {
+          this.data[key] = this.number(this.data[key], key === "longestSnake" ? 4 : 0);
+        }
+        for (const mode of ["classic", "reverse"]) this.data.bestByMode[mode] = this.number(this.data.bestByMode[mode]);
+
+        const owned = Array.isArray(this.data.ownedSnakes)
+          ? this.data.ownedSnakes.filter((id) => Object.hasOwn(SNAKE_SKINS, id))
+          : [];
+        this.data.ownedSnakes = [...new Set(["garden", ...owned])];
+        if (!this.data.ownedSnakes.includes(this.data.selectedSnake)) this.data.selectedSnake = "garden";
+
+        const fruits = Array.isArray(this.data.selectedFruits)
+          ? this.data.selectedFruits.filter((id) => Object.hasOwn(FRUIT_SKINS, id))
+          : [];
+        this.data.selectedFruits = [...new Set(fruits.length ? fruits : ["apple"])] ;
+
+        this.data.settings.boardSize = Math.max(14, Math.min(40, this.number(this.data.settings.boardSize, 24)));
+        if (this.data.settings.boardSize % 2) this.data.settings.boardSize += 1;
+        if (!SPEEDS.some((speed) => speed.id === this.data.settings.speed)) this.data.settings.speed = "normal";
+        this.data.settings.fruitCount = Math.max(1, Math.min(5, this.number(this.data.settings.fruitCount, 1)));
+        if (!["classic", "reverse"].includes(this.data.settings.mode)) this.data.settings.mode = "classic";
+        if (!["auto", "on", "off"].includes(this.data.touchMode)) this.data.touchMode = "auto";
+        this.data.sound = this.data.sound !== false;
+        this.save();
+        return this.data;
+      }
+
+      static save() {
+        try {
+          const root = this.readRoot();
+          root[this.GAME_KEY] = JSON.parse(JSON.stringify(this.data));
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(root));
+          return true;
+        } catch (error) {
+          console.warn("Snake could not save progress.", error);
+          return false;
+        }
+      }
+    }
+
+    class SoundManager {
+      static context = null;
+
+      static audio() {
+        if (!SaveManager.data.sound) return null;
+        const Engine = window.AudioContext || window.webkitAudioContext;
+        if (!Engine) return null;
+        if (!this.context) this.context = new Engine();
+        if (this.context.state === "suspended") this.context.resume().catch(() => {});
+        return this.context;
+      }
+
+      static tone(frequency, duration, type = "sine", volume = .025, delay = 0) {
+        const audio = this.audio();
+        if (!audio) return;
+        const start = audio.currentTime + delay;
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(.0001, start);
+        gain.gain.exponentialRampToValueAtTime(volume, start + .007);
+        gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration + .02);
+      }
+
+      static fruit() {
+        this.tone(520, .055, "square", .018);
+        this.tone(760, .08, "triangle", .022, .045);
+      }
+      static reverse() {
+        this.tone(720, .07, "triangle", .02);
+        this.tone(430, .11, "sawtooth", .018, .065);
+      }
+      static crash() { this.tone(130, .2, "sawtooth", .03); this.tone(82, .24, "square", .018, .1); }
+      static click() { this.tone(320, .045, "sine", .012); }
+      static buy() {
+        this.tone(523, .08, "triangle", .025);
+        this.tone(659, .08, "triangle", .025, .08);
+        this.tone(784, .13, "triangle", .03, .16);
+      }
+    }
+
+    const container = $("#game-container");
+    const canvas = $("#gameCanvas");
+    const context = canvas.getContext("2d");
+    const previewCanvas = $("#menu-preview");
+    const previewContext = previewCanvas.getContext("2d");
+    const menuScreen = $("#menu-screen");
+    const settingsScreen = $("#settings-screen");
+    const skinsScreen = $("#skins-screen");
+    const statsScreen = $("#stats-screen");
+    const pauseScreen = $("#pause-screen");
+    const gameoverScreen = $("#gameover-screen");
+    const scoreElement = $("#score");
+    const bestElement = $("#best");
+    const hudModeElement = $("#hud-mode");
+    const setupLabel = $("#setup-label");
+    const skinGrid = $("#skin-grid");
+    const snakeTab = $("#snake-tab");
+    const fruitTab = $("#fruit-tab");
+    const toastElement = $("#toast");
+
+    let phase = "menu";
+    let viewWidth = 820;
+    let viewHeight = 960;
+    let pixelRatio = 1;
+    let cellSize = 24;
+    let boardPixels = 576;
+    let offsetX = 0;
+    let offsetY = 0;
+    let snake = [];
+    let fruits = [];
+    let direction = { x: 1, y: 0 };
+    let directionQueue = [];
+    let score = 0;
+    let accumulator = 0;
+    let lastTime = performance.now();
+    let lastMoveTime = 0;
+    let skinTab = "snake";
+    let toastTimer = 0;
+    let swipeStart = null;
+    let resultTimer = 0;
+    let draftMode = "classic";
+
+    function settings() { return SaveManager.data.settings; }
+    function boardSize() { return settings().boardSize; }
+    function speedConfig() { return SPEEDS.find((speed) => speed.id === settings().speed) || SPEEDS[1]; }
+    function keyOf(point) { return `${point.x},${point.y}`; }
+    function samePoint(first, second) { return first.x === second.x && first.y === second.y; }
+    function clamp(value, minimum, maximum) { return Math.max(minimum, Math.min(maximum, value)); }
+
+    function showToast(message) {
+      toastElement.textContent = message;
+      toastElement.classList.add("visible");
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => toastElement.classList.remove("visible"), 1750);
+    }
+
+    function touchPreferred() {
+      try { return window.matchMedia("(pointer: coarse)").matches; }
+      catch (error) { return false; }
+    }
+
+    function applyTouchMode() {
+      const enabled = SaveManager.data.touchMode === "on" ||
+        (SaveManager.data.touchMode === "auto" && touchPreferred());
+      container.classList.toggle("touch-enabled", enabled);
+    }
+
+    function roundedPath(g, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      g.beginPath();
+      g.moveTo(x + r, y);
+      g.lineTo(x + width - r, y);
+      g.quadraticCurveTo(x + width, y, x + width, y + r);
+      g.lineTo(x + width, y + height - r);
+      g.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      g.lineTo(x + r, y + height);
+      g.quadraticCurveTo(x, y + height, x, y + height - r);
+      g.lineTo(x, y + r);
+      g.quadraticCurveTo(x, y, x + r, y);
+      g.closePath();
+    }
+
+    function polygon(g, points, fill, stroke = null, lineWidth = 1) {
+      g.beginPath();
+      g.moveTo(points[0][0], points[0][1]);
+      for (let index = 1; index < points.length; index += 1) g.lineTo(points[index][0], points[index][1]);
+      g.closePath();
+      g.fillStyle = fill;
+      g.fill();
+      if (stroke) { g.strokeStyle = stroke; g.lineWidth = lineWidth; g.stroke(); }
+    }
+
+    function circle(g, x, y, radius, fill, stroke = null, lineWidth = 1) {
+      g.beginPath();
+      g.arc(x, y, radius, 0, Math.PI * 2);
+      if (fill) { g.fillStyle = fill; g.fill(); }
+      if (stroke) { g.strokeStyle = stroke; g.lineWidth = lineWidth; g.stroke(); }
+    }
+
+    function line(g, points, color, width, cap = "round") {
+      g.strokeStyle = color;
+      g.lineWidth = width;
+      g.lineCap = cap;
+      g.lineJoin = "round";
+      g.beginPath();
+      g.moveTo(points[0][0], points[0][1]);
+      for (let index = 1; index < points.length; index += 1) g.lineTo(points[index][0], points[index][1]);
+      g.stroke();
+    }
+
+    function drawGardenSegment(g, size, isHead, index) {
+      const gradient = g.createLinearGradient(-size / 2, -size / 2, size / 2, size / 2);
+      gradient.addColorStop(0, isHead ? "#b6ff70" : index % 2 ? "#79df58" : "#63c74a");
+      gradient.addColorStop(1, isHead ? "#45b84b" : "#27893d");
+      roundedPath(g, -size * .46, -size * .42, size * .92, size * .84, size * (isHead ? .28 : .2));
+      g.fillStyle = gradient; g.fill();
+      g.strokeStyle = "rgba(15,76,35,.65)"; g.lineWidth = size * .045; g.stroke();
+      if (!isHead) {
+        for (const x of [-.22, .05, .3]) circle(g, size * x, -size * .08, size * .055, "rgba(210,255,158,.36)");
+      } else {
+        for (const y of [-.19, .19]) {
+          circle(g, size * .2, size * y, size * .105, "#f5fff0");
+          circle(g, size * .245, size * y, size * .047, "#10251a");
+        }
+        line(g, [[size*.42,0],[size*.65,0]], "#ff6a7e", size*.045);
+        line(g, [[size*.62,0],[size*.75,-size*.08]], "#ff6a7e", size*.035);
+        line(g, [[size*.62,0],[size*.75,size*.08]], "#ff6a7e", size*.035);
+      }
+    }
+
+    function drawCircuitSegment(g, size, isHead, index) {
+      const points = [[-size*.43,-size*.3],[-size*.24,-size*.44],[size*.29,-size*.4],[size*.45,-size*.19],[size*.4,size*.3],[size*.18,size*.43],[-size*.31,size*.39],[-size*.45,size*.2]];
+      polygon(g, points, isHead ? "#153c45" : index % 2 ? "#102c36" : "#17233e", isHead ? "#61efff" : "#39bdd4", size*.05);
+      line(g, [[-size*.29,0],[-size*.05,0],[size*.04,-size*.17],[size*.29,-size*.17]], index%2?"#59f5ff":"#d462ff", size*.05, "square");
+      circle(g,-size*.3,0,size*.045,"#fff"); circle(g,size*.3,-size*.17,size*.045,"#fff");
+      if (isHead) {
+        polygon(g, [[size*.35,-size*.31],[size*.57,-size*.2],[size*.35,-size*.05]], "#67f4ff");
+        polygon(g, [[size*.35,size*.31],[size*.57,size*.2],[size*.35,size*.05]], "#67f4ff");
+        circle(g,size*.2,-size*.19,size*.055,"#ffec6d"); circle(g,size*.2,size*.19,size*.055,"#ffec6d");
+      }
+    }
+
+    function drawDragonSegment(g, size, isHead, index) {
+      const gradient=g.createLinearGradient(-size*.4,-size*.4,size*.4,size*.4);
+      gradient.addColorStop(0,isHead?"#ff9c54":"#e85a3b");gradient.addColorStop(1,"#7d2140");
+      circle(g,0,0,size*(isHead?.45:.4),gradient,"#ffbd68",size*.04);
+      polygon(g,[[-size*.32,-size*.3],[-size*.17,-size*.61],[0,-size*.36],[size*.18,-size*.64],[size*.31,-size*.29]],index%2?"#ffd16a":"#f38f4e","#7d3040",size*.025);
+      if (!isHead) {
+        circle(g,-size*.14,-size*.05,size*.095,"#ffbc62"); circle(g,size*.14,size*.09,size*.075,"#ae3342");
+      } else {
+        polygon(g,[[size*.12,-size*.34],[size*.31,-size*.56],[size*.34,-size*.25]],"#f5dfaa");
+        polygon(g,[[size*.12,size*.34],[size*.31,size*.56],[size*.34,size*.25]],"#f5dfaa");
+        circle(g,size*.18,-size*.19,size*.075,"#ffe75d"); circle(g,size*.18,size*.19,size*.075,"#ffe75d");
+        line(g,[[size*.2,-size*.2],[size*.24,-size*.2]],"#201019",size*.035);
+        line(g,[[size*.2,size*.2],[size*.24,size*.2]],"#201019",size*.035);
+      }
+    }
+
+    function drawSkeletonSegment(g, size, isHead, index) {
+      if (isHead) {
+        circle(g,0,0,size*.42,"#e8e1cb","#776f61",size*.045);
+        roundedPath(g,size*.05,-size*.28,size*.4,size*.56,size*.13);g.fillStyle="#e8e1cb";g.fill();
+        circle(g,size*.14,-size*.17,size*.095,"#1a1820");circle(g,size*.14,size*.17,size*.095,"#1a1820");
+        polygon(g,[[size*.37,-size*.07],[size*.5,0],[size*.37,size*.07]],"#1a1820");
+        for(const y of [-.14,0,.14]) line(g,[[size*.31,y*size],[size*.46,y*size]],"#777064",size*.025,"butt");
+      } else {
+        line(g,[[-size*.41,0],[size*.41,0]],"#d9d2bd",size*.12);
+        circle(g,0,0,size*.16,"#eee7d2","#777064",size*.035);
+        for(const x of [-.24,.24]) {
+          line(g,[[x*size,-size*.25],[x*size,size*.25]],"#c6bea9",size*.07);
+          circle(g,x*size,-size*.26,size*.065,"#e8e1cb");circle(g,x*size,size*.26,size*.065,"#e8e1cb");
+        }
+      }
+    }
+
+    function drawHoneySegment(g, size, isHead, index) {
+      g.fillStyle="#f5bb31";g.beginPath();g.ellipse(0,0,size*.46,size*.36,0,0,Math.PI*2);g.fill();
+      g.save();roundedPath(g,-size*.46,-size*.36,size*.92,size*.72,size*.3);g.clip();
+      for(const x of [-.24,.08,.4]) {g.fillStyle="#322719";g.fillRect(size*x,-size*.42,size*.12,size*.84);}g.restore();
+      g.strokeStyle="#ffdb67";g.lineWidth=size*.035;g.stroke();
+      if (isHead) {
+        for(const y of [-.17,.17]) {circle(g,size*.22,size*y,size*.085,"#effcff");circle(g,size*.255,size*y,size*.035,"#191b1b");}
+        line(g,[[size*.05,-size*.25],[-size*.1,-size*.5]],"#332719",size*.035);circle(g,-size*.1,-size*.5,size*.045,"#332719");
+        line(g,[[size*.05,size*.25],[-size*.1,size*.5]],"#332719",size*.035);circle(g,-size*.1,size*.5,size*.045,"#332719");
+      } else if(index%2===0){
+        g.fillStyle="rgba(210,245,255,.55)";g.beginPath();g.ellipse(0,-size*.38,size*.24,size*.11,-.35,0,Math.PI*2);g.fill();
+        g.beginPath();g.ellipse(0,size*.38,size*.24,size*.11,.35,0,Math.PI*2);g.fill();
+      }
+    }
+
+    function drawGalaxySegment(g, size, isHead, index) {
+      const gradient=g.createRadialGradient(-size*.15,-size*.14,size*.03,0,0,size*.48);
+      gradient.addColorStop(0,isHead?"#8ef1ff":"#b77cff");gradient.addColorStop(.45,isHead?"#3857c8":"#6134a4");gradient.addColorStop(1,"#101438");
+      circle(g,0,0,size*(isHead?.45:.39),gradient,"#b6c6ff",size*.025);
+      for(const [x,y,r] of [[-.19,-.16,.025],[.12,.18,.035],[.22,-.08,.018]]) circle(g,size*x,size*y,size*r,"#fff");
+      g.save();g.rotate(index*.6-.25);g.strokeStyle=index%2?"#6fe7ff":"#ff91cf";g.lineWidth=size*.045;g.beginPath();g.ellipse(0,0,size*.53,size*.16,0,0,Math.PI*2);g.stroke();g.restore();
+      if(isHead){circle(g,size*.19,-size*.17,size*.065,"#ffef79");circle(g,size*.19,size*.17,size*.065,"#ffef79");}
+    }
+
+    const SNAKE_RENDERERS = Object.freeze({
+      garden: drawGardenSegment,
+      circuit: drawCircuitSegment,
+      dragon: drawDragonSegment,
+      skeleton: drawSkeletonSegment,
+      honeybee: drawHoneySegment,
+      galaxy: drawGalaxySegment
+    });
+
+    function segmentDirection(index, segments, fallback = direction) {
+      if (index === 0) return fallback;
+      const towardHead = segments[index - 1];
+      const current = segments[index];
+      return { x: towardHead.x - current.x, y: towardHead.y - current.y };
+    }
+
+    function drawSnakePiece(g, skinId, centerX, centerY, size, isHead, index, facing) {
+      const renderer = SNAKE_RENDERERS[skinId] || SNAKE_RENDERERS.garden;
+      g.save();
+      g.translate(centerX, centerY);
+      g.rotate(Math.atan2(facing.y, facing.x));
+      renderer(g, size, isHead, index);
+      g.restore();
+    }
+
+    function skinLinkColor(id) {
+      return {
+        garden: "#3fa449", circuit: "#285f70", dragon: "#9f3341",
+        skeleton: "#c9c1ad", honeybee: "#d89b22", galaxy: "#4b3f9f"
+      }[id] || "#3fa449";
+    }
+
+    function resizeGame() {
+      const rect = container.getBoundingClientRect();
+      viewWidth = Math.max(320, rect.width || container.clientWidth || 820);
+      viewHeight = Math.max(420, rect.height || container.clientHeight || 960);
+      pixelRatio = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.round(viewWidth * pixelRatio);
+      canvas.height = Math.round(viewHeight * pixelRatio);
+      canvas.style.width = `${viewWidth}px`;
+      canvas.style.height = `${viewHeight}px`;
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      calculateBoardGeometry();
+      drawGame();
+      drawMenuPreview(performance.now());
+    }
+
+    function calculateBoardGeometry() {
+      const touchSpace = container.classList.contains("touch-enabled") && phase === "playing" ? 130 : 28;
+      const topSpace = 73;
+      const availableWidth = viewWidth - 20;
+      const availableHeight = viewHeight - topSpace - touchSpace - 12;
+      cellSize = Math.max(5, Math.floor(Math.min(availableWidth / boardSize(), availableHeight / boardSize())));
+      boardPixels = cellSize * boardSize();
+      offsetX = Math.floor((viewWidth - boardPixels) / 2);
+      offsetY = Math.floor(topSpace + (availableHeight - boardPixels) / 2);
+    }
+
+    function randomFruitId() {
+      const selected = SaveManager.data.selectedFruits;
+      return selected[Math.floor(Math.random() * selected.length)] || "apple";
+    }
+
+    function spawnFruit() {
+      const occupied = new Set(snake.map(keyOf));
+      for (const fruit of fruits) occupied.add(keyOf(fruit));
+      const maximum = boardSize() * boardSize();
+      if (occupied.size >= maximum) return null;
+      for (let attempt = 0; attempt < maximum * 2; attempt += 1) {
+        const position = {
+          x: Math.floor(Math.random() * boardSize()),
+          y: Math.floor(Math.random() * boardSize()),
+          skin: randomFruitId()
+        };
+        if (!occupied.has(keyOf(position))) return position;
+      }
+      for (let y = 0; y < boardSize(); y += 1) {
+        for (let x = 0; x < boardSize(); x += 1) {
+          if (!occupied.has(`${x},${y}`)) return { x, y, skin: randomFruitId() };
+        }
+      }
+      return null;
+    }
+
+    function refillFruits() {
+      while (fruits.length < settings().fruitCount) {
+        const fruit = spawnFruit();
+        if (!fruit) break;
+        fruits.push(fruit);
+      }
+    }
+
+    function resetRun() {
+      const center = Math.floor(boardSize() / 2);
+      snake = [
+        { x: center + 1, y: center },
+        { x: center, y: center },
+        { x: center - 1, y: center },
+        { x: center - 2, y: center }
+      ];
+      fruits = [];
+      direction = { x: 1, y: 0 };
+      directionQueue = [];
+      score = 0;
+      accumulator = 0;
+      lastMoveTime = 0;
+      refillFruits();
+      calculateBoardGeometry();
+      updateHud();
+      drawGame();
+    }
+
+    function startGame() {
+      hideScreens();
+      phase = "playing";
+      container.classList.add("is-playing");
+      applyTouchMode();
+      resetRun();
+      lastTime = performance.now();
+      SoundManager.click();
+    }
+
+    function pauseGame() {
+      if (phase !== "playing") return;
+      phase = "paused";
+      pauseScreen.classList.remove("hidden");
+      container.classList.remove("is-playing");
+      SoundManager.click();
+    }
+
+    function resumeGame() {
+      if (phase !== "paused") return;
+      pauseScreen.classList.add("hidden");
+      phase = "playing";
+      container.classList.add("is-playing");
+      applyTouchMode();
+      calculateBoardGeometry();
+      lastTime = performance.now();
+      SoundManager.click();
+    }
+
+    function queueDirection(x, y) {
+      if (phase !== "playing") return;
+      const last = directionQueue.length ? directionQueue[directionQueue.length - 1] : direction;
+      if ((last.x === x && last.y === y) || (last.x === -x && last.y === -y)) return;
+      if (directionQueue.length < 2) directionQueue.push({ x, y });
+    }
+
+    function reverseSnake() {
+      snake.reverse();
+      const head = snake[0];
+      const neck = snake[1];
+      direction = { x: head.x - neck.x, y: head.y - neck.y };
+      directionQueue = [];
+      SoundManager.reverse();
+    }
+
+    function finishGame(reason) {
+      if (phase !== "playing") return;
+      phase = "gameover";
+      container.classList.remove("is-playing");
+      SoundManager.crash();
+      const sizeFactor = clamp(28 / boardSize(), .7, 1.5);
+      const fruitFactor = clamp(1.25 - (settings().fruitCount - 1) * .1, .8, 1.25);
+      const modeFactor = settings().mode === "reverse" ? 1.3 : 1;
+      const earned = Math.max(1, Math.round(score * 3 * speedConfig().multiplier * sizeFactor * fruitFactor * modeFactor));
+
+      SaveManager.data.credits += earned;
+      SaveManager.data.gamesPlayed += 1;
+      SaveManager.data.totalFruit += score;
+      SaveManager.data.bestScore = Math.max(SaveManager.data.bestScore, score);
+      SaveManager.data.longestSnake = Math.max(SaveManager.data.longestSnake, snake.length);
+      SaveManager.data.bestByMode[settings().mode] = Math.max(SaveManager.data.bestByMode[settings().mode], score);
+      SaveManager.save();
+
+      $("#gameover-reason").textContent = reason;
+      $("#final-score").textContent = String(score);
+      $("#final-length").textContent = String(snake.length);
+      $("#earned-credits").textContent = `+${earned}`;
+      $("#result-emoji").textContent = score >= 25 ? "🏆" : score >= 10 ? "🐍" : "💥";
+      updateInterface();
+      window.clearTimeout(resultTimer);
+      resultTimer = window.setTimeout(() => gameoverScreen.classList.remove("hidden"), 280);
+    }
+
+    function moveSnake() {
+      if (directionQueue.length) direction = directionQueue.shift();
+      const head = snake[0];
+      const next = { x: head.x + direction.x, y: head.y + direction.y };
+
+      if (next.x < 0 || next.y < 0 || next.x >= boardSize() || next.y >= boardSize()) {
+        finishGame("You hit the wall.");
+        return;
+      }
+
+      const eatenIndex = fruits.findIndex((fruit) => samePoint(fruit, next));
+      const eating = eatenIndex >= 0;
+      const bodyToCheck = eating ? snake : snake.slice(0, -1);
+      if (bodyToCheck.some((segment) => samePoint(segment, next))) {
+        finishGame("You ran into your body.");
+        return;
+      }
+
+      snake.unshift(next);
+      if (eating) {
+        score += 1;
+        fruits.splice(eatenIndex, 1);
+        SoundManager.fruit();
+        if (settings().mode === "reverse") reverseSnake();
+        refillFruits();
+        updateHud();
+        if (!fruits.length) finishGame("You filled the entire map.");
+      } else {
+        snake.pop();
+      }
+    }
+
+    function update(delta) {
+      if (phase !== "playing") return;
+      accumulator += delta * 1000;
+      const interval = speedConfig().interval;
+      let safety = 0;
+      while (accumulator >= interval && phase === "playing" && safety < 4) {
+        accumulator -= interval;
+        moveSnake();
+        lastMoveTime = performance.now();
+        safety += 1;
+      }
+    }
+
+    function drawBackground(g) {
+      const gradient = g.createLinearGradient(0, 0, 0, viewHeight);
+      gradient.addColorStop(0, "#11231a");
+      gradient.addColorStop(.55, "#09140f");
+      gradient.addColorStop(1, "#050b08");
+      g.fillStyle = gradient;
+      g.fillRect(0, 0, viewWidth, viewHeight);
+
+      g.fillStyle = "rgba(0,0,0,.26)";
+      g.fillRect(offsetX - 6, offsetY - 6, boardPixels + 12, boardPixels + 12);
+      g.strokeStyle = "rgba(156,242,87,.2)";
+      g.lineWidth = 1;
+      g.strokeRect(offsetX - 5.5, offsetY - 5.5, boardPixels + 11, boardPixels + 11);
+
+      const gridAlpha = boardSize() >= 34 ? .035 : .065;
+      g.strokeStyle = `rgba(210,255,225,${gridAlpha})`;
+      g.lineWidth = 1;
+      g.beginPath();
+      for (let index = 0; index <= boardSize(); index += 1) {
+        const position = index * cellSize;
+        g.moveTo(offsetX + position, offsetY);
+        g.lineTo(offsetX + position, offsetY + boardPixels);
+        g.moveTo(offsetX, offsetY + position);
+        g.lineTo(offsetX + boardPixels, offsetY + position);
+      }
+      g.stroke();
+    }
+
+    function drawFruits(g) {
+      const fontSize = Math.max(8, cellSize * .82);
+      g.save();
+      g.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      for (const fruit of fruits) {
+        const data = FRUIT_SKINS[fruit.skin] || FRUIT_SKINS.apple;
+        const x = offsetX + (fruit.x + .5) * cellSize;
+        const y = offsetY + (fruit.y + .52) * cellSize;
+        g.shadowColor = "rgba(255,217,91,.35)";
+        g.shadowBlur = cellSize * .35;
+        g.fillText(data.emoji, x, y);
+      }
+      g.restore();
+    }
+
+    function drawSnake(g) {
+      if (!snake.length) return;
+      const skinId = SaveManager.data.selectedSnake;
+      const linkColor = skinLinkColor(skinId);
+      g.save();
+      g.strokeStyle = linkColor;
+      g.lineWidth = Math.max(2, cellSize * (skinId === "skeleton" ? .16 : .48));
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.beginPath();
+      for (let index = 0; index < snake.length; index += 1) {
+        const segment = snake[index];
+        const x = offsetX + (segment.x + .5) * cellSize;
+        const y = offsetY + (segment.y + .5) * cellSize;
+        if (!index) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+
+      for (let index = snake.length - 1; index >= 0; index -= 1) {
+        const segment = snake[index];
+        const x = offsetX + (segment.x + .5) * cellSize;
+        const y = offsetY + (segment.y + .5) * cellSize;
+        const facing = segmentDirection(index, snake);
+        drawSnakePiece(g, skinId, x, y, cellSize * .88, index === 0, index, facing);
+      }
+      g.restore();
+    }
+
+    function drawGame() {
+      if (!context || !canvas.width) return;
+      context.save();
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      context.clearRect(0, 0, viewWidth, viewHeight);
+      drawBackground(context);
+      drawFruits(context);
+      drawSnake(context);
+      context.restore();
+    }
+
+    function drawMenuPreview(time) {
+      const width = previewCanvas.width;
+      const height = previewCanvas.height;
+      const g = previewContext;
+      const gradient = g.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#09180f");
+      gradient.addColorStop(1, "#06100b");
+      g.fillStyle = gradient;
+      g.fillRect(0, 0, width, height);
+      g.strokeStyle = "rgba(156,242,87,.07)";
+      g.lineWidth = 1;
+      for (let x = 0; x < width; x += 22) { g.beginPath(); g.moveTo(x,0); g.lineTo(x,height); g.stroke(); }
+      for (let y = 0; y < height; y += 22) { g.beginPath(); g.moveTo(0,y); g.lineTo(width,y); g.stroke(); }
+
+      const cell = 48;
+      const centerY = height * .55;
+      const wave = Math.sin(time * .002) * 5;
+      const segments = Array.from({ length: 8 }, (_, index) => ({
+        x: width * .66 - index * cell * .72,
+        y: centerY + Math.sin(index * .72 + time * .002) * 13 + wave
+      }));
+      g.strokeStyle = skinLinkColor(SaveManager.data.selectedSnake);
+      g.lineWidth = 24;
+      g.lineCap = "round";
+      g.beginPath();
+      segments.forEach((segment,index) => index ? g.lineTo(segment.x,segment.y) : g.moveTo(segment.x,segment.y));
+      g.stroke();
+      for (let index = segments.length - 1; index >= 0; index -= 1) {
+        const current = segments[index];
+        const towardHead = index ? segments[index - 1] : { x: current.x + 1, y: current.y };
+        const facing = { x: towardHead.x - current.x, y: towardHead.y - current.y };
+        drawSnakePiece(g, SaveManager.data.selectedSnake, current.x, current.y, cell * .72, index === 0, index, facing);
+      }
+      const selected = SaveManager.data.selectedFruits;
+      g.font = '38px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+      g.textAlign = "center"; g.textBaseline = "middle";
+      for (let index = 0; index < Math.min(3, selected.length); index += 1) {
+        const fruit = FRUIT_SKINS[selected[index]] || FRUIT_SKINS.apple;
+        g.fillText(fruit.emoji, width - 48 - index * 44, 43 + index * 5);
+      }
+    }
+
+    function updateHud() {
+      scoreElement.textContent = String(score);
+      bestElement.textContent = String(Math.max(SaveManager.data.bestScore, score));
+      hudModeElement.textContent = settings().mode.toUpperCase();
+    }
+
+    function updateCredits() {
+      const label = `${SaveManager.data.credits} CREDITS`;
+      $("#menu-credits").textContent = label;
+      $("#shop-credits").textContent = label;
+    }
+
+    function updateSetupLabel() {
+      const fruitLabel = `${settings().fruitCount} ${settings().fruitCount === 1 ? "FRUIT" : "FRUITS"}`;
+      setupLabel.textContent = `${boardSize()}×${boardSize()} · ${speedConfig().name.toUpperCase()} · ${fruitLabel} · ${settings().mode.toUpperCase()}`;
+    }
+
+    function updateInterface() {
+      updateHud();
+      updateCredits();
+      updateSetupLabel();
+      $("#sound-button").textContent = `SOUND: ${SaveManager.data.sound ? "ON" : "OFF"}`;
+      applyTouchMode();
+      drawMenuPreview(performance.now());
+    }
+
+    function hideScreens() {
+      menuScreen.classList.add("hidden");
+      settingsScreen.classList.add("hidden");
+      skinsScreen.classList.add("hidden");
+      statsScreen.classList.add("hidden");
+      pauseScreen.classList.add("hidden");
+      gameoverScreen.classList.add("hidden");
+    }
+
+    function openMenu() {
+      phase = "menu";
+      container.classList.remove("is-playing");
+      window.clearTimeout(resultTimer);
+      hideScreens();
+      menuScreen.classList.remove("hidden");
+      updateInterface();
+      calculateBoardGeometry();
+      drawGame();
+      SoundManager.click();
+    }
+
+    function speedIndex(id) {
+      const index = SPEEDS.findIndex((speed) => speed.id === id);
+      return index >= 0 ? index : 1;
+    }
+
+    function refreshSettingLabels() {
+      $("#size-value").textContent = `${$("#size-input").value}×${$("#size-input").value}`;
+      $("#speed-value").textContent = SPEEDS[Number($("#speed-input").value)].name.toUpperCase();
+      $("#fruit-count-value").textContent = $("#fruit-count-input").value;
+      $("#classic-mode").classList.toggle("selected", draftMode === "classic");
+      $("#reverse-mode").classList.toggle("selected", draftMode === "reverse");
+    }
+
+    function openSettings() {
+      phase = "settings";
+      hideScreens();
+      settingsScreen.classList.remove("hidden");
+      $("#size-input").value = String(settings().boardSize);
+      $("#speed-input").value = String(speedIndex(settings().speed));
+      $("#fruit-count-input").value = String(settings().fruitCount);
+      draftMode = settings().mode;
+      refreshSettingLabels();
+      SoundManager.click();
+    }
+
+    function applySettings() {
+      SaveManager.data.settings = {
+        boardSize: Number($("#size-input").value),
+        speed: SPEEDS[Number($("#speed-input").value)].id,
+        fruitCount: Number($("#fruit-count-input").value),
+        mode: draftMode
+      };
+      SaveManager.save();
+      resetRun();
+      openMenu();
+      showToast("Settings saved.");
+    }
+
+    function skinShopState() {
+      return {
+        catalogue: SNAKE_SKINS,
+        owned: SaveManager.data.ownedSnakes,
+        selected: SaveManager.data.selectedSnake
+      };
+    }
+
+    function renderSnakePreview(canvasElement, skinId) {
+      const g = canvasElement.getContext("2d");
+      const width = canvasElement.width;
+      const height = canvasElement.height;
+      g.clearRect(0,0,width,height);
+      const cell = 34;
+      const segments = Array.from({length:5},(_,index)=>({x:width*.72-index*cell*.67,y:height*.53+Math.sin(index*.8)*8}));
+      g.strokeStyle=skinLinkColor(skinId);g.lineWidth=17;g.lineCap="round";g.beginPath();
+      segments.forEach((segment,index)=>index?g.lineTo(segment.x,segment.y):g.moveTo(segment.x,segment.y));g.stroke();
+      for(let index=segments.length-1;index>=0;index-=1){
+        const current=segments[index];const target=index?segments[index-1]:{x:current.x+1,y:current.y};
+        drawSnakePiece(g,skinId,current.x,current.y,cell*.72,index===0,index,{x:target.x-current.x,y:target.y-current.y});
+      }
+    }
+
+    function renderSkinShop() {
+      snakeTab.classList.toggle("active", skinTab === "snake");
+      fruitTab.classList.toggle("active", skinTab === "fruit");
+      if (skinTab === "snake") {
+        const state = skinShopState();
+        skinGrid.innerHTML = Object.values(state.catalogue).map((item) => {
+          const isOwned = state.owned.includes(item.id);
+          const isSelected = state.selected === item.id;
+          return `
+            <article class="skin-card${isSelected ? " selected" : ""}">
+              <div class="skin-visual"><canvas width="220" height="106" data-snake-preview="${item.id}"></canvas></div>
+              <div class="skin-copy">
+                <h3>${item.name.toUpperCase()}</h3><p>${item.description}</p>
+                <button class="skin-action${isOwned ? " equip" : ""}" type="button" data-snake-skin="${item.id}" ${isSelected ? "disabled" : ""}>${isSelected ? "EQUIPPED" : isOwned ? "EQUIP" : `${item.price} CREDITS`}</button>
+              </div>
+            </article>`;
+        }).join("");
+        for (const preview of skinGrid.querySelectorAll("canvas[data-snake-preview]")) {
+          renderSnakePreview(preview, preview.dataset.snakePreview);
+        }
+      } else {
+        const selected = SaveManager.data.selectedFruits;
+        skinGrid.innerHTML = Object.values(FRUIT_SKINS).map((item) => {
+          const active = selected.includes(item.id);
+          return `
+            <article class="skin-card fruit-card${active ? " selected" : ""}">
+              <div class="skin-visual"><span class="fruit-visual">${item.emoji}</span></div>
+              <div class="skin-copy">
+                <h3>${item.name.toUpperCase()}</h3><p>${active ? "Included in random spawns" : "Not currently spawning"}</p>
+                <button class="skin-action" type="button" data-fruit-skin="${item.id}">${active ? "SELECTED" : "SELECT"}</button>
+              </div>
+            </article>`;
+        }).join("");
+      }
+      updateCredits();
+    }
+
+    function handleSnakeSkin(id) {
+      const item = SNAKE_SKINS[id];
+      if (!item) return;
+      if (!SaveManager.data.ownedSnakes.includes(id)) {
+        if (SaveManager.data.credits < item.price) {
+          showToast(`You need ${item.price - SaveManager.data.credits} more credits.`);
+          return;
+        }
+        SaveManager.data.credits -= item.price;
+        SaveManager.data.ownedSnakes.push(id);
+        SaveManager.data.selectedSnake = id;
+        SoundManager.buy();
+        showToast(`${item.name} unlocked and equipped.`);
+      } else {
+        SaveManager.data.selectedSnake = id;
+        SoundManager.click();
+        showToast(`${item.name} equipped.`);
+      }
+      SaveManager.save();
+      renderSkinShop();
+      updateInterface();
+      drawGame();
+    }
+
+    function toggleFruit(id) {
+      if (!Object.hasOwn(FRUIT_SKINS, id)) return;
+      const selected = SaveManager.data.selectedFruits;
+      if (selected.includes(id)) {
+        if (selected.length === 1) {
+          showToast("At least one fruit must stay selected.");
+          return;
+        }
+        SaveManager.data.selectedFruits = selected.filter((fruitId) => fruitId !== id);
+      } else {
+        SaveManager.data.selectedFruits.push(id);
+      }
+      SaveManager.save();
+      renderSkinShop();
+      updateInterface();
+      SoundManager.click();
+    }
+
+    function openSkins(tab = skinTab) {
+      phase = "skins";
+      skinTab = tab;
+      hideScreens();
+      skinsScreen.classList.remove("hidden");
+      renderSkinShop();
+      SoundManager.click();
+    }
+
+    function openStats() {
+      phase = "stats";
+      hideScreens();
+      statsScreen.classList.remove("hidden");
+      $("#stat-games").textContent = String(SaveManager.data.gamesPlayed);
+      $("#stat-fruit").textContent = String(SaveManager.data.totalFruit);
+      $("#stat-best").textContent = String(SaveManager.data.bestScore);
+      $("#stat-longest").textContent = String(SaveManager.data.longestSnake);
+      $("#stat-classic").textContent = String(SaveManager.data.bestByMode.classic);
+      $("#stat-reverse").textContent = String(SaveManager.data.bestByMode.reverse);
+      SoundManager.click();
+    }
+
+    function toggleSound() {
+      SaveManager.data.sound = !SaveManager.data.sound;
+      SaveManager.save();
+      updateInterface();
+      if (SaveManager.data.sound) SoundManager.click();
+    }
+
+    function directionFromName(name) {
+      return {
+        up: { x: 0, y: -1 }, down: { x: 0, y: 1 },
+        left: { x: -1, y: 0 }, right: { x: 1, y: 0 }
+      }[name];
+    }
+
+    $("#play-button").addEventListener("click", startGame);
+    $("#restart-button").addEventListener("click", startGame);
+    $("#settings-button").addEventListener("click", openSettings);
+    $("#skins-button").addEventListener("click", () => openSkins("snake"));
+    $("#stats-button").addEventListener("click", openStats);
+    $("#sound-button").addEventListener("click", toggleSound);
+    $("#pause-button").addEventListener("click", pauseGame);
+    $("#resume-button").addEventListener("click", resumeGame);
+    $("#pause-menu-button").addEventListener("click", openMenu);
+    $("#gameover-menu-button").addEventListener("click", openMenu);
+    $("#settings-back-button").addEventListener("click", openMenu);
+    $("#skins-back-button").addEventListener("click", openMenu);
+    $("#stats-back-button").addEventListener("click", openMenu);
+    $("#apply-settings-button").addEventListener("click", applySettings);
+    $("#classic-mode").addEventListener("click", () => { draftMode = "classic"; refreshSettingLabels(); SoundManager.click(); });
+    $("#reverse-mode").addEventListener("click", () => { draftMode = "reverse"; refreshSettingLabels(); SoundManager.click(); });
+    snakeTab.addEventListener("click", () => { skinTab = "snake"; renderSkinShop(); SoundManager.click(); });
+    fruitTab.addEventListener("click", () => { skinTab = "fruit"; renderSkinShop(); SoundManager.click(); });
+
+    for (const id of ["size-input", "speed-input", "fruit-count-input"]) {
+      $(`#${id}`).addEventListener("input", refreshSettingLabels);
+    }
+
+    skinGrid.addEventListener("click", (event) => {
+      const snakeButton = event.target.closest("button[data-snake-skin]");
+      if (snakeButton && !snakeButton.disabled) handleSnakeSkin(snakeButton.dataset.snakeSkin);
+      const fruitButton = event.target.closest("button[data-fruit-skin]");
+      if (fruitButton) toggleFruit(fruitButton.dataset.fruitSkin);
+    });
+
+    for (const button of document.querySelectorAll("button[data-direction]")) {
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        const next = directionFromName(button.dataset.direction);
+        if (next) queueDirection(next.x, next.y);
+      });
+    }
+
+    window.addEventListener("keydown", (event) => {
+      const directions = {
+        ArrowUp: [0,-1], KeyW: [0,-1], ArrowDown: [0,1], KeyS: [0,1],
+        ArrowLeft: [-1,0], KeyA: [-1,0], ArrowRight: [1,0], KeyD: [1,0]
+      };
+      if (directions[event.code]) {
+        event.preventDefault();
+        queueDirection(...directions[event.code]);
+        return;
+      }
+      if (["Space", "KeyP", "Escape"].includes(event.code)) {
+        event.preventDefault();
+        if (phase === "playing") pauseGame();
+        else if (phase === "paused") resumeGame();
+        else if (["settings", "skins", "stats"].includes(phase)) openMenu();
+      }
+    });
+
+    document.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button, input")) return;
+      swipeStart = { x: event.clientX, y: event.clientY };
+    });
+
+    document.addEventListener("pointerup", (event) => {
+      if (!swipeStart || phase !== "playing") { swipeStart = null; return; }
+      const dx = event.clientX - swipeStart.x;
+      const dy = event.clientY - swipeStart.y;
+      swipeStart = null;
+      if (Math.hypot(dx, dy) < 28) return;
+      if (Math.abs(dx) > Math.abs(dy)) queueDirection(dx > 0 ? 1 : -1, 0);
+      else queueDirection(0, dy > 0 ? 1 : -1);
+    });
+
+    window.addEventListener("resize", resizeGame);
+    window.addEventListener("blur", () => { if (phase === "playing") pauseGame(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && phase === "playing") pauseGame();
+    });
+
+    function gameLoop(time) {
+      const delta = Math.min(.08, Math.max(0, (time - lastTime) / 1000 || 0));
+      lastTime = time;
+      update(delta);
+      drawGame();
+      if (phase === "menu") drawMenuPreview(time);
+      requestAnimationFrame(gameLoop);
+    }
+
+    SaveManager.load();
+    applyTouchMode();
+    resetRun();
+    updateInterface();
+    resizeGame();
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
