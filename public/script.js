@@ -902,6 +902,17 @@ function addGameCredits(game, credits) {
     localStorage.setItem("ARCADE_GAMES", JSON.stringify(root));
 }
 
+function renderGameIcon(icon, alt, className = "") {
+    const value = String(icon || "🎮").trim();
+    const isImage = /^(?:https?:\/\/|\.?\.?\/)?[^\s]+\.(?:png|jpe?g|webp|gif|svg)(?:[?#].*)?$/i.test(value);
+
+    if (!isImage) {
+        return escapeHtml(value);
+    }
+
+    return `<img class="${className}" src="${escapeHtml(value)}" alt="${escapeHtml(alt)}" loading="lazy">`;
+}
+
 function renderCreditStore() {
     const store = document.getElementById("credits-store");
 
@@ -911,7 +922,7 @@ function renderCreditStore() {
 
     store.innerHTML = defaultGames.map((game) => `
         <article class="store-card">
-            <div class="store-card__icon">${String(game.icon || "🎮")}</div>
+            <div class="store-card__icon">${renderGameIcon(game.icon, String(game.name))}</div>
             <div class="store-card__content">
                 <h3>${escapeHtml(String(game.name))}</h3>
                 <p>Use these credits inside this game.</p>
@@ -1081,7 +1092,7 @@ function openPackModal(offerId) {
 
     document.getElementById("pack-title").textContent = `${offer.size}-game daily drop`;
     document.getElementById("pack-games").innerHTML = games.map((game) => `
-        <span class="pack-preview__game">${String(game.icon || "🎮")} ${escapeHtml(String(game.name))}</span>
+        <span class="pack-preview__game">${renderGameIcon(game.icon, String(game.name), "pack-preview__icon")} ${escapeHtml(String(game.name))}</span>
     `).join("");
     document.getElementById("pack-regular-cost").textContent = `${regularCost.toLocaleString("en-US")} 🪙`;
     document.getElementById("pack-discount").textContent = `${discount}%`;
@@ -1157,8 +1168,10 @@ function createGameCard(game) {
         );
 
     const icon =
-        String(
-            game.icon || "🎮"
+        renderGameIcon(
+            game.icon,
+            String(game.name || "Game"),
+            "game-card__icon-image"
         );
 
     const description =
@@ -1485,10 +1498,11 @@ function openPurchaseModal(
 
     document.getElementById(
         "purchase-icon"
-    ).textContent =
-        String(
-            game.icon || "🎮"
-        );
+    ).innerHTML = renderGameIcon(
+        game.icon,
+        name,
+        "purchase-icon-image"
+    );
 
     document.getElementById(
         "purchase-cost"

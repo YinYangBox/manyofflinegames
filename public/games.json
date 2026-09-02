@@ -4,7 +4,7 @@
 		"name": "2048",
 		"description": "Classic 2048 Puzzle",
 		"cost": 400,
-		"icon": "🔢",
+		"icon": "Images/2048.png",
 		"path": "/.netlify/functions/proxy?game=2048"
 	},
 	{
@@ -12,7 +12,7 @@
 		"name": "Bouncy Balls",
 		"description": "Bouncy Balls Chaos",
 		"cost": 500,
-		"icon": "🔵",
+		"icon": "Images/bouncy-balls.png",
 		"path": "/.netlify/functions/proxy?game=bouncy-balls"
 	},
 	{
@@ -20,7 +20,7 @@
 		"name": "Chess",
 		"description": "Classic Chess Master",
 		"cost": 1200,
-		"icon": "♟️",
+		"icon": "Images/chess.png",
 		"path": "/.netlify/functions/proxy?game=chess"
 	},
 	{
@@ -28,7 +28,7 @@
 		"name": "Doodle Jump",
 		"description": "Doodle Jump Adventure",
 		"cost": 800,
-		"icon": "🦘",
+		"icon": "Images/doodle-jump.png",
 		"path": "/.netlify/functions/proxy?game=doodle"
 	},
 	{
@@ -36,7 +36,7 @@
 		"name": "Flappy Bird",
 		"description": "Flappy Bird Classic",
 		"cost": 500,
-		"icon": "🐦",
+		"icon": "Images/flappy-bird.png",
 		"path": "/.netlify/functions/proxy?game=flappy-bird"
 	},
 	{
@@ -44,7 +44,7 @@
 		"name": "Maze Runner",
 		"description": "Escape the Maze",
 		"cost": 850,
-		"icon": "🧩",
+		"icon": "Images/maze-runner.png",
 		"path": "/.netlify/functions/proxy?game=maze-runner"
 	},
 	{
@@ -52,7 +52,7 @@
 		"name": "Minesweeper",
 		"description": "Classic Minesweeper",
 		"cost": 400,
-		"icon": "💣",
+		"icon": "Images/minesweeper.png",
 		"path": "/.netlify/functions/proxy?game=minesweeper"
 	},
 	{
@@ -60,7 +60,7 @@
 		"name": "Pacman",
 		"description": "Classic Pacman Arcade",
 		"cost": 1000,
-		"icon": "👻",
+		"icon": "Images/pacman.png",
 		"path": "/.netlify/functions/proxy?game=pacman"
 	},
 	{
@@ -68,7 +68,7 @@
 		"name": "Pong",
 		"description": "Retro Pong Battle",
 		"cost": 250,
-		"icon": "🏓",
+		"icon": "Images/pong.png",
 		"path": "/.netlify/functions/proxy?game=pong"
 	},
 	{
@@ -76,7 +76,7 @@
 		"name": "Snake",
 		"description": "Classic Snake Game",
 		"cost": 350,
-		"icon": "🐍",
+		"icon": "Images/snake.png",
 		"path": "/.netlify/functions/proxy?game=snake"
 	},
 	{
@@ -84,7 +84,7 @@
 		"name": "Space Invaders",
 		"description": "Space Invaders Shooter",
 		"cost": 800,
-		"icon": "👾",
+		"icon": "Images/space-invaders.png",
 		"path": "/.netlify/functions/proxy?game=space-invaders"
 	},
 	{
@@ -92,7 +92,7 @@
 		"name": "Survival Arena",
 		"description": "Survival Arena Battle",
 		"cost": 1100,
-		"icon": "⚔️",
+		"icon": "Images/survival-arena.png",
 		"path": "/.netlify/functions/proxy?game=survival-arena"
 	},
 	{
@@ -100,7 +100,7 @@
 		"name": "Tetris",
 		"description": "Classic Tetris Blocks",
 		"cost": 900,
-		"icon": "🧱",
+		"icon": "Images/tetris.png",
 		"path": "/.netlify/functions/proxy?game=tetris"
 	},
 	{
@@ -108,7 +108,15 @@
 		"name": "Tic Tac Toe",
 		"description": "Classic Tic Tac Toe",
 		"cost": 200,
-		"icon": "⭕",
+		"icon": "Images/tictactoe.png",
 		"path": "/.netlify/functions/proxy?game=tictactoe"
+	},
+	{
+		"id": "checkers",
+		"name": "Checkers",
+		"description": "Classic Checkers Match",
+		"cost": 650,
+		"icon": "Images/checkers.png",
+		"path": "/.netlify/functions/proxy?game=checkers"
 	}
 ]

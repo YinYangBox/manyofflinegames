@@ -336,7 +336,18 @@ button:disabled {
 }
 
 .store-card__icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
     font-size: 2rem;
+}
+
+.store-card__icon img,
+.game-card__icon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .store-card h3 {
@@ -460,12 +471,21 @@ button:disabled {
 }
 
 .pack-preview__game {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 9px 11px;
     color: var(--muted-strong);
     border: 1px solid rgba(166, 190, 224, 0.12);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.04);
     font-size: 0.82rem;
+}
+
+.pack-preview__icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
 
 .game-card {
@@ -527,6 +547,11 @@ button:disabled {
     border: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 2rem;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.game-card__icon-image {
+    width: 48px;
+    height: 48px;
 }
 
 .game-card__badge,
@@ -732,6 +757,12 @@ button:disabled {
     font-size: 1.65rem;
     background: rgba(85, 199, 255, 0.09);
     border: 1px solid rgba(85, 199, 255, 0.13);
+}
+
+.purchase-icon-image {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
 }
 
 .purchase-preview h3 {
