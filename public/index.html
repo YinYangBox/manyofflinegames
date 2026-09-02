@@ -28,10 +28,17 @@
             </span>
         </div>
 
-        <div class="topbar__status" aria-live="polite">
-            <span id="connection-dot" class="connection-dot"></span>
-            <span id="connection-status">Checking connection…</span>
-        </div>
+        <nav class="store-tabs" aria-label="Store sections">
+            <button class="store-tab active" type="button" data-store-tab="library" aria-selected="true">
+                GAME LIBRARY
+            </button>
+            <button class="store-tab" type="button" data-store-tab="offers" aria-selected="false">
+                DAILY OFFERS
+            </button>
+            <button class="store-tab" type="button" data-store-tab="credits" aria-selected="false">
+                GET CREDITS
+            </button>
+        </nav>
 
         <button
             id="reward-button"
@@ -61,7 +68,7 @@
 
         <!-- YOUR PURCHASED GAMES -->
         <section
-            class="library-section"
+            class="library-section store-tab-panel store-tab-panel--library"
             aria-labelledby="your-games-title"
         >
             <div class="section-heading">
@@ -87,7 +94,7 @@
         <!-- ONLINE GAME GALLERY -->
         <section
             id="gallery-section"
-            class="library-section"
+            class="library-section store-tab-panel store-tab-panel--library"
             aria-labelledby="gallery-title"
         >
             <div class="section-heading">
@@ -108,6 +115,40 @@
                 id="game-gallery"
                 class="game-hub"
             ></div>
+        </section>
+
+        <section
+            id="credits-section"
+            class="library-section store-section store-tab-panel store-tab-panel--credits"
+            aria-labelledby="credits-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">POWER UP</span>
+                    <h2 id="credits-title">Game credits</h2>
+                </div>
+
+                <span class="library-count">1 coin = 10 credits</span>
+            </div>
+
+            <div id="credits-store" class="store-grid"></div>
+        </section>
+
+        <section
+            id="packs-section"
+            class="library-section store-section store-tab-panel store-tab-panel--offers"
+            aria-labelledby="packs-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">BUNDLE DEALS</span>
+                    <h2 id="packs-title">Game packs</h2>
+                </div>
+
+                <span class="library-count">Save 10% - 50%</span>
+            </div>
+
+            <div id="packs-store" class="store-grid pack-grid"></div>
         </section>
     </main>
 
@@ -214,6 +255,41 @@
                     >
                         Buy game
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PACK PURCHASE MODAL -->
+    <div
+        id="pack-modal"
+        class="app-modal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pack-title"
+    >
+        <div class="app-modal__panel purchase-panel">
+            <div class="app-modal__header">
+                <div>
+                    <span class="section-kicker">CONFIRM PACK</span>
+                    <h2 id="pack-title">Buy pack</h2>
+                </div>
+
+                <button id="close-pack" class="icon-button" type="button" aria-label="Close pack dialog">✕</button>
+            </div>
+
+            <div class="purchase-panel__body">
+                <div id="pack-games" class="pack-preview"></div>
+                <div class="purchase-summary">
+                    <div><span>Regular price</span><strong id="pack-regular-cost">0 🪙</strong></div>
+                    <div><span>Discount</span><strong id="pack-discount">0%</strong></div>
+                    <div><span>Your balance</span><strong id="pack-balance">0 🪙</strong></div>
+                </div>
+                <p id="pack-note" class="purchase-note"></p>
+                <div class="modal-actions">
+                    <button id="cancel-pack" class="secondary-button" type="button">Not now</button>
+                    <button id="confirm-pack" class="primary-button" type="button">Buy pack</button>
                 </div>
             </div>
         </div>

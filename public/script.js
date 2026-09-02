@@ -8,7 +8,15 @@ const LEGACY_STATE_KEYS = ["hub-state-v1"];
 const LOCAL_COINS_KEY = "many-offline-games-coins-v1";
 const LEGACY_LOCAL_STATE_KEY = "many-offline-games-state-v2";
 
-const DAILY_REWARDS = [100, 125, 150, 175, 200, 250, 500];
+const DAILY_REWARDS = [10, 20, 30, 40, 50, 60, 70];
+const CREDIT_PACKS = [
+    { credits: 100, coins: 10 },
+    { credits: 300, coins: 25 },
+    { credits: 1000, coins: 50 },
+    { credits: 1500, coins: 100 }
+];
+const PACK_DISCOUNTS = [10, 20, 35, 50];
+const DAILY_OFFERS_KEY = "many-offline-games-daily-offers-v1";
 
 const DEFAULT_STATE = {
     coins: 0,
@@ -23,6 +31,9 @@ let appState = { ...DEFAULT_STATE };
 let purchaseTarget = null;
 let purchaseBusy = false;
 let currentFrameGameId = "";
+let packTarget = null;
+let packBusy = false;
+let activeStoreTab = "library";
 
 
 // ======================================================
@@ -55,6 +66,7 @@ document.addEventListener("keydown", (event) => {
 
     if (event.key === "Escape") {
         closePurchaseModal();
+        closePackModal();
         closeRewardModal();
         closeGameModal();
     }
@@ -854,6 +866,274 @@ function getGameById(gameId) {
     ) || null;
 }
 
+function getSavedGameKey(game) {
+    return getGameIdentifier(game) === "space-invaders"
+        ? "SPACE_INVADERS"
+        : getGameIdentifier(game);
+}
+
+function readArcadeGames() {
+    try {
+        const data = JSON.parse(
+            localStorage.getItem("ARCADE_GAMES") || "{}"
+        );
+
+        return data && typeof data === "object" && !Array.isArray(data)
+            ? data
+            : {};
+    } catch (error) {
+        console.warn("Could not read game credits:", error);
+        return {};
+    }
+}
+
+function addGameCredits(game, credits) {
+    const root = readArcadeGames();
+    const key = getSavedGameKey(game);
+    const current = root[key] && typeof root[key] === "object"
+        ? root[key]
+        : {};
+
+    current.credits = Math.max(
+        0,
+        Math.floor(Number(current.credits) || 0) + credits
+    );
+    root[key] = current;
+    localStorage.setItem("ARCADE_GAMES", JSON.stringify(root));
+}
+
+function renderCreditStore() {
+    const store = document.getElementById("credits-store");
+
+    if (!store) {
+        return;
+    }
+
+    store.innerHTML = defaultGames.map((game) => `
+        <article class="store-card">
+            <div class="store-card__icon">${String(game.icon || "🎮")}</div>
+            <div class="store-card__content">
+                <h3>${escapeHtml(String(game.name))}</h3>
+                <p>Use these credits inside this game.</p>
+            </div>
+            <div class="credit-options">
+                ${CREDIT_PACKS.slice(0, 3).map((pack) => `
+                    <button class="secondary-button credit-option" type="button"
+                        data-credit-game="${encodeURIComponent(getGameIdentifier(game))}"
+                        data-credit-value="${pack.credits}" data-credit-cost="${pack.coins}">
+                        +${pack.credits} C / ${pack.coins} 🪙
+                    </button>
+                `).join("")}
+            </div>
+        </article>
+    `).join("");
+}
+
+function getPackGames(size) {
+    return defaultGames.slice(0, size);
+}
+
+function seededRandom(seed) {
+    let value = seed;
+
+    return () => {
+        value = (value * 9301 + 49297) % 233280;
+        return value / 233280;
+    };
+}
+
+function getDailyOffers() {
+    const today = getTodayKey();
+    const stored = (() => {
+        try {
+            return JSON.parse(localStorage.getItem(DAILY_OFFERS_KEY) || "null");
+        } catch {
+            return null;
+        }
+    })();
+
+    if (
+        stored?.date === today &&
+        Array.isArray(stored.offers) &&
+        stored.offers.length > 0
+    ) {
+        return {
+            ...stored,
+            revealed: Array.isArray(stored.revealed)
+                ? stored.revealed
+                : []
+        };
+    }
+
+    const seed = [...today].reduce((total, character) => total + character.charCodeAt(0), 0);
+    const random = seededRandom(seed);
+    const shuffledGames = [...defaultGames].sort(() => random() - 0.5);
+    const offers = Array.from({ length: Math.min(3, Math.floor(defaultGames.length / 2)) }, (_, index) => {
+        const size = 1 + Math.floor(random() * 4);
+        const discount = PACK_DISCOUNTS[Math.floor(random() * PACK_DISCOUNTS.length)];
+        const start = index * 2;
+
+        return {
+            id: `${today}-${index}`,
+            size,
+            discount,
+            gameIds: shuffledGames.slice(start, start + size).map(getGameIdentifier)
+        };
+    });
+    const next = { date: today, offers, revealed: [] };
+
+    try {
+        localStorage.setItem(DAILY_OFFERS_KEY, JSON.stringify(next));
+    } catch (error) {
+        console.warn("Could not save daily offers:", error);
+    }
+
+    return next;
+}
+
+function getOfferGames(offer) {
+    return offer.gameIds
+        .map(getGameById)
+        .filter(Boolean);
+}
+
+function revealDailyOffer(offerId) {
+    const daily = getDailyOffers();
+
+    if (!daily.revealed.includes(offerId)) {
+        daily.revealed.push(offerId);
+        try {
+            localStorage.setItem(DAILY_OFFERS_KEY, JSON.stringify(daily));
+        } catch (error) {
+            console.warn("Could not save revealed offer:", error);
+        }
+    }
+
+    renderPackStore();
+}
+
+function renderPackStore() {
+    const store = document.getElementById("packs-store");
+
+    if (!store) {
+        return;
+    }
+
+    const daily = getDailyOffers();
+
+    store.innerHTML = daily.offers.map((offer, index) => {
+        const games = getOfferGames(offer);
+        const regularCost = games.reduce((total, game) => total + getGameCost(game), 0);
+        const discount = offer.discount;
+        const price = Math.ceil(regularCost * (1 - discount / 100));
+        const revealed = daily.revealed.includes(offer.id);
+
+        return `
+            <button class="store-card pack-card ${revealed ? "is-revealed" : "is-hidden"}" type="button" data-offer-id="${offer.id}" ${games.length !== offer.size ? "disabled" : ""}>
+                ${revealed ? `
+                    <span class="pack-card__tag">${discount}% OFF</span>
+                    <h3>${offer.size}-GAME DROP</h3>
+                    <p>${games.map((game) => escapeHtml(String(game.name))).join(" · ")}</p>
+                    <strong>${price.toLocaleString("en-US")} 🪙</strong>
+                    <span class="store-card__action">Tap to claim offer</span>
+                ` : `
+                    <span class="pack-card__mystery">?</span>
+                    <h3>MYSTERY DROP ${index + 1}</h3>
+                    <p>Today's secret bundle is waiting.</p>
+                    <span class="store-card__action">Tap to reveal</span>
+                `}
+            </button>
+        `;
+    }).join("");
+}
+
+function getGameCost(game) {
+    return Number(game?.cost) > 0 ? Math.floor(Number(game.cost)) : 100;
+}
+
+function closePackModal() {
+    if (packBusy) {
+        return;
+    }
+
+    packTarget = null;
+    closeModal(document.getElementById("pack-modal"));
+}
+
+function openPackModal(offerId) {
+    if (!isOnline()) {
+        showToast("Go online to buy a pack.", "info");
+        return;
+    }
+
+    const daily = getDailyOffers();
+    const offer = daily.offers.find((item) => item.id === offerId);
+
+    if (!offer || !daily.revealed.includes(offerId)) {
+        return;
+    }
+
+    const games = getOfferGames(offer);
+    const discount = offer.discount;
+    const regularCost = games.reduce((total, game) => total + getGameCost(game), 0);
+    const price = Math.ceil(regularCost * (1 - discount / 100));
+    packTarget = { games, price, discount, regularCost };
+
+    document.getElementById("pack-title").textContent = `${offer.size}-game daily drop`;
+    document.getElementById("pack-games").innerHTML = games.map((game) => `
+        <span class="pack-preview__game">${String(game.icon || "🎮")} ${escapeHtml(String(game.name))}</span>
+    `).join("");
+    document.getElementById("pack-regular-cost").textContent = `${regularCost.toLocaleString("en-US")} 🪙`;
+    document.getElementById("pack-discount").textContent = `${discount}%`;
+    document.getElementById("pack-balance").textContent = `${appState.coins.toLocaleString("en-US")} 🪙`;
+
+    const note = document.getElementById("pack-note");
+    const confirm = document.getElementById("confirm-pack");
+    note.textContent = appState.coins < price
+        ? `You need ${(price - appState.coins).toLocaleString("en-US")} more coins.`
+        : `Pay ${price.toLocaleString("en-US")} coins to unlock and cache every game.`;
+    confirm.disabled = appState.coins < price;
+    confirm.textContent = appState.coins < price ? "Not enough coins" : `Buy for ${price} 🪙`;
+    openModal(document.getElementById("pack-modal"));
+}
+
+async function purchasePack() {
+    if (packBusy || !packTarget || appState.coins < packTarget.price) {
+        return;
+    }
+
+    packBusy = true;
+    const purchasedGameCount = packTarget.games.length;
+    const confirm = document.getElementById("confirm-pack");
+    confirm.disabled = true;
+    confirm.textContent = "Preparing pack...";
+
+    try {
+        for (const game of packTarget.games) {
+            if (!await fetchLatestGameHtml(game)) {
+                throw new Error(`Could not download ${game.name}`);
+            }
+        }
+
+        appState.coins -= packTarget.price;
+        appState.unlocked = [...new Set([
+            ...appState.unlocked,
+            ...packTarget.games.map(getGameIdentifier)
+        ])];
+        renderCoins();
+        renderLibraries();
+        await saveState();
+        packBusy = false;
+        closePackModal();
+        showToast(`Pack purchased: ${purchasedGameCount} games unlocked.`, "success");
+    } catch (error) {
+        console.error("Pack purchase cancelled:", error);
+        showToast("Pack cancelled: a game could not be downloaded.", "error");
+    } finally {
+        packBusy = false;
+    }
+}
+
 function isGameUnlocked(gameId) {
     return appState.unlocked.includes(
         String(gameId)
@@ -1084,6 +1364,27 @@ function renderLibraries() {
             defaultGames
         );
     }
+
+    renderCreditStore();
+    renderPackStore();
+}
+
+function setStoreTab(tab) {
+    const validTab = ["library", "offers", "credits"].includes(tab)
+        ? tab
+        : "library";
+
+    activeStoreTab = validTab;
+
+    document.querySelectorAll("[data-store-tab]").forEach((button) => {
+        const selected = button.dataset.storeTab === validTab;
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-selected", String(selected));
+    });
+
+    document.querySelectorAll(".store-tab-panel").forEach((panel) => {
+        panel.hidden = !panel.classList.contains(`store-tab-panel--${validTab}`);
+    });
 }
 
 
@@ -1858,6 +2159,38 @@ async function handleGameCardClick(
     );
 }
 
+function handleCreditPurchase(event) {
+    const button = event.target.closest("[data-credit-game]");
+
+    if (!button) {
+        return;
+    }
+
+    const game = getGameById(decodeURIComponent(button.dataset.creditGame));
+    const credits = Number(button.dataset.creditValue);
+    const cost = Number(button.dataset.creditCost);
+
+    if (!game || !Number.isFinite(credits) || !Number.isFinite(cost)) {
+        return;
+    }
+
+    if (appState.coins < cost) {
+        showToast(`You need ${(cost - appState.coins).toLocaleString("en-US")} more coins.`, "error");
+        return;
+    }
+
+    try {
+        addGameCredits(game, credits);
+        appState.coins -= cost;
+        renderCoins();
+        saveState();
+        showToast(`${credits} credits added to ${game.name}.`, "success");
+    } catch (error) {
+        console.error("Credit purchase cancelled:", error);
+        showToast("Credit purchase could not be completed.", "error");
+    }
+}
+
 
 // ======================================================
 // INITIALIZATION
@@ -1907,6 +2240,16 @@ async function initializeApp() {
         );
 
     document
+        .querySelectorAll("[data-store-tab]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                setStoreTab(button.dataset.storeTab);
+            });
+        });
+
+    setStoreTab(activeStoreTab);
+
+    document
         .getElementById(
             "close-reward"
         )
@@ -1941,6 +2284,40 @@ async function initializeApp() {
             "click",
             closePurchaseModal
         );
+
+    document
+        .getElementById("close-pack")
+        ?.addEventListener("click", closePackModal);
+
+    document
+        .getElementById("cancel-pack")
+        ?.addEventListener("click", closePackModal);
+
+    document
+        .getElementById("confirm-pack")
+        ?.addEventListener("click", purchasePack);
+
+    document
+        .getElementById("credits-store")
+        ?.addEventListener("click", handleCreditPurchase);
+
+    document
+        .getElementById("packs-store")
+        ?.addEventListener("click", (event) => {
+            const card = event.target.closest("[data-offer-id]");
+
+            if (!card || card.disabled) {
+                return;
+            }
+
+            const daily = getDailyOffers();
+            if (!daily.revealed.includes(card.dataset.offerId)) {
+                revealDailyOffer(card.dataset.offerId);
+                return;
+            }
+
+            openPackModal(card.dataset.offerId);
+        });
 
     document
         .getElementById(
@@ -1996,6 +2373,10 @@ async function initializeApp() {
                             "reward-modal"
                         ) {
                             closeRewardModal();
+                        }
+
+                        if (modal.id === "pack-modal") {
+                            closePackModal();
                         }
 
                         if (
