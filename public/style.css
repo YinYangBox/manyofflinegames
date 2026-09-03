@@ -464,6 +464,128 @@ button:disabled {
     text-transform: uppercase;
 }
 
+.coin-store-intro {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 22px 0 14px;
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 216, 92, 0.2);
+    border-radius: 18px;
+    background:
+        linear-gradient(115deg, rgba(255, 216, 92, 0.1), rgba(85, 199, 255, 0.06)),
+        rgba(255, 255, 255, 0.025);
+}
+
+.coin-store-intro h3 {
+    margin: 6px 0 3px;
+    font-size: 1.12rem;
+}
+
+.coin-store-intro p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.coin-store-intro__balance {
+    color: var(--muted-strong);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.coin-store-intro__balance strong {
+    color: var(--gold);
+}
+
+.coin-card {
+    position: relative;
+    min-height: 190px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.coin-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 216, 92, 0.55);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
+}
+
+.coin-card--featured {
+    border-color: rgba(255, 216, 92, 0.36);
+    background:
+        radial-gradient(circle at 90% 0%, rgba(255, 216, 92, 0.17), transparent 45%),
+        linear-gradient(145deg, rgba(38, 42, 71, 0.96), rgba(12, 20, 38, 0.98));
+}
+
+.coin-card .pack-card__tag {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+.coin-card__icon,
+.coin-checkout__icon {
+    display: grid;
+    place-items: center;
+    color: var(--gold);
+    background: rgba(255, 216, 92, 0.1);
+    border: 1px solid rgba(255, 216, 92, 0.2);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+}
+
+.coin-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+}
+
+.coin-card h3 {
+    margin: 14px 0 0;
+    font-size: 1.08rem;
+}
+
+.coin-card strong {
+    display: block;
+    margin-top: 7px;
+    color: var(--gold);
+    font-size: 1.22rem;
+}
+
+.coin-checkout {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 16px;
+    border: 1px solid rgba(255, 216, 92, 0.2);
+    border-radius: 17px;
+    background: rgba(255, 216, 92, 0.06);
+}
+
+.coin-checkout__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+}
+
+.coin-checkout strong,
+.coin-checkout span:last-child {
+    display: block;
+}
+
+.coin-checkout strong {
+    font-size: 1.05rem;
+}
+
+.coin-checkout span:last-child {
+    margin-top: 4px;
+    color: var(--gold);
+    font-weight: 900;
+}
+
 .pack-preview {
     display: flex;
     flex-wrap: wrap;
@@ -852,6 +974,16 @@ button:disabled {
     border-color: rgba(166, 190, 224, 0.12);
 }
 
+.secondary-button--wide {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.paypal-button-container {
+    min-height: 45px;
+    margin-top: 14px;
+}
+
 .primary-button:disabled,
 .secondary-button:disabled {
     opacity: 0.5;
@@ -1016,6 +1148,11 @@ button:disabled {
 
     .purchase-summary {
         grid-template-columns: 1fr;
+    }
+
+    .coin-store-intro {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .modal-actions {

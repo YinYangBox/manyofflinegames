@@ -15,6 +15,20 @@ const CREDIT_PACKS = [
     { credits: 1000, coins: 50 },
     { credits: 1500, coins: 100 }
 ];
+const COIN_PACKS = [
+    { coins: 400, price: "EUR 0.49" },
+    { coins: 1200, price: "EUR 0.99" },
+    { coins: 2500, price: "EUR 1.99" },
+    { coins: 7000, price: "EUR 4.99" },
+    { coins: 20000, price: "EUR 9.99" },
+    { coins: 50000, price: "EUR 19.99" }
+];
+// PayPal Client ID is public and belongs here. Replace this placeholder with
+// the Client ID from your PayPal Developer Dashboard (Sandbox while testing).
+const PAYPAL_CLIENT_ID = "PON_AQUI_TU_PAYPAL_CLIENT_ID";
+// Use "sandbox" for tests and "production" after your PayPal account is live.
+const PAYPAL_ENVIRONMENT = "sandbox";
+const PAYPAL_CURRENCY = "EUR";
 const PACK_DISCOUNTS = [10, 20, 35, 50];
 const DAILY_OFFERS_KEY = "many-offline-games-daily-offers-v1";
 
@@ -33,6 +47,9 @@ let purchaseBusy = false;
 let currentFrameGameId = "";
 let packTarget = null;
 let packBusy = false;
+let coinTarget = null;
+let coinBusy = false;
+let paypalButtons = null;
 let activeStoreTab = "library";
 
 
@@ -67,6 +84,7 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
         closePurchaseModal();
         closePackModal();
+        closeCoinModal();
         closeRewardModal();
         closeGameModal();
     }
@@ -940,6 +958,131 @@ function renderCreditStore() {
     `).join("");
 }
 
+function renderCoinStore() {
+    const store = document.getElementById("coin-store");
+
+    if (!store) {
+        return;
+    }
+
+    store.innerHTML = COIN_PACKS.map((pack, index) => `
+        <button class="store-card coin-card ${index === 2 ? "coin-card--featured" : ""}" type="button" data-coin-pack="${index}">
+            ${index === 2 ? '<span class="pack-card__tag">BEST VALUE</span>' : ""}
+            <span class="coin-card__icon">COIN</span>
+            <h3>${pack.coins.toLocaleString("en-US")} coins</h3>
+            <strong>${pack.price}</strong>
+            <span class="store-card__action">Buy coin pack</span>
+        </button>
+    `).join("");
+}
+
+function closeCoinModal() {
+    if (coinBusy) {
+        return;
+    }
+
+    coinTarget = null;
+    closeModal(document.getElementById("coin-modal"));
+}
+
+function openCoinModal(packIndex) {
+    if (!isOnline()) {
+        showToast("Go online to buy coins.", "info");
+        return;
+    }
+
+    const pack = COIN_PACKS[Number(packIndex)];
+
+    if (!pack) {
+        return;
+    }
+
+    coinTarget = pack;
+    document.getElementById("coin-purchase-amount").textContent = `${pack.coins.toLocaleString("en-US")} coins`;
+    document.getElementById("coin-purchase-price").textContent = pack.price;
+    document.getElementById("coin-purchase-note").textContent = PAYPAL_CLIENT_ID.startsWith("PON_AQUI")
+        ? "Add your PayPal Client ID in public/script.js to enable secure checkout."
+        : "You will be redirected to PayPal to complete payment securely.";
+    renderPayPalButtons();
+    openModal(document.getElementById("coin-modal"));
+}
+
+function loadPayPalSdk() {
+    if (window.paypal) {
+        return Promise.resolve(window.paypal);
+    }
+
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(PAYPAL_CLIENT_ID)}&currency=${PAYPAL_CURRENCY}&intent=capture&components=buttons`;
+        script.onload = () => resolve(window.paypal);
+        script.onerror = () => reject(new Error("PayPal SDK could not load."));
+        document.head.appendChild(script);
+    });
+}
+
+async function renderPayPalButtons() {
+    const container = document.getElementById("paypal-button-container");
+
+    if (!container || PAYPAL_CLIENT_ID.startsWith("PON_AQUI")) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    try {
+        const paypal = await loadPayPalSdk();
+        paypalButtons = paypal.Buttons({
+            style: { layout: "vertical", shape: "rect", label: "paypal" },
+            createOrder: async () => {
+                const response = await fetch("/.netlify/functions/paypal-create-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ coins: coinTarget.coins })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.id) {
+                    throw new Error(data.error || "Could not create PayPal order.");
+                }
+                return data.id;
+            },
+            onApprove: async (data) => {
+                coinBusy = true;
+                try {
+                    const response = await fetch("/.netlify/functions/paypal-capture-order", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ orderID: data.orderID })
+                    });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== "COMPLETED") {
+                        throw new Error(result.error || "PayPal payment was not completed.");
+                    }
+                    appState.coins += result.coins;
+                    renderCoins();
+                    await saveState();
+                    closeCoinModal();
+                    showToast(`Payment complete: +${result.coins.toLocaleString("en-US")} coins.`, "success");
+                } catch (error) {
+                    console.error("PayPal capture error:", error);
+                    showToast("PayPal could not confirm the payment.", "error");
+                } finally {
+                    coinBusy = false;
+                }
+            },
+            onError: (error) => {
+                coinBusy = false;
+                console.error("PayPal checkout error:", error);
+                showToast("PayPal could not complete the payment.", "error");
+            }
+        });
+        await paypalButtons.render(container);
+    } catch (error) {
+        console.error("PayPal setup error:", error);
+        showToast("PayPal checkout is not configured yet.", "error");
+    }
+}
+
 function getPackGames(size) {
     return defaultGames.slice(0, size);
 }
@@ -1379,11 +1522,12 @@ function renderLibraries() {
     }
 
     renderCreditStore();
+    renderCoinStore();
     renderPackStore();
 }
 
 function setStoreTab(tab) {
-    const validTab = ["library", "offers", "credits"].includes(tab)
+    const validTab = ["library", "offers", "coins", "credits"].includes(tab)
         ? tab
         : "library";
 
@@ -2312,6 +2456,25 @@ async function initializeApp() {
         ?.addEventListener("click", purchasePack);
 
     document
+        .getElementById("close-coin")
+        ?.addEventListener("click", closeCoinModal);
+
+    document
+        .getElementById("cancel-coin")
+        ?.addEventListener("click", closeCoinModal);
+
+    document
+    document
+        .getElementById("coin-store")
+        ?.addEventListener("click", (event) => {
+            const card = event.target.closest("[data-coin-pack]");
+
+            if (card) {
+                openCoinModal(card.dataset.coinPack);
+            }
+        });
+
+    document
         .getElementById("credits-store")
         ?.addEventListener("click", handleCreditPurchase);
 
@@ -2391,6 +2554,10 @@ async function initializeApp() {
 
                         if (modal.id === "pack-modal") {
                             closePackModal();
+                        }
+
+                        if (modal.id === "coin-modal") {
+                            closeCoinModal();
                         }
 
                         if (

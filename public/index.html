@@ -35,6 +35,9 @@
             <button class="store-tab" type="button" data-store-tab="offers" aria-selected="false">
                 DAILY OFFERS
             </button>
+            <button class="store-tab" type="button" data-store-tab="coins" aria-selected="false">
+                BUY COINS
+            </button>
             <button class="store-tab" type="button" data-store-tab="credits" aria-selected="false">
                 GET CREDITS
             </button>
@@ -118,6 +121,32 @@
         </section>
 
         <section
+            id="coins-section"
+            class="library-section store-section store-tab-panel store-tab-panel--coins"
+            aria-labelledby="coins-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">POWER UP</span>
+                    <h2 id="coins-title">Buy coins</h2>
+                </div>
+
+                <span class="library-count">Spend them across the arcade</span>
+            </div>
+
+            <div class="coin-store-intro">
+                <div>
+                    <span class="section-kicker">COIN SHOP</span>
+                    <h3>Choose your coin pack</h3>
+                    <p>Top up your balance and spend coins across the arcade.</p>
+                </div>
+                <span class="coin-store-intro__balance">Balance: <strong data-coin-value>0</strong> coins</span>
+            </div>
+
+            <div id="coin-store" class="store-grid coin-store"></div>
+        </section>
+
+        <section
             id="credits-section"
             class="library-section store-section store-tab-panel store-tab-panel--credits"
             aria-labelledby="credits-title"
@@ -159,6 +188,33 @@
         aria-live="polite"
         role="status"
     ></div>
+
+    <!-- COIN PURCHASE MODAL -->
+    <div id="coin-modal" class="app-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="coin-title">
+        <div class="app-modal__panel purchase-panel">
+            <div class="app-modal__header">
+                <div>
+                    <span class="section-kicker">SECURE CHECKOUT</span>
+                    <h2 id="coin-title">Buy coins</h2>
+                </div>
+                <button id="close-coin" class="icon-button" type="button" aria-label="Close coin purchase">X</button>
+            </div>
+
+            <div class="purchase-panel__body">
+                <div class="coin-checkout">
+                    <span class="coin-checkout__icon">COIN</span>
+                    <div>
+                        <strong id="coin-purchase-amount">400 coins</strong>
+                        <span id="coin-purchase-price">EUR 0.49</span>
+                    </div>
+                </div>
+                <p id="coin-purchase-note" class="purchase-note">You will be redirected to PayPal to complete payment securely.</p>
+                <div id="paypal-button-container" class="paypal-button-container"></div>
+                <button id="confirm-coin" class="primary-button" type="button" hidden>Confirm purchase</button>
+                <button id="cancel-coin" class="secondary-button secondary-button--wide" type="button">Not now</button>
+            </div>
+        </div>
+    </div>
 
     <!-- PURCHASE MODAL -->
     <div

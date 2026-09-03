@@ -3,590 +3,726 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0a0a0f">
+<meta name="theme-color" content="#080b10">
 <title>Pong</title>
-<style>
-:root {
-  --bg-color: #0a0a0f;
-  --accent-color: #ffffff;
-  --panel-bg: rgba(15, 15, 20, 0.85);
-  --border-radius: 12px;
-  --transition-speed: 0.2s;
-  --crt-scanline: rgba(255, 255, 255, 0.03);
-}
 
+<style>
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  user-select: none;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   margin: 0;
-  padding: 0;
   overflow: hidden;
-  background-color: var(--bg-color);
-  font-family: 'Courier New', Courier, monospace;
-  color: var(--accent-color);
+}
+
+body {
   display: flex;
   justify-content: center;
   align-items: center;
+  background: radial-gradient(circle at center, #252525 0%, #0d0d0d 55%, #030303 100%);
+  font-family: Arial, Helvetica, sans-serif;
+  color: white;
+  user-select: none;
+  touch-action: none;
 }
 
-h1, h2, h3, h4 {
-  margin: 0;
-  text-transform: uppercase;
+#game-container {
+  position: relative;
+  width: min(96vw, calc(96vh * 1.714));
+  height: min(96vh, calc(96vw / 1.714));
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  border-radius: 26px;
+  overflow: hidden;
+  background: #050505;
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.65),
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    inset 0 0 50px rgba(255, 255, 255, 0.04);
+}
+
+#gameCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#hud {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 35px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.hud-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.62);
+  border-radius: 14px;
+  background: rgba(8, 8, 8, 0.74);
+  backdrop-filter: blur(4px);
+  text-shadow: 3px 3px 0 #000, 0 0 16px rgba(255, 255, 255, 0.16);
+}
+
+.hud-label {
+  color: #888;
+  font-size: 9px;
   letter-spacing: 2px;
+  font-weight: 900;
+}
+
+.hud-value {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  padding: 20px;
 }
 
 .hidden {
   display: none !important;
 }
 
-.text-glow {
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.3);
-}
-
-#game-container {
-  position: relative;
-  width: min(95vw, calc(95vh * 1.77));
-  height: min(95vh, calc(95vw / 1.77));
-  background: #000;
-  border-radius: 20px;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-}
-
-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-#game-container::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  z-index: 2;
-  background-size: 100% 2px, 3px 100%;
-  pointer-events: none;
-}
-
-.screen {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  padding: 20px;
-}
-
-.panel {
-  background: var(--panel-bg);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--border-radius);
-  padding: 40px;
-  width: 100%;
-  max-width: 600px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  animation: panelIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-@keyframes panelIn {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+.card {
+  width: min(520px, 88%);
+  padding: 38px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(40, 40, 40, 0.98), rgba(15, 15, 15, 0.98));
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  text-align: center;
 }
 
 .logo {
-  font-size: clamp(40px, 8vw, 70px);
+  margin-bottom: 30px;
+  font-size: clamp(50px, 9vw, 85px);
   font-weight: 900;
-  letter-spacing: 15px;
-  margin-bottom: 10px;
-  background: linear-gradient(180deg, #fff, #888);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 15px rgba(255,255,255,0.4));
+  letter-spacing: 12px;
+  text-shadow: 4px 4px 0 #444, 0 0 25px rgba(255, 255, 255, 0.2);
 }
 
-/* ==========================================================================
-   BUTTONS
-   ========================================================================== */
-.btn {
-  width: 100%;
-  padding: 16px 24px;
-  background: transparent;
-  border: 2px solid rgba(255,255,255,0.3);
-  color: white;
-  font-family: inherit;
-  font-size: 18px;
-  font-weight: bold;
+h2 {
+  margin: 0 0 18px;
+  font-size: 22px;
   text-transform: uppercase;
   letter-spacing: 3px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all var(--transition-speed) ease;
-  position: relative;
-  overflow: hidden;
+  font-weight: 900;
 }
 
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s ease;
+.subtitle {
+  margin: 0 0 24px;
+  color: #888;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-.btn:hover::before {
-  left: 100%;
+.section-title {
+  margin: 18px 0 10px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 900;
 }
 
-.btn:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255,255,255,0.1);
-}
-
-.btn:active {
-  transform: translateY(1px);
-}
-
-.btn-primary {
-  background: #fff;
-  color: #000;
-}
-
-.btn-primary:hover {
-  background: #ddd;
-  box-shadow: 0 0 20px rgba(255,255,255,0.4);
-}
-
-/* ==========================================================================
-   GRID LAYOUTS
-   ========================================================================== */
-.grid-2 {
+.button-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  width: 100%;
+  gap: 10px;
 }
 
-.grid-4 {
+button {
+  border: 2px solid white;
+  border-radius: 12px;
+  padding: 14px 24px;
+  background: #111;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.12s, color 0.12s;
+}
+
+button:hover {
+  background: white;
+  color: black;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(2px);
+}
+
+.difficulty-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  width: 100%;
+  gap: 7px;
 }
 
-#hud {
-  position: absolute;
-  top: 30px;
-  left: 0;
+.difficulty-grid button {
+  padding: 11px 5px;
+  font-size: 12px;
+  border: 2px solid white;
+}
+
+.difficulty-grid button.active {
+  background: white;
+  color: black;
+}
+
+#difficultyText {
+  min-height: 25px;
+  margin: 15px 0;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.start-button {
   width: 100%;
+  background: white;
+  color: black;
+  font-size: 18px;
+  padding: 15px;
+  margin-top: 4px;
+}
+
+.controls-preview {
   display: flex;
-  justify-content: space-between;
-  padding: 0 50px;
-  pointer-events: none;
-  z-index: 5;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.65);
 }
 
-.score-box {
+.controls-text {
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.direction-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(0,0,0,0.5);
-  padding: 15px 30px;
-  border-radius: 15px;
-  border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(5px);
+  color: white;
+  text-align: center;
 }
 
-.score-label {
-  font-size: 12px;
-  color: #aaa;
-  letter-spacing: 3px;
-  margin-bottom: 5px;
+.direction-text {
+  font-size: clamp(35px, 7vw, 65px);
+  font-weight: 900;
+  letter-spacing: 8px;
 }
 
-.score-value {
-  font-size: 40px;
-  font-weight: bold;
+#directionArrow {
+  margin: 25px;
+  font-size: clamp(80px, 15vw, 150px);
   line-height: 1;
+  transform-origin: center;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 25px rgba(255, 255, 255, 0.25));
 }
 
-.shop-panel {
-  max-width: 900px;
-  height: 85vh;
+.direction-label {
+  font-size: 15px;
+  letter-spacing: 5px;
+  color: #aaa;
 }
 
-.shop-header {
+.results {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  justify-content: center;
+  gap: 60px;
+  margin-bottom: 25px;
 }
 
-.coin-display {
+.results div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.results span {
+  color: #999;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.results strong {
+  font-size: 45px;
+}
+
+#mobile-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.slider-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+}
+
+#p1-container {
+  left: 0;
+}
+
+#p2-container {
+  right: 0;
+}
+
+.paddle-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 60vh;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  outline: none;
+  transform: rotate(90deg);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+  margin: 0;
+}
+
+.paddle-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.4), inset 0 0 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.paddle-slider::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #mobile-controls {
+    display: none;
+  }
+}
+
+@media (max-width: 650px) {
+  #game-container {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    border-width: 0;
+  }
+
+  .card {
+    padding: 28px 20px;
+  }
+
+  .button-grid {
+    flex-direction: column;
+  }
+
+  .button-grid button {
+    width: 100%;
+  }
+
+  .difficulty-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #hud {
+    top: 12px;
+    gap: 20px;
+  }
+
+  .hud-box {
+    padding: 8px 12px;
+  }
+
+  .hud-label {
+    font-size: 8px;
+  }
+
+  .hud-value {
+    font-size: 17px;
+  }
+
+  .paddle-slider::-webkit-slider-thumb {
+    width: 55px;
+    height: 55px;
+  }
+
+  .results {
+    gap: 50px;
+  }
+
+  .results strong {
+    font-size: 38px;
+  }
+}
+
+@media (orientation: landscape) and (max-width: 900px) {
+  .card {
+    padding: 18px 25px;
+  }
+
+  .logo {
+    font-size: 45px;
+  }
+
+  .subtitle {
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    margin: 10px 0 7px;
+  }
+
+  .controls-text {
+    margin-top: 10px;
+  }
+}
+
+/* ===== COINS & SHOP ===== */
+#bankedCoinsMenu {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 24px;
-  font-weight: bold;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 14px;
+  padding: 9px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.42);
+  border-radius: 14px;
+  background: rgba(8, 8, 8, 0.62);
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.bank-coin {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffd700;
+  border-radius: 50%;
+  font-size: 10px;
   color: #ffd700;
-  text-shadow: 0 0 10px rgba(255,215,0,0.4);
-  background: rgba(255,215,0,0.1);
-  padding: 10px 20px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,215,0,0.3);
+}
+
+#skinShopScreen {
+  z-index: 30;
+  padding: 14px;
+}
+
+.skin-shop-card {
+  width: min(760px, 92%);
+  max-height: 82vh;
+  overflow-y: auto;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+.skin-shop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.skin-shop-title {
+  font-family: monospace;
+  font-size: clamp(24px, 5vw, 40px);
+  font-weight: 900;
+  letter-spacing: 5px;
+}
+
+.shop-coins {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-family: monospace;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .shop-tabs {
   display: flex;
-  width: 100%;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 
-.tab-btn {
+.shop-tabs button {
   flex: 1;
-  padding: 12px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
-  color: #aaa;
-  cursor: pointer;
-  font-weight: bold;
-  letter-spacing: 1px;
-  transition: all 0.2s;
-}
-
-.tab-btn.active {
-  background: #fff;
-  color: #000;
-  border-color: #fff;
-}
-
-.shop-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 15px;
-  width: 100%;
-  overflow-y: auto;
   padding: 10px;
-  flex-grow: 1;
+  font-size: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-/* Custom Scrollbar for Shop */
-.shop-grid::-webkit-scrollbar { width: 8px; }
-.shop-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 4px; }
-.shop-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
-.shop-grid::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
-
-.skin-card {
-  background: rgba(20, 20, 25, 0.9);
-  border: 2px solid rgba(255,255,255,0.1);
-  border-radius: 15px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  transition: all 0.3s;
+.shop-tabs button.active {
+  border-color: white;
+  background: white;
+  color: black;
 }
 
-.skin-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(255,255,255,0.4);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 2px 4px 8px 2px;
+  flex: 1;
 }
 
-.skin-card.equipped {
-  border-color: #00ff88;
-  box-shadow: 0 0 15px rgba(0,255,136,0.2);
+.skin-item {
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  padding: 10px;
+  background: linear-gradient(145deg, rgba(40, 40, 40, 0.9), rgba(12, 12, 12, 0.95));
+  text-align: center;
 }
 
-.skin-preview-box {
+.skin-item.active {
+  border-color: #ffd700;
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.3);
+}
+
+.skin-preview {
   width: 100px;
   height: 100px;
-  background: #000;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.05);
+  margin: 2px auto 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: #080808;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   font-size: 50px;
-  position: relative;
-  overflow: hidden;
+  font-weight: 900;
 }
 
 .skin-name {
-  font-weight: bold;
-  font-size: 14px;
+  font-weight: 900;
+  font-size: 12px;
   letter-spacing: 1px;
-  text-align: center;
 }
 
-.skin-action-btn {
+.skin-price {
+  margin: 5px 0 9px;
+  color: #aaa;
+  font-size: 11px;
+}
+
+.skin-btn {
   width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
+  padding: 9px 8px;
+  font-size: 11px;
 }
 
-.btn-buy { background: #ffd700; color: #000; }
-.btn-buy:hover { background: #ffea00; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
-.btn-equip { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
-.btn-equip:hover { background: #fff; color: #000; }
-.btn-equipped { background: #00ff88; color: #000; cursor: default; pointer-events: none; }
-
-/* ==========================================================================
-   MOBILE CONTROLS (iPad / Touch)
-   ========================================================================== */
-#mobile-controls {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  display: flex;
-  justify-content: space-between;
-  padding: 20px;
+.skin-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
-#mobile-controls.hidden {
-  display: none !important;
+.shop-close-btn {
+  margin-top: 10px;
+  width: 100%;
+  flex-shrink: 0;
 }
 
-#mobile-controls.show-controls {
-  display: flex !important;
-  pointer-events: auto;
+#shopButton {
+  width: 100%;
+  margin-top: 8px;
 }
 
-.touch-zone {
-  width: 20%;
-  height: 100%;
-  pointer-events: auto;
-  touch-action: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-}
-
-.control-btn {
-  width: 70px;
-  height: 70px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  font-size: 28px;
-  font-weight: bold;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.1s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.control-btn:active {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.6);
-  transform: scale(0.95);
-}
-
-.control-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  #mobile-controls { display: none; }
-}
-
-@media (max-width: 800px) {
-  #game-container {
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-    border: none;
+@media (max-width: 650px) {
+  #skinShopScreen {
+    padding: 8px;
   }
-  .panel { padding: 20px; max-width: 95%; height: auto; max-height: 95vh; }
-  .grid-4 { grid-template-columns: repeat(2, 1fr); }
-  .logo { font-size: 40px; }
-  .shop-grid { grid-template-columns: repeat(2, 1fr); }
-  .shop-tabs { flex-wrap: wrap; }
-  #hud { padding: 0 20px; }
-  .score-value { font-size: 30px; }
-}
 
-.diff-desc {
-  min-height: 30px;
-  color: #888;
-  font-size: 14px;
-  text-align: center;
-  margin: 10px 0;
-}
-.active-diff {
-  background: #fff;
-  color: #000;
-}
-.coin-notification {
-  position: absolute;
-  color: #ffd700;
-  font-weight: bold;
-  font-size: 24px;
-  text-shadow: 0 0 10px rgba(255,215,0,0.8);
-  pointer-events: none;
-  z-index: 20;
-  animation: floatUp 1.5s ease-out forwards;
-}
-@keyframes floatUp {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+  .skin-shop-card {
+    width: 96%;
+    max-height: 88vh;
+    padding: 16px;
+  }
+
+  .skin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .skin-preview {
+    width: 80px;
+    height: 80px;
+    font-size: 40px;
+  }
+
+  .shop-coins {
+    font-size: 12px;
+    padding: 7px 9px;
+  }
+
+  .shop-tabs {
+    flex-wrap: wrap;
+  }
 }
 </style>
 </head>
+
 <body>
-
 <div id="game-container">
-  <canvas id="gameCanvas" width="1600" height="900"></canvas>
-  
+  <canvas id="gameCanvas" width="1200" height="700"></canvas>
+
   <div id="hud" class="hidden">
-    <div class="score-box">
-      <span class="score-label">P1</span>
-      <span class="score-value" id="score1">0</span>
+    <div class="hud-box">
+      <span class="hud-label">PLAYER 1</span>
+      <span class="hud-value" id="score1">0</span>
     </div>
-    <div class="score-box">
-      <span class="score-label" id="p2-label">BOT</span>
-      <span class="score-value" id="score2">0</span>
-    </div>
-  </div>
-
-  <!-- MAIN MENU -->
-  <div id="mainMenu" class="screen">
-    <div class="panel">
-      <div class="logo">PONG</div>
-
-      <div class="grid-2">
-        <button class="btn" id="btn-1p">1 PLAYER (BOT)</button>
-        <button class="btn" id="btn-2p">2 PLAYERS</button>
-      </div>
-
-      <button class="btn btn-primary" id="btn-shop" style="margin-top: 10px;">
-        🛒 SKIN SHOP
-      </button>
-
-      <div class="coin-display" style="margin-top: 10px; font-size: 18px;">
-        <span>🪙</span> <span id="menu-coins">0</span>
-      </div>
-      
-      <button class="btn" id="btn-toggle-touch" style="margin-top: 10px; background: rgba(100, 100, 100, 0.8);">Enable Touch Controls</button>
-      
-      <div style="font-size: 12px; color: #666; text-align: center; margin-top: 20px;">
-        CONTROLS: P1 [W/S] • P2 [↑/↓]<br>
-        OR TAP THE SIDES ON TOUCH SCREEN
-      </div>
+    <div class="hud-box">
+      <span class="hud-label">PLAYER 2</span>
+      <span class="hud-value" id="score2">0</span>
     </div>
   </div>
 
-  <!-- DIFFICULTY MENU -->
-  <div id="diffMenu" class="screen hidden">
-    <div class="panel">
-      <h2>SELECT DIFFICULTY</h2>
-      <div class="diff-desc" id="diff-text">Normal Difficulty • 20 Coins per victory</div>
-      
-      <div class="grid-4" id="diff-grid">
-        <button class="btn" data-diff="1">EASY</button>
-        <button class="btn active-diff" data-diff="2">NORMAL</button>
-        <button class="btn" data-diff="3">HARD</button>
-        <button class="btn" data-diff="4">INSANE</button>
-      </div>
+  <div id="menu" class="screen">
+    <div class="card">
+      <div class="logo">◇ PONG ◇</div>
+      <div class="subtitle">Classic arcade • modern edition</div>
 
-      <button class="btn btn-primary" id="btn-start">▶ START GAME</button>
-      <button class="btn" id="btn-back-diff">BACK</button>
-    </div>
-  </div>
-
-  <!-- SHOP -->
-  <div id="shopMenu" class="screen hidden">
-    <div class="panel shop-panel">
-      <div class="shop-header">
-        <h2>ARSENAL</h2>
-        <div class="coin-display">
-          <span>🪙</span> <span id="shop-coins">0</span>
+      <div id="mode-section">
+        <div class="section-title">GAME MODE</div>
+        <div class="button-grid">
+          <button id="onePlayer">1 PLAYER</button>
+          <button id="twoPlayers" class="active">2 PLAYERS</button>
         </div>
+        <div class="controls-preview">
+          <span id="controlsLabel">KEYBOARD OR ON-SCREEN CONTROLS</span>
+        </div>
+
+        <div id="bankedCoinsMenu">
+          <span class="bank-coin">◆</span>
+          <span id="bankedCoinsValue">0</span>
+          <span style="color:#888;font-size:10px;letter-spacing:2px;">TOTAL COINS</span>
+        </div>
+
+        <button id="shopButton">🛒 SKIN SHOP</button>
       </div>
 
+      <div id="difficulty-section" class="hidden">
+        <div class="section-title">DIFFICULTY</div>
+        <div class="difficulty-grid">
+          <button data-difficulty="1">EASY</button>
+          <button data-difficulty="2" class="active">NORMAL</button>
+          <button data-difficulty="3">HARD</button>
+          <button data-difficulty="4">INSANE</button>
+        </div>
+        <div id="difficultyText">Balanced acceleration and reactive bot</div>
+        <button id="startButton" class="start-button">▶ START GAME</button>
+        <button id="backButton">BACK</button>
+      </div>
+
+      <div class="controls-text">P1: W / S &nbsp; • &nbsp; P2: ↑ / ↓</div>
+    </div>
+  </div>
+
+  <div id="skinShopScreen" class="screen hidden">
+    <div class="card skin-shop-card">
+      <div class="skin-shop-header">
+        <div class="skin-shop-title">SHOP</div>
+        <div class="shop-coins"><span class="bank-coin">◆</span> <span id="shopCoinsValue">0</span></div>
+      </div>
+      
       <div class="shop-tabs">
-        <button class="tab-btn active" data-tab="BALL">BALL</button>
-        <button class="tab-btn" data-tab="PADDLE_P1">PADDLE P1</button>
-        <button class="tab-btn" data-tab="PADDLE_P2">PADDLE P2</button>
-        <button class="tab-btn" data-tab="PADDLE_BOT">PADDLE BOT</button>
+        <button id="ballTabBtn" class="active">BOLAS</button>
+        <button id="paddleTabBtn">PALAS</button>
       </div>
 
-      <div class="shop-grid" id="shop-grid"></div>
-
-      <button class="btn" id="btn-back-shop" style="margin-top: 20px;">BACK TO MENU</button>
-    </div>
-  </div>
-
-  <!-- GAME OVER -->
-  <div id="gameOverMenu" class="screen hidden">
-    <div class="panel">
-      <h1 id="winner-text" class="text-glow" style="font-size: 40px; text-align: center;">PLAYER 1 WINS</h1>
+      <div id="ballGrid" class="skin-grid"></div>
+      <div id="paddleGrid" class="skin-grid hidden"></div>
       
-      <div class="grid-2" style="margin: 20px 0;">
-        <div class="score-box" style="background: rgba(255,255,255,0.1);">
-          <span class="score-label">P1</span>
-          <span class="score-value" id="final-score1">0</span>
-        </div>
-        <div class="score-box" style="background: rgba(255,255,255,0.1);">
-          <span class="score-label" id="final-p2-label">P2</span>
-          <span class="score-value" id="final-score2">0</span>
-        </div>
-      </div>
-
-      <button class="btn btn-primary" id="btn-rematch">↻ REMATCH</button>
-      <button class="btn" id="btn-menu-go">MAIN MENU</button>
+      <button id="closeShopBtn" class="shop-close-btn">BACK TO MENU</button>
     </div>
   </div>
 
-  <div id="mobile-controls" class="hidden">
-    <div class="touch-zone" id="touch-zone-p1">
-      <button class="control-btn" id="btn-up-p1">▲</button>
-      <button class="control-btn" id="btn-down-p1">▼</button>
+  <div id="directionScreen" class="screen hidden">
+    <div class="card">
+      <div class="direction-card">
+        <div class="direction-text">READY</div>
+        <div id="directionArrow">➤</div>
+        <div class="direction-label">BALL DIRECTION</div>
+      </div>
     </div>
-    <div class="touch-zone" id="touch-zone-p2">
-      <button class="control-btn" id="btn-up-p2">▲</button>
-      <button class="control-btn" id="btn-down-p2">▼</button>
+  </div>
+
+  <div id="gameOver" class="screen hidden">
+    <div class="card">
+      <h2 id="winner">PLAYER 1 WINS</h2>
+      <div class="results">
+        <div><span>PLAYER 1</span><strong id="final1">0</strong></div>
+        <div><span>PLAYER 2</span><strong id="final2">0</strong></div>
+      </div>
+      <button id="againButton">↻ PLAY AGAIN</button>
+      <button id="menuButton">MENU</button>
+    </div>
+  </div>
+
+  <div id="mobile-controls">
+    <div id="p1-container" class="slider-container">
+      <input type="range" id="p1-slider" class="paddle-slider" min="0" max="1000" value="500">
+    </div>
+    <div id="p2-container" class="slider-container">
+      <input type="range" id="p2-slider" class="paddle-slider" min="0" max="1000" value="500">
     </div>
   </div>
 </div>
@@ -594,891 +730,604 @@ canvas {
 <script>
 "use strict";
 
-/* ==========================================================================
-   1. CONFIGURATION AND DATA (SKINS, DIFFICULTY)
-   ========================================================================== */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
 
-const GAME_CONFIG = {
-  CANVAS_WIDTH: 1600,
-  CANVAS_HEIGHT: 900,
-  WIN_SCORE: 7,
-  BASE_SPEED: 600,
-  SPEED_INC: 40,
-  MAX_SPEED: 1800,
-  PADDLE_WIDTH: 24,
-  PADDLE_HEIGHT: 160,
-  PADDLE_PADDING: 40,
-  BALL_RADIUS: 18,
-  PARTICLE_COUNT: 20
-};
+const W = canvas.width;
+const H = canvas.height;
 
-const DIFFICULTY_SETTINGS = {
-  1: { name: "EASY", desc: "Slow and predictable bot • 10 Coins/Goal", botSpeed: 450, botReaction: 0.4, botDeadZone: 60, coins: 10 },
-  2: { name: "NORMAL", desc: "Balanced for average players • 20 Coins/Goal", botSpeed: 550, botReaction: 0.2, botDeadZone: 30, coins: 20 },
-  3: { name: "HARD", desc: "Fast and reactive bot • 40 Coins/Goal", botSpeed: 650, botReaction: 0.1, botDeadZone: 15, coins: 40 },
-  4: { name: "INSANE", desc: "Perfect algorithmic precision • 80 Coins/Goal", botSpeed: 900, botReaction: 0.01, botDeadZone: 0, coins: 80 }
-};
+const menu = document.getElementById("menu");
+const skinShopScreen = document.getElementById("skinShopScreen");
+const directionScreen = document.getElementById("directionScreen");
+const gameOver = document.getElementById("gameOver");
+const hud = document.getElementById("hud");
+const modeSection = document.getElementById("mode-section");
+const difficultySection = document.getElementById("difficulty-section");
+
+const score1 = document.getElementById("score1");
+const score2 = document.getElementById("score2");
+const final1 = document.getElementById("final1");
+const final2 = document.getElementById("final2");
+const winner = document.getElementById("winner");
+const difficultyText = document.getElementById("difficultyText");
+const directionArrow = document.getElementById("directionArrow");
+
+const p1Slider = document.getElementById("p1-slider");
+const p2Slider = document.getElementById("p2-slider");
+
+const bankedCoinsValue = document.getElementById("bankedCoinsValue");
+const shopCoinsValue = document.getElementById("shopCoinsValue");
+const ballGrid = document.getElementById("ballGrid");
+const paddleGrid = document.getElementById("paddleGrid");
 
 const BALL_SKINS = [
-  { id: 'classic', name: 'CLASSIC', cost: 0, type: 'color', val: '#ffffff', glow: '#ffffff' },
-  { id: 'gold', name: 'PUMPKIN', cost: 100, type: 'emoji', val: '🎃', glow: '#ffd700' },
-  { id: 'diamond', name: 'DIAMOND', cost: 200, type: 'emoji', val: '💎', glow: '#00ffff' },
-  { id: 'fire', name: 'FIREBALL', cost: 250, type: 'emoji', val: '🔥', glow: '#ff4500' },
-  { id: 'cookie', name: 'COOKIE', cost: 150, type: 'emoji', val: '🍪', glow: '#d2b48c' },
-  { id: '8ball', name: '8 BALL', cost: 180, type: 'emoji', val: '🎱', glow: '#444444' },
-  { id: 'neon_pink', name: 'NEON PINK', cost: 220, type: 'color', val: '#ff00ff', glow: '#ff00ff' },
-  { id: 'plasma', name: 'PLASMA', cost: 300, type: 'color', val: '#00ffcc', glow: '#00ffcc' },
-  { id: 'sun', name: 'SUN', cost: 400, type: 'emoji', val: '☀️', glow: '#ffaa00' },
-  { id: 'moon', name: 'MOON', cost: 400, type: 'emoji', val: '🌙', glow: '#aaaaff' },
-  { id: 'soccer', name: 'SOCCER', cost: 100, type: 'emoji', val: '⚽', glow: '#ffffff' },
-  { id: 'basketball', name: 'BASKETBALL', cost: 100, type: 'emoji', val: '🏀', glow: '#ff7700' },
-  { id: 'ninja', name: 'NINJA', cost: 500, type: 'emoji', val: '🥷', glow: '#222222' },
-  { id: 'ghost', name: 'GHOST', cost: 450, type: 'emoji', val: '👻', glow: '#ffffff' },
-  { id: 'alien', name: 'ALIEN', cost: 600, type: 'emoji', val: '👾', glow: '#00ff00' }
+  { id: "classic", name: "CLASSIC", cost: 0, emoji: "⚪" },
+  { id: "gold", name: "GOLD COIN", cost: 100, emoji: "🪙" },
+  { id: "diamond", name: "DIAMOND", cost: 200, emoji: "💎" },
+  { id: "fire", name: "FIRE BALL", cost: 150, emoji: "🔥" },
+  { id: "star", name: "STAR", cost: 180, emoji: "⭐" },
+  { id: "crystal", name: "CRYSTAL", cost: 250, emoji: "🔮" }
 ];
 
 const PADDLE_SKINS = [
-  { id: 'classic', name: 'CLASSIC', cost: 0, main: '#ffffff', glow: '#ffffff' },
-  { id: 'ruby', name: 'RUBY', cost: 150, main: '#ff1744', glow: '#ff5e7b' },
-  { id: 'emerald', name: 'EMERALD', cost: 150, main: '#00e676', glow: '#69f0ae' },
-  { id: 'sapphire', name: 'SAPPHIRE', cost: 150, main: '#2979ff', glow: '#82b1ff' },
-  { id: 'amethyst', name: 'AMETHYST', cost: 200, main: '#d500f9', glow: '#e040fb' },
-  { id: 'gold', name: 'PURE GOLD', cost: 300, main: '#ffd700', glow: '#ffea00' },
-  { id: 'toxic', name: 'TOXIC', cost: 250, main: '#76ff03', glow: '#b2ff59' },
-  { id: 'lava', name: 'LAVA', cost: 280, main: '#ff3d00', glow: '#ff9e80' },
-  { id: 'ice', name: 'ICE', cost: 280, main: '#00e5ff', glow: '#84ffff' },
-  { id: 'void', name: 'VOID', cost: 500, main: '#111111', glow: '#555555' },
-  { id: 'cyber', name: 'CYBERPUNK', cost: 450, main: '#f50057', glow: '#00e5ff' },
-  { id: 'wood', name: 'WOOD', cost: 100, main: '#8d6e63', glow: '#5d4037' },
-  { id: 'iron', name: 'IRON', cost: 120, main: '#9e9e9e', glow: '#e0e0e0' },
-  { id: 'quantum', name: 'QUANTUM', cost: 800, main: '#ffffff', glow: '#00d4ff' },
-  { id: 'hacker', name: 'MATRIX', cost: 600, main: '#00ff00', glow: '#003300' }
+  { id: "classic", name: "CLASSIC", cost: 0, colors: { main: "#fff", glow: "#ffffff" } },
+  { id: "gold", name: "GOLD", cost: 120, colors: { main: "#ffd700", glow: "#ffed4e" } },
+  { id: "neon", name: "NEON CYAN", cost: 150, colors: { main: "#00ffff", glow: "#00ffff" } },
+  { id: "ruby", name: "RUBY", cost: 180, colors: { main: "#ff1744", glow: "#ff5e7b" } },
+  { id: "emerald", name: "EMERALD", cost: 180, colors: { main: "#00e676", glow: "#69f0ae" } },
+  { id: "amethyst", name: "AMETHYST", cost: 200, colors: { main: "#d946ef", glow: "#f0abfc" } }
 ];
 
-/* ==========================================================================
-   2. SAVE SYSTEM (PERSISTENCE AND ISOLATION)
-   ========================================================================== */
-class SaveManager {
-  static STORAGE_KEY = 'ARCADE_GAMES';
-  static GAME_KEY = 'pong';
-  static LEGACY_KEY = 'pong-legacy';
-  static data = {
-    version: 1,
-    credits: 0,
-    ownedBalls: ['classic'],
-    ownedPaddles: ['classic'],
-    equipped: { ball: 'classic', p1: 'classic', p2: 'classic', bot: 'classic' }
-  };
+const settings = {
+  1: { startSpeed: 300, maxSpeed: 560, acceleration: 0.32, playerSpeed: 720, botSpeed: 190, reaction: 0.28, deadZone: 38, pointMult: 10 },
+  2: { startSpeed: 350, maxSpeed: 680, acceleration: 0.34, playerSpeed: 730, botSpeed: 330, reaction: 0.16, deadZone: 25, pointMult: 20 },
+  3: { startSpeed: 390, maxSpeed: 800, acceleration: 0.38, playerSpeed: 750, botSpeed: 410, reaction: 0.08, deadZone: 13, pointMult: 35 },
+  4: { startSpeed: 420, maxSpeed: 880, acceleration: 0.42, playerSpeed: 790, botSpeed: 550, reaction: 0.035, deadZone: 5, pointMult: 60 }
+};
 
-  static readArcadeData() {
-    try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
-      const parsed = stored ? JSON.parse(stored) : {};
-      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
-    } catch (e) {
-      console.warn('Could not read the shared arcade save data; using a clean object.', e);
-      return {};
-    }
-  }
+let difficulty = 2, mode = 2, running = false, selectingDirection = false;
+let directionStart = 0, lastTime = 0, animationFrame = 0, bounces = 0, botReactionTimer = 0, botDirection = 0;
+const keys = {};
+let p1Dragging = false, p2Dragging = false;
 
-  static load() {
-    try {
-      const arcadeData = this.readArcadeData();
-      let parsed = arcadeData[this.GAME_KEY];
-      let migratedLegacySave = false;
+const player1 = { x: 55, y: H / 2 - 75, width: 22, height: 150, speed: 730, score: 0 };
+const player2 = { x: W - 77, y: H / 2 - 75, width: 22, height: 150, speed: 570, score: 0 };
+const ball = { x: W / 2, y: H / 2, radius: 15, angle: 0, speed: 350 };
 
-      if (!parsed) {
-        const legacyStored = localStorage.getItem(this.LEGACY_KEY);
-        parsed = legacyStored ? JSON.parse(legacyStored) : null;
-        migratedLegacySave = Boolean(parsed);
-      }
+// Save system
+const SAVE_KEY = "pongArcadeSave_v1";
+let save = {
+  coins: 0,
+  owned_balls: ["classic"],
+  owned_paddles: ["classic"],
+  equipped_ball: "classic",
+  equipped_paddle: "classic"
+};
 
-      if (parsed && typeof parsed === 'object') {
-        this.data.version = Number(parsed.version) || 1;
-        this.data.coins = Number(parsed.coins) || 0;
-        this.data.ownedBalls = Array.isArray(parsed.ownedBalls) ? parsed.ownedBalls : ['classic'];
-        this.data.ownedPaddles = Array.isArray(parsed.ownedPaddles) ? parsed.ownedPaddles : ['classic'];
-        if (parsed.equipped) {
-          this.data.equipped.ball = parsed.equipped.ball || 'classic';
-          this.data.equipped.p1 = parsed.equipped.p1 || 'classic';
-          this.data.equipped.p2 = parsed.equipped.p2 || 'classic';
-          this.data.equipped.bot = parsed.equipped.bot || 'classic';
-        }
-      }
-
-      if (migratedLegacySave) {
-        this.save();
-      }
-    } catch (e) {
-      console.warn('Could not load the Pong save; using defaults.', e);
-    }
-  }
-
-  static save() {
-    try {
-      const arcadeData = this.readArcadeData();
-      arcadeData[this.GAME_KEY] = {
-        version: this.data.version,
-        coins: this.data.coins,
-        ownedBalls: [...this.data.ownedBalls],
-        ownedPaddles: [...this.data.ownedPaddles],
-        equipped: { ...this.data.equipped }
+function loadSave() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+    if (stored && typeof stored === "object") {
+      save = {
+        coins: Math.max(0, Number(stored.coins) || 0),
+        owned_balls: Array.isArray(stored.owned_balls) ? [...new Set(stored.owned_balls)] : ["classic"],
+        owned_paddles: Array.isArray(stored.owned_paddles) ? [...new Set(stored.owned_paddles)] : ["classic"],
+        equipped_ball: typeof stored.equipped_ball === "string" ? stored.equipped_ball : "classic",
+        equipped_paddle: typeof stored.equipped_paddle === "string" ? stored.equipped_paddle : "classic"
       };
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(arcadeData));
-      localStorage.removeItem(this.LEGACY_KEY);
-    } catch (e) {
-      console.warn('Could not save Pong data to localStorage.', e);
+      if (!save.owned_balls.includes("classic")) save.owned_balls.unshift("classic");
+      if (!save.owned_paddles.includes("classic")) save.owned_paddles.unshift("classic");
+      if (!BALL_SKINS.some(s => s.id === save.equipped_ball) || !save.owned_balls.includes(save.equipped_ball)) save.equipped_ball = "classic";
+      if (!PADDLE_SKINS.some(s => s.id === save.equipped_paddle) || !save.owned_paddles.includes(save.equipped_paddle)) save.equipped_paddle = "classic";
     }
-  }
-
-  static addCoins(amount) {
-    this.data.coins += amount;
-    this.save();
-  }
-
-  static hasItem(type, id) {
-    return type === 'BALL' ? this.data.ownedBalls.includes(id) : this.data.ownedPaddles.includes(id);
-  }
+  } catch (_) {}
+  updateCoinDisplays();
 }
 
-/* ==========================================================================
-   3. AUDIO SYSTEM (Web Audio API)
-   ========================================================================== */
-class AudioEngine {
-  constructor() {
-    this.ctx = null;
-    this.enabled = false;
-  }
-  
-  init() {
-    if (this.ctx) return;
-    try {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-      this.enabled = true;
-    } catch (e) {
-      console.warn('Web Audio API is not supported.');
-    }
-  }
-
-  playTone(freq, type, duration, vol = 0.1) {
-    if (!this.enabled || !this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-    
-    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-    
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    
-    osc.start();
-    osc.stop(this.ctx.currentTime + duration);
-  }
-
-  playHit() { this.playTone(300, 'square', 0.1, 0.1); }
-  playWallHit() { this.playTone(150, 'square', 0.1, 0.1); }
-  playScore() {
-    this.playTone(400, 'sine', 0.2, 0.2);
-    setTimeout(() => this.playTone(600, 'sine', 0.4, 0.2), 150);
-  }
-  playCoin() {
-    this.playTone(900, 'sine', 0.1, 0.1);
-    setTimeout(() => this.playTone(1200, 'sine', 0.3, 0.1), 100);
-  }
-  playClick() { this.playTone(800, 'sine', 0.05, 0.05); }
-}
-const audio = new AudioEngine();
-
-/* ==========================================================================
-   4. INPUT SYSTEM (KEYBOARD AND TOUCH)
-   ========================================================================== */
-class InputManager {
-  constructor() {
-    this.keys = {};
-    this.buttonPressed = { p1Up: false, p1Down: false, p2Up: false, p2Down: false };
-    this.usingButtons = false;
-
-    window.addEventListener('keydown', (e) => {
-      this.keys[e.key.toLowerCase()] = true;
-      if(['arrowup','arrowdown',' '].includes(e.key.toLowerCase())) e.preventDefault();
-    });
-    window.addEventListener('keyup', (e) => this.keys[e.key.toLowerCase()] = false);
-
-    this.setupButtonControls();
-  }
-
-  setupButtonControls() {
-    const btnUpP1 = document.getElementById('btn-up-p1');
-    const btnDownP1 = document.getElementById('btn-down-p1');
-    const btnUpP2 = document.getElementById('btn-up-p2');
-    const btnDownP2 = document.getElementById('btn-down-p2');
-
-    const setupButton = (btn, key) => {
-      if (!btn) return;
-      btn.addEventListener('mousedown', () => { this.buttonPressed[key] = true; });
-      btn.addEventListener('mouseup', () => { this.buttonPressed[key] = false; });
-      btn.addEventListener('mouseleave', () => { this.buttonPressed[key] = false; });
-      btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.buttonPressed[key] = true; });
-      btn.addEventListener('touchend', (e) => { e.preventDefault(); this.buttonPressed[key] = false; });
-    };
-
-    setupButton(btnUpP1, 'p1Up');
-    setupButton(btnDownP1, 'p1Down');
-    setupButton(btnUpP2, 'p2Up');
-    setupButton(btnDownP2, 'p2Down');
-  }
-}
-const input = new InputManager();
-
-/* ==========================================================================
-   5. GAME ENTITIES
-   ========================================================================== */
-class Particle {
-  constructor(x, y, color) {
-    this.x = x; this.y = y; this.color = color;
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 300 + 100;
-    this.vx = Math.cos(angle) * speed;
-    this.vy = Math.sin(angle) * speed;
-    this.life = 1.0;
-    this.decay = Math.random() * 1.5 + 0.5;
-    this.size = Math.random() * 4 + 2;
-  }
-  update(dt) {
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-    this.life -= this.decay * dt;
-  }
-  draw(ctx) {
-    ctx.globalAlpha = Math.max(0, this.life);
-    ctx.fillStyle = this.color;
-    ctx.fillRect(this.x, this.y, this.size, this.size);
-    ctx.globalAlpha = 1.0;
-  }
+function savePersist() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (_) {}
+  updateCoinDisplays();
 }
 
-class FloatingText {
-  constructor(x, y, text, color) {
-    this.x = x; this.y = y; this.text = text; this.color = color;
-    this.life = 1.0;
-    this.vy = -100;
-  }
-  update(dt) {
-    this.y += this.vy * dt;
-    this.life -= dt * 0.8;
-  }
-  draw(ctx) {
-    ctx.globalAlpha = Math.max(0, this.life);
-    ctx.fillStyle = this.color;
-    ctx.font = "bold 30px Courier New";
-    ctx.textAlign = "center";
-    ctx.fillText(this.text, this.x, this.y);
-    ctx.globalAlpha = 1.0;
-  }
+function updateCoinDisplays() {
+  bankedCoinsValue.textContent = String(save.coins);
+  shopCoinsValue.textContent = String(save.coins);
 }
 
-/* ==========================================================================
-   6. RENDERER (OFFSCREEN CANVAS AND EFFECTS)
-   ========================================================================== */
-class Renderer {
-  constructor(canvasId) {
-    this.canvas = document.getElementById(canvasId);
-    this.ctx = this.canvas.getContext('2d', { alpha: false });
-    this.W = this.canvas.width;
-    this.H = this.canvas.height;
-    
-    // Offscreen cache
-    this.bgCanvas = document.createElement('canvas');
-    this.bgCanvas.width = this.W;
-    this.bgCanvas.height = this.H;
-    this.bgCtx = this.bgCanvas.getContext('2d');
-    
-    this.particles = [];
-    this.texts = [];
-    this.trail = [];
-    this.shakeTime = 0;
-    
-    this.prerenderBackground();
-  }
+function addCoins(amount) {
+  amount = Math.max(0, Math.floor(Number(amount) || 0));
+  if (!amount) return;
+  save.coins += amount;
+  savePersist();
+}
 
-  prerenderBackground() {
-    const ctx = this.bgCtx;
-    // Base gradient
-    const g = ctx.createLinearGradient(0, 0, 0, this.H);
-    g.addColorStop(0, '#0a0a0f');
-    g.addColorStop(0.5, '#050508');
-    g.addColorStop(1, '#000000');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, this.W, this.H);
-    
-    // Tron-style grid
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-    ctx.lineWidth = 2;
-    for (let x = 0; x <= this.W; x += 80) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.H); ctx.stroke(); }
-    for (let y = 0; y <= this.H; y += 80) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.W, y); ctx.stroke(); }
-    
-    // Dotted center line
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    for (let y = 20; y < this.H; y += 40) {
-      ctx.fillRect(this.W / 2 - 4, y, 8, 20);
-    }
-  }
+function openShop() {
+  running = false;
+  menu.classList.add("hidden");
+  skinShopScreen.classList.remove("hidden");
+  renderShop();
+}
 
-  shake() { this.shakeTime = 0.2; }
+function closeShop() {
+  skinShopScreen.classList.add("hidden");
+  menu.classList.remove("hidden");
+}
 
-  spawnParticles(x, y, color, count) {
-    for(let i=0; i<count; i++) this.particles.push(new Particle(x, y, color));
-  }
-  
-  spawnText(x, y, text, color) {
-    this.texts.push(new FloatingText(x, y, text, color));
-  }
+function renderShop() {
+  ballGrid.innerHTML = "";
+  for (const skin of BALL_SKINS) {
+    const item = document.createElement("div");
+    item.className = "skin-item" + (save.equipped_ball === skin.id ? " active" : "");
 
-  drawSkinPaddle(x, y, w, h, skinId) {
-    const skin = PADDLE_SKINS.find(s => s.id === skinId) || PADDLE_SKINS[0];
-    this.ctx.shadowBlur = 20;
-    this.ctx.shadowColor = skin.glow;
-    this.ctx.fillStyle = skin.main;
-    this.ctx.beginPath();
-    this.ctx.roundRect(x, y, w, h, 8);
-    this.ctx.fill();
-    this.ctx.shadowBlur = 0;
-  }
+    const preview = document.createElement("div");
+    preview.className = "skin-preview";
+    preview.textContent = skin.emoji;
 
-  drawSkinBall(x, y, r, skinId) {
-    const skin = BALL_SKINS.find(s => s.id === skinId) || BALL_SKINS[0];
-    this.ctx.shadowBlur = 25;
-    this.ctx.shadowColor = skin.glow;
-    
-    if (skin.type === 'color') {
-      this.ctx.fillStyle = skin.val;
-      this.ctx.beginPath();
-      this.ctx.arc(x, y, r, 0, Math.PI * 2);
-      this.ctx.fill();
+    const name = document.createElement("div");
+    name.className = "skin-name";
+    name.textContent = skin.name;
+
+    const price = document.createElement("div");
+    price.className = "skin-price";
+    price.textContent = skin.cost === 0 ? "FREE" : `${skin.cost} ◆`;
+
+    const btn = document.createElement("button");
+    btn.className = "skin-btn";
+    const owned = save.owned_balls.includes(skin.id);
+    if (save.equipped_ball === skin.id) {
+      btn.textContent = "EQUIPPED";
+      btn.disabled = true;
+    } else if (owned) {
+      btn.textContent = "EQUIP";
     } else {
-      this.ctx.font = `${r*2.2}px Arial`;
-      this.ctx.textAlign = "center";
-      this.ctx.textBaseline = "middle";
-      this.ctx.fillText(skin.val, x, y);
-    }
-    this.ctx.shadowBlur = 0;
-  }
-
-  render(gameState, dt) {
-    this.ctx.save();
-    
-    if (this.shakeTime > 0) {
-      const mag = (this.shakeTime / 0.2) * 8;
-      const dx = (Math.random() - 0.5) * mag;
-      const dy = (Math.random() - 0.5) * mag;
-      this.ctx.translate(dx, dy);
-      this.shakeTime -= dt;
+      btn.textContent = `BUY`;
     }
 
-    // 1. Draw the cached background (important optimization)
-    this.ctx.drawImage(this.bgCanvas, 0, 0);
-
-    // 2. Draw the ball trail
-    if (gameState.state === 'PLAYING') {
-      this.trail.push({x: gameState.ball.x, y: gameState.ball.y, alpha: 1.0});
-      if (this.trail.length > 15) this.trail.shift();
-    } else {
-      this.trail = [];
-    }
-    
-    const bSkin = BALL_SKINS.find(s => s.id === SaveManager.data.equipped.ball) || BALL_SKINS[0];
-    for (let i = 0; i < this.trail.length; i++) {
-      const t = this.trail[i];
-      t.alpha -= dt * 3;
-      if (t.alpha > 0) {
-        this.ctx.globalAlpha = t.alpha * 0.4;
-        this.ctx.fillStyle = bSkin.glow;
-        this.ctx.beginPath();
-        this.ctx.arc(t.x, t.y, GAME_CONFIG.BALL_RADIUS * (i/this.trail.length), 0, Math.PI*2);
-        this.ctx.fill();
+    btn.addEventListener("click", () => {
+      if (!owned) {
+        if (save.coins < skin.cost) return;
+        save.coins -= skin.cost;
+        save.owned_balls.push(skin.id);
       }
-    }
-    this.ctx.globalAlpha = 1.0;
-
-    // 3. Entities
-    this.drawSkinPaddle(GAME_CONFIG.PADDLE_PADDING, gameState.p1.y, GAME_CONFIG.PADDLE_WIDTH, GAME_CONFIG.PADDLE_HEIGHT, SaveManager.data.equipped.p1);
-    
-    const p2Skin = gameState.mode === 'BOT' ? SaveManager.data.equipped.bot : SaveManager.data.equipped.p2;
-    this.drawSkinPaddle(this.W - GAME_CONFIG.PADDLE_PADDING - GAME_CONFIG.PADDLE_WIDTH, gameState.p2.y, GAME_CONFIG.PADDLE_WIDTH, GAME_CONFIG.PADDLE_HEIGHT, p2Skin);
-
-    this.drawSkinBall(gameState.ball.x, gameState.ball.y, GAME_CONFIG.BALL_RADIUS, SaveManager.data.equipped.ball);
-
-    // 4. Particles and floating text
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      let p = this.particles[i];
-      p.update(dt);
-      p.draw(this.ctx);
-      if (p.life <= 0) this.particles.splice(i, 1);
-    }
-
-    for (let i = this.texts.length - 1; i >= 0; i--) {
-      let t = this.texts[i];
-      t.update(dt);
-      t.draw(this.ctx);
-      if (t.life <= 0) this.texts.splice(i, 1);
-    }
-
-    this.ctx.restore();
-  }
-}
-
-/* ==========================================================================
-   7. GAME LOGIC (ADVANCED PHYSICS)
-   ========================================================================== */
-class GameEngine {
-  constructor(renderer) {
-    this.renderer = renderer;
-    this.state = 'MENU'; // MENU, PLAYING, GAMEOVER
-    this.mode = 'BOT'; // BOT, 2P
-    this.difficulty = 2; // 1 to 4
-    
-    this.resetState();
-  }
-
-  resetState() {
-    const H = GAME_CONFIG.CANVAS_HEIGHT;
-    this.p1 = { y: H/2 - GAME_CONFIG.PADDLE_HEIGHT/2, score: 0, speed: 800 };
-    this.p2 = { y: H/2 - GAME_CONFIG.PADDLE_HEIGHT/2, score: 0, speed: 800 };
-    this.ball = { x: GAME_CONFIG.CANVAS_WIDTH/2, y: H/2, vx: 0, vy: 0, speed: GAME_CONFIG.BASE_SPEED };
-    this.botTimer = 0;
-    this.botTarget = H/2;
-  }
-
-  startRound(direction) {
-    const W = GAME_CONFIG.CANVAS_WIDTH;
-    const H = GAME_CONFIG.CANVAS_HEIGHT;
-    this.ball.x = W/2;
-    this.ball.y = H/2;
-    this.ball.speed = GAME_CONFIG.BASE_SPEED;
-    
-    const angle = (Math.random() * Math.PI/4) - (Math.PI/8);
-    const dir = direction === 1 ? 0 : Math.PI; // 1 = right, -1 = left
-    const finalAngle = dir + angle;
-    
-    this.ball.vx = Math.cos(finalAngle) * this.ball.speed;
-    this.ball.vy = Math.sin(finalAngle) * this.ball.speed;
-    this.state = 'PLAYING';
-  }
-
-  scorePoint(playerNum) {
-    audio.playScore();
-    this.renderer.shake();
-    
-    if (playerNum === 1) {
-      this.p1.score++;
-      document.getElementById('score1').innerText = this.p1.score;
-      // COIN LOGIC: rewards Player 1 goals in bot mode only
-      if (this.mode === 'BOT') {
-        const reward = DIFFICULTY_SETTINGS[this.difficulty].coins;
-        SaveManager.addCoins(reward);
-        this.renderer.spawnText(GAME_CONFIG.CANVAS_WIDTH/2, GAME_CONFIG.CANVAS_HEIGHT/2, `+${reward} 🪙`, '#ffd700');
-        ui.updateCoins();
-        audio.playCoin();
-      }
-    } else {
-      this.p2.score++;
-      document.getElementById('score2').innerText = this.p2.score;
-    }
-
-    if (this.p1.score >= GAME_CONFIG.WIN_SCORE || this.p2.score >= GAME_CONFIG.WIN_SCORE) {
-      this.state = 'GAMEOVER';
-      ui.showGameOver(this.p1.score > this.p2.score ? 1 : 2);
-    } else {
-      // The player who conceded serves the next ball
-      this.startRound(playerNum === 1 ? -1 : 1);
-    }
-  }
-
-  updatePaddles(dt) {
-    const H = GAME_CONFIG.CANVAS_HEIGHT;
-    const PH = GAME_CONFIG.PADDLE_HEIGHT;
-
-    if (input.buttonPressed.p1Up) this.p1.y -= this.p1.speed * dt;
-    if (input.buttonPressed.p1Down) this.p1.y += this.p1.speed * dt;
-    if (input.keys['w']) this.p1.y -= this.p1.speed * dt;
-    if (input.keys['s']) this.p1.y += this.p1.speed * dt;
-
-    if (this.mode === '2P') {
-      if (input.buttonPressed.p2Up) this.p2.y -= this.p2.speed * dt;
-      if (input.buttonPressed.p2Down) this.p2.y += this.p2.speed * dt;
-      if (input.keys['arrowup']) this.p2.y -= this.p2.speed * dt;
-      if (input.keys['arrowdown']) this.p2.y += this.p2.speed * dt;
-    } else {
-      const diff = DIFFICULTY_SETTINGS[this.difficulty];
-      this.botTimer -= dt;
-      
-      if (this.botTimer <= 0) {
-        this.botTimer = diff.botReaction;
-        if (this.ball.vx > 0) {
-          this.botTarget = this.ball.y - PH/2 + (Math.random()-0.5) * 40;
-        } else {
-          this.botTarget = H/2 - PH/2;
-        }
-      }
-
-      const centerP2 = this.p2.y + PH/2;
-      const dist = this.botTarget + PH/2 - centerP2;
-      
-      if (Math.abs(dist) > diff.botDeadZone) {
-        const dir = Math.sign(dist);
-        this.p2.y += dir * diff.botSpeed * dt;
-      }
-    }
-
-    this.p1.y = Math.max(0, Math.min(H - PH, this.p1.y));
-    this.p2.y = Math.max(0, Math.min(H - PH, this.p2.y));
-  }
-
-  checkPaddleCollision(px, py, ballNextX, ballNextY, isLeft) {
-    const PW = GAME_CONFIG.PADDLE_WIDTH;
-    const PH = GAME_CONFIG.PADDLE_HEIGHT;
-    const BR = GAME_CONFIG.BALL_RADIUS;
-    
-    // AABB expanded by the ball radius
-    if (ballNextX + BR > px && ballNextX - BR < px + PW &&
-        ballNextY + BR > py && ballNextY - BR < py + PH) {
-        
-        audio.playHit();
-        this.renderer.shake();
-        
-        // Spawn particles using the paddle color
-        let skinId = isLeft ? SaveManager.data.equipped.p1 : (this.mode === 'BOT' ? SaveManager.data.equipped.bot : SaveManager.data.equipped.p2);
-        let skin = PADDLE_SKINS.find(s => s.id === skinId) || PADDLE_SKINS[0];
-        this.renderer.spawnParticles(isLeft ? px+PW : px, ballNextY, skin.glow, GAME_CONFIG.PARTICLE_COUNT);
-
-        // Calculate the bounce angle from the impact position
-        const relY = (ballNextY - (py + PH/2)) / (PH/2); // -1 to 1
-        const bounceAngle = relY * (Math.PI/3); // Maximum 60 degrees
-        
-        this.ball.speed = Math.min(GAME_CONFIG.MAX_SPEED, this.ball.speed + GAME_CONFIG.SPEED_INC);
-        
-        const dir = isLeft ? 1 : -1;
-        this.ball.vx = dir * Math.cos(bounceAngle) * this.ball.speed;
-        this.ball.vy = Math.sin(bounceAngle) * this.ball.speed;
-        
-        // Prevent the ball from getting stuck inside the paddle
-        this.ball.x = isLeft ? px + PW + BR + 1 : px - BR - 1;
-        return true;
-    }
-    return false;
-  }
-
-  updateBall(dt) {
-    // Use substeps to prevent tunneling at high speed
-    const substeps = 3;
-    const subDt = dt / substeps;
-    const W = GAME_CONFIG.CANVAS_WIDTH;
-    const H = GAME_CONFIG.CANVAS_HEIGHT;
-    const BR = GAME_CONFIG.BALL_RADIUS;
-
-    for (let i = 0; i < substeps; i++) {
-      let nx = this.ball.x + this.ball.vx * subDt;
-      let ny = this.ball.y + this.ball.vy * subDt;
-
-      // Top and bottom wall collision
-      if (ny - BR < 0) {
-        ny = BR; this.ball.vy *= -1; audio.playWallHit();
-      } else if (ny + BR > H) {
-        ny = H - BR; this.ball.vy *= -1; audio.playWallHit();
-      }
-
-      // Paddle collision
-      let hit = this.checkPaddleCollision(GAME_CONFIG.PADDLE_PADDING, this.p1.y, nx, ny, true);
-      if (!hit) {
-        hit = this.checkPaddleCollision(W - GAME_CONFIG.PADDLE_PADDING - GAME_CONFIG.PADDLE_WIDTH, this.p2.y, nx, ny, false);
-      }
-
-      this.ball.x = nx;
-      this.ball.y = ny;
-
-      // Goal
-      if (this.ball.x < -BR*2) {
-        this.scorePoint(2);
-        break;
-      } else if (this.ball.x > W + BR*2) {
-        this.scorePoint(1);
-        break;
-      }
-    }
-  }
-
-  update(dt) {
-    if (this.state !== 'PLAYING') return;
-    this.updatePaddles(dt);
-    this.updateBall(dt);
-  }
-}
-
-/* ==========================================================================
-   8. USER INTERFACE AND STATE MANAGEMENT
-   ========================================================================== */
-class UIManager {
-  constructor(engine) {
-    this.engine = engine;
-    this.currentShopTab = 'BALL'; // BALL, PADDLE_P1, PADDLE_P2, PADDLE_BOT
-
-    // Screen references
-    this.screens = {
-      menu: document.getElementById('mainMenu'),
-      diff: document.getElementById('diffMenu'),
-      shop: document.getElementById('shopMenu'),
-      gameover: document.getElementById('gameOverMenu'),
-      hud: document.getElementById('hud')
-    };
-
-    this.bindEvents();
-    this.updateCoins();
-  }
-
-  showScreen(id) {
-    Object.values(this.screens).forEach(s => s.classList.add('hidden'));
-    if (id) this.screens[id].classList.remove('hidden');
-
-    // Show or hide touch controls
-    if (id === 'hud' && this.touchControlsEnabled && this.touchControlsEnabled()) {
-      this.mobileControls.classList.remove('hidden');
-      this.mobileControls.classList.add('show-controls');
-      // Hide the Player 2 touch zone in bot mode
-      if (this.engine.mode === 'BOT') {
-        this.touchZoneP2.style.display = 'none';
-      } else {
-        this.touchZoneP2.style.display = 'flex';
-      }
-    } else {
-      this.mobileControls.classList.add('hidden');
-      this.mobileControls.classList.remove('show-controls');
-    }
-  }
-
-  updateCoins() {
-    document.getElementById('menu-coins').innerText = SaveManager.data.coins;
-    document.getElementById('shop-coins').innerText = SaveManager.data.coins;
-  }
-
-  bindEvents() {
-    let touchControlsEnabled = false;
-    const mobileControls = document.getElementById('mobile-controls');
-    const touchZoneP2 = document.getElementById('touch-zone-p2');
-
-    // Touch control toggle
-    document.getElementById('btn-toggle-touch').onclick = () => {
-      audio.playClick();
-      touchControlsEnabled = !touchControlsEnabled;
-      const btn = document.getElementById('btn-toggle-touch');
-      if (touchControlsEnabled) {
-        btn.textContent = 'Disable Touch Controls';
-        btn.style.background = 'rgba(100, 180, 100, 0.8)';
-        mobileControls.classList.add('show-controls');
-        mobileControls.classList.remove('hidden');
-      } else {
-        btn.textContent = 'Enable Touch Controls';
-        btn.style.background = 'rgba(100, 100, 100, 0.8)';
-        mobileControls.classList.remove('show-controls');
-        mobileControls.classList.add('hidden');
-      }
-    };
-
-    // Store touch-control state on the instance for showScreen
-    this.touchControlsEnabled = () => touchControlsEnabled;
-    this.mobileControls = mobileControls;
-    this.touchZoneP2 = touchZoneP2;
-
-    // Main menu
-    document.getElementById('btn-1p').onclick = () => {
-      audio.init(); audio.playClick();
-      this.engine.mode = 'BOT';
-      document.getElementById('p2-label').innerText = 'BOT';
-      this.showScreen('diff');
-    };
-    
-    document.getElementById('btn-2p').onclick = () => {
-      audio.init(); audio.playClick();
-      this.engine.mode = '2P';
-      document.getElementById('p2-label').innerText = 'P2';
-      this.engine.resetState();
-      document.getElementById('score1').innerText = '0';
-      document.getElementById('score2').innerText = '0';
-      this.showScreen('hud');
-      this.engine.startRound(1);
-    };
-
-    document.getElementById('btn-shop').onclick = () => {
-      audio.init(); audio.playClick();
-      this.renderShop();
-      this.showScreen('shop');
-    };
-
-    // Difficulty selection
-    document.querySelectorAll('[data-diff]').forEach(btn => {
-      btn.onclick = (e) => {
-        audio.playClick();
-        document.querySelectorAll('[data-diff]').forEach(b => b.classList.remove('active-diff'));
-        e.target.classList.add('active-diff');
-        this.engine.difficulty = parseInt(e.target.dataset.diff);
-        document.getElementById('diff-text').innerText = DIFFICULTY_SETTINGS[this.engine.difficulty].desc;
-      };
+      save.equipped_ball = skin.id;
+      savePersist();
+      renderShop();
     });
 
-    document.getElementById('btn-start').onclick = () => {
-      audio.playClick();
-      this.engine.resetState();
-      document.getElementById('score1').innerText = '0';
-      document.getElementById('score2').innerText = '0';
-      this.showScreen('hud');
-      this.engine.startRound(1);
-    };
-
-    document.getElementById('btn-back-diff').onclick = () => { audio.playClick(); this.showScreen('menu'); };
-
-    // Game Over
-    document.getElementById('btn-rematch').onclick = () => {
-      audio.playClick();
-      this.engine.resetState();
-      document.getElementById('score1').innerText = '0';
-      document.getElementById('score2').innerText = '0';
-      this.showScreen('hud');
-      this.engine.startRound(1);
-    };
-    
-    document.getElementById('btn-menu-go').onclick = () => { audio.playClick(); this.showScreen('menu'); };
-    
-    // Shop
-    document.getElementById('btn-back-shop').onclick = () => { audio.playClick(); this.showScreen('menu'); };
-    
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.onclick = (e) => {
-        audio.playClick();
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        this.currentShopTab = e.target.dataset.tab;
-        this.renderShop();
-      };
-    });
+    item.appendChild(preview);
+    item.appendChild(name);
+    item.appendChild(price);
+    item.appendChild(btn);
+    ballGrid.appendChild(item);
   }
 
-  showGameOver(winner) {
-    this.showScreen('gameover');
-    const wText = document.getElementById('winner-text');
-    if (this.engine.mode === 'BOT') {
-      wText.innerText = winner === 1 ? 'VICTORY!' : 'THE BOT WINS';
-      wText.style.color = winner === 1 ? '#00ff88' : '#ff3333';
-      document.getElementById('final-p2-label').innerText = 'BOT';
+  paddleGrid.innerHTML = "";
+  for (const skin of PADDLE_SKINS) {
+    const item = document.createElement("div");
+    item.className = "skin-item" + (save.equipped_paddle === skin.id ? " active" : "");
+
+    const preview = document.createElement("div");
+    preview.className = "skin-preview";
+    preview.style.background = `linear-gradient(135deg, ${skin.colors.main}, rgba(255,255,255,0.2))`;
+    preview.style.boxShadow = `inset 0 0 20px ${skin.colors.glow}`;
+    preview.textContent = "█";
+    preview.style.fontSize = "60px";
+    preview.style.color = skin.colors.main;
+    preview.style.textShadow = `0 0 10px ${skin.colors.glow}`;
+
+    const name = document.createElement("div");
+    name.className = "skin-name";
+    name.textContent = skin.name;
+
+    const price = document.createElement("div");
+    price.className = "skin-price";
+    price.textContent = skin.cost === 0 ? "FREE" : `${skin.cost} ◆`;
+
+    const btn = document.createElement("button");
+    btn.className = "skin-btn";
+    const owned = save.owned_paddles.includes(skin.id);
+    if (save.equipped_paddle === skin.id) {
+      btn.textContent = "EQUIPPED";
+      btn.disabled = true;
+    } else if (owned) {
+      btn.textContent = "EQUIP";
     } else {
-      wText.innerText = `PLAYER ${winner} WINS`;
-      wText.style.color = '#ffffff';
-      document.getElementById('final-p2-label').innerText = 'P2';
+      btn.textContent = `BUY`;
     }
-    document.getElementById('final-score1').innerText = this.engine.p1.score;
-    document.getElementById('final-score2').innerText = this.engine.p2.score;
-  }
 
-  renderShop() {
-    const grid = document.getElementById('shop-grid');
-    grid.innerHTML = '';
-    
-    const isBall = this.currentShopTab === 'BALL';
-    const items = isBall ? BALL_SKINS : PADDLE_SKINS;
-    
-    // Determine which equipment slot is being edited
-    let equipSlot = 'ball';
-    if (this.currentShopTab === 'PADDLE_P1') equipSlot = 'p1';
-    if (this.currentShopTab === 'PADDLE_P2') equipSlot = 'p2';
-    if (this.currentShopTab === 'PADDLE_BOT') equipSlot = 'bot';
-
-    items.forEach(item => {
-      const isOwned = SaveManager.hasItem(isBall ? 'BALL' : 'PADDLE', item.id);
-      const isEquipped = SaveManager.data.equipped[equipSlot] === item.id;
-
-      const card = document.createElement('div');
-      card.className = `skin-card ${isEquipped ? 'equipped' : ''}`;
-      
-      let previewHTML = '';
-      if (isBall) {
-        if(item.type === 'color') {
-          previewHTML = `<div style="width:40px; height:40px; border-radius:50%; background:${item.val}; box-shadow:0 0 15px ${item.glow}"></div>`;
-        } else {
-          previewHTML = `<div>${item.val}</div>`;
-        }
-      } else {
-        previewHTML = `<div style="width:20px; height:80px; border-radius:4px; background:${item.main}; box-shadow:0 0 15px ${item.glow}"></div>`;
+    btn.addEventListener("click", () => {
+      if (!owned) {
+        if (save.coins < skin.cost) return;
+        save.coins -= skin.cost;
+        save.owned_paddles.push(skin.id);
       }
-
-      card.innerHTML = `
-        <div class="skin-preview-box">${previewHTML}</div>
-        <div class="skin-name">${item.name}</div>
-        ${!isOwned ? `<div style="color:#ffd700; font-size:14px;">🪙 ${item.cost}</div>` : ''}
-      `;
-
-      const btn = document.createElement('button');
-      if (isEquipped) {
-        btn.className = 'skin-action-btn btn-equipped';
-        btn.innerText = 'EQUIPPED';
-      } else if (isOwned) {
-        btn.className = 'skin-action-btn btn-equip';
-        btn.innerText = 'EQUIP';
-        btn.onclick = () => {
-          audio.playClick();
-          SaveManager.data.equipped[equipSlot] = item.id;
-          SaveManager.save();
-          this.renderShop();  
-        };
-      } else {
-        btn.className = 'skin-action-btn btn-buy';
-        btn.innerText = 'BUY';
-        btn.onclick = () => {
-          if (SaveManager.data.coins >= item.cost) {
-            audio.playCoin();
-            SaveManager.data.coins -= item.cost;
-            if (isBall) SaveManager.data.ownedBalls.push(item.id);
-            else SaveManager.data.ownedPaddles.push(item.id);
-            SaveManager.save();
-            this.updateCoins();
-            this.renderShop();
-          } else {
-            btn.style.transform = 'translateX(-5px)';
-            setTimeout(()=>btn.style.transform = 'translateX(5px)', 50);
-            setTimeout(()=>btn.style.transform = 'translateX(0)', 100);
-          }
-        };
-      }
-      
-      card.appendChild(btn);
-      grid.appendChild(card);
+      save.equipped_paddle = skin.id;
+      savePersist();
+      renderShop();
     });
+
+    item.appendChild(preview);
+    item.appendChild(name);
+    item.appendChild(price);
+    item.appendChild(btn);
+    paddleGrid.appendChild(item);
+  }
+
+  updateCoinDisplays();
+}
+
+loadSave();
+
+p1Slider.addEventListener("pointerdown", () => p1Dragging = true);
+p1Slider.addEventListener("pointerup", () => p1Dragging = false);
+p1Slider.addEventListener("pointercancel", () => p1Dragging = false);
+
+p2Slider.addEventListener("pointerdown", () => p2Dragging = true);
+p2Slider.addEventListener("pointerup", () => p2Dragging = false);
+p2Slider.addEventListener("pointercancel", () => p2Dragging = false);
+
+window.addEventListener("pointerup", () => { p1Dragging = false; p2Dragging = false; });
+
+function randomAngle() {
+  let a;
+  do { a = Math.random() * Math.PI * 2; } while (Math.abs(Math.sin(a)) < 0.25);
+  return a;
+}
+
+function resetRound(direction = null) {
+  const c = settings[difficulty];
+  ball.x = W / 2;
+  ball.y = H / 2;
+  ball.speed = c.startSpeed;
+  bounces = 0;
+  botReactionTimer = 0;
+  botDirection = 0;
+  if (direction === 1) ball.angle = Math.random() * 0.9 - 0.45;
+  else if (direction === -1) ball.angle = Math.PI + (Math.random() * 0.9 - 0.45);
+  else ball.angle = randomAngle();
+  player1.y = H / 2 - player1.height / 2;
+  player2.y = H / 2 - player2.height / 2;
+  player1.speed = c.playerSpeed;
+  player2.speed = c.botSpeed;
+  updateScore();
+}
+
+function updateScore() {
+  score1.textContent = player1.score;
+  score2.textContent = player2.score;
+}
+
+function movePlayer(p, d, dt) {
+  p.y += d * p.speed * dt;
+  p.y = Math.max(0, Math.min(H - p.height, p.y));
+}
+
+function updatePlayer1(dt) {
+  if (p1Dragging) {
+    player1.y = (p1Slider.value / 1000) * (H - player1.height);
+  } else {
+    let d = 0;
+    if (keys.w) d--;
+    if (keys.s) d++;
+    movePlayer(player1, d, dt);
+    p1Slider.value = (player1.y / (H - player1.height)) * 1000;
   }
 }
 
-/* ==========================================================================
-   9. MAIN LOOP (GAME LOOP)
-   ========================================================================== */
-SaveManager.load();
-const renderer = new Renderer('gameCanvas');
-const engine = new GameEngine(renderer);
-const ui = new UIManager(engine);
-
-let lastTime = 0;
-function loop(timestamp) {
-  let dt = (timestamp - lastTime) / 1000;
-  lastTime = timestamp;
-  
-  if (dt > 0.1) dt = 0.1;
-  
-  engine.update(dt);
-  renderer.render(engine, dt);
-  
-  requestAnimationFrame(loop);
+function updatePlayer2(dt) {
+  if (mode === 1) {
+    updateBot(dt);
+    p2Slider.value = (player2.y / (H - player2.height)) * 1000;
+    return;
+  }
+  if (p2Dragging) {
+    player2.y = (p2Slider.value / 1000) * (H - player2.height);
+  } else {
+    let d = 0;
+    if (keys.arrowup) d--;
+    if (keys.arrowdown) d++;
+    movePlayer(player2, d, dt);
+    p2Slider.value = (player2.y / (H - player2.height)) * 1000;
+  }
 }
 
-requestAnimationFrame(t => { lastTime = t; loop(t); });
+function updateBot(dt) {
+  const c = settings[difficulty];
+  const coming = Math.cos(ball.angle) > 0;
+  if (!coming) {
+    const diff = H / 2 - (player2.y + player2.height / 2);
+    botDirection = Math.abs(diff) > 8 ? Math.sign(diff) : 0;
+    movePlayer({ get y() { return player2.y; }, set y(v) { player2.y = v; }, speed: c.botSpeed, height: player2.height }, botDirection, 0.35 * dt);
+    return;
+  }
+  botReactionTimer -= dt;
+  if (botReactionTimer > 0) {
+    player2.y += botDirection * c.botSpeed * dt;
+    player2.y = Math.max(0, Math.min(H - player2.height, player2.y));
+    return;
+  }
+  botReactionTimer = c.reaction;
+  const diff = ball.y - (player2.y + player2.height / 2);
+  botDirection = Math.abs(diff) <= c.deadZone ? 0 : Math.sign(diff);
+  player2.y += botDirection * c.botSpeed * dt;
+  player2.y = Math.max(0, Math.min(H - player2.height, player2.y));
+}
 
+function increaseSpeed() {
+  const c = settings[difficulty];
+  bounces++;
+  const growth = 1 - Math.exp(-c.acceleration * bounces);
+  ball.speed = c.startSpeed + (c.maxSpeed - c.startSpeed) * growth;
+}
+
+function collide(p, left) {
+  const cx = Math.max(p.x, Math.min(ball.x, p.x + p.width));
+  const cy = Math.max(p.y, Math.min(ball.y, p.y + p.height));
+  const dx = ball.x - cx;
+  const dy = ball.y - cy;
+  if (dx * dx + dy * dy > ball.radius * ball.radius) return;
+  const vx = Math.cos(ball.angle);
+  const toward = left ? vx < 0 : vx > 0;
+  if (!toward) return;
+  const rel = Math.max(-1, Math.min(1, (ball.y - (p.y + p.height / 2)) / (p.height / 2)));
+  increaseSpeed();
+  const bounce = rel * Math.PI / 3;
+  ball.angle = left ? bounce : Math.PI - bounce;
+  ball.x = left ? p.x + p.width + ball.radius + 1 : p.x - ball.radius - 1;
+  botReactionTimer = 0;
+}
+
+function updateBall(dt) {
+  ball.x += Math.cos(ball.angle) * ball.speed * dt;
+  ball.y += Math.sin(ball.angle) * ball.speed * dt;
+  if (ball.y - ball.radius <= 0) {
+    ball.y = ball.radius;
+    ball.angle = -ball.angle;
+    increaseSpeed();
+  }
+  if (ball.y + ball.radius >= H) {
+    ball.y = H - ball.radius;
+    ball.angle = -ball.angle;
+    increaseSpeed();
+  }
+  collide(player1, true);
+  collide(player2, false);
+  if (ball.x + ball.radius < 0) {
+    player2.score++;
+    updateScore();
+    addCoins(settings[difficulty].pointMult);
+    if (player2.score >= 7) return finishGame(mode === 1 ? "BOT WINS" : "PLAYER 2 WINS");
+    prepareNextRound(1);
+  }
+  if (ball.x - ball.radius > W) {
+    player1.score++;
+    updateScore();
+    if (mode === 2) addCoins(settings[difficulty].pointMult);
+    if (player1.score >= 7) return finishGame("PLAYER 1 WINS");
+    prepareNextRound(-1);
+  }
+}
+
+function prepareNextRound(dir) {
+  running = false;
+  selectingDirection = true;
+  resetRound(dir);
+  directionStart = performance.now();
+  directionScreen.classList.remove("hidden");
+  animationFrame = requestAnimationFrame(directionLoop);
+}
+
+function startRound() {
+  player1.score = 0;
+  player2.score = 0;
+  updateScore();
+  menu.classList.add("hidden");
+  gameOver.classList.add("hidden");
+  directionScreen.classList.remove("hidden");
+  hud.classList.remove("hidden");
+  selectingDirection = true;
+  running = false;
+  resetRound();
+  directionStart = performance.now();
+  cancelAnimationFrame(animationFrame);
+  animationFrame = requestAnimationFrame(directionLoop);
+}
+
+function finishGame(text) {
+  running = false;
+  selectingDirection = false;
+  hud.classList.add("hidden");
+  winner.textContent = text;
+  final1.textContent = player1.score;
+  final2.textContent = player2.score;
+  gameOver.classList.remove("hidden");
+}
+
+function directionLoop(time) {
+  if (!selectingDirection) return;
+  const progress = Math.min((time - directionStart) / 1800, 1);
+  const eased = 1 - Math.pow(1 - progress, 3);
+  const angle = ball.angle - Math.PI * 2 + Math.PI * 2 * eased;
+  directionArrow.style.transform = `rotate(${angle}rad)`;
+  draw();
+  if (progress < 1) animationFrame = requestAnimationFrame(directionLoop);
+  else {
+    directionArrow.style.transform = `rotate(${ball.angle}rad)`;
+    selectingDirection = false;
+    directionScreen.classList.add("hidden");
+    running = true;
+    lastTime = performance.now();
+    animationFrame = requestAnimationFrame(gameLoop);
+  }
+}
+
+function drawBackground() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#111820");
+  g.addColorStop(0.5, "#080d14");
+  g.addColorStop(1, "#03060a");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "rgba(255,255,255,.025)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 60) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 60) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+}
+
+function drawCenter() {
+  ctx.fillStyle = "rgba(255,255,255,.2)";
+  for (let y = 20; y < H; y += 40) ctx.fillRect(W / 2 - 2, y, 4, 22);
+}
+
+function getPaddleSkin() {
+  return PADDLE_SKINS.find(s => s.id === save.equipped_paddle) || PADDLE_SKINS[0];
+}
+
+function drawPaddle(p) {
+  const skin = getPaddleSkin();
+  const g = ctx.createLinearGradient(p.x, 0, p.x + p.width, 0);
+  g.addColorStop(0, skin.colors.main);
+  g.addColorStop(0.5, skin.colors.main);
+  g.addColorStop(1, "rgba(255,255,255,0.6)");
+  ctx.fillStyle = g;
+  ctx.shadowColor = skin.colors.glow;
+  ctx.shadowBlur = 25;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.beginPath();
+  ctx.roundRect(p.x, p.y, p.width, p.height, 9);
+  ctx.fill();
+  
+  // Inner highlight
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "rgba(255,255,255,0.3)";
+  ctx.beginPath();
+  ctx.roundRect(p.x + 2, p.y + 2, p.width - 4, p.height / 2 - 2, 6);
+  ctx.fill();
+}
+
+function getBallSkin() {
+  return BALL_SKINS.find(s => s.id === save.equipped_ball) || BALL_SKINS[0];
+}
+
+function drawBall() {
+  const skin = getBallSkin();
+  ctx.save();
+  
+  // Glow
+  ctx.shadowColor = "rgba(255,255,255,.8)";
+  ctx.shadowBlur = 22;
+  
+  // Pelota con emoji
+  ctx.font = `${ball.radius * 2}px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(skin.emoji, ball.x, ball.y);
+  
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawCenter();
+  drawPaddle(player1);
+  drawPaddle(player2);
+  drawBall();
+}
+
+function gameLoop(time) {
+  if (!running) {
+    draw();
+    return;
+  }
+  let dt = Math.min((time - lastTime) / 1000, 0.05);
+  lastTime = time;
+  updatePlayer1(dt);
+  updatePlayer2(dt);
+  updateBall(dt);
+  draw();
+  animationFrame = requestAnimationFrame(gameLoop);
+}
+
+document.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+  if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
+});
+
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+document.getElementById("onePlayer").onclick = () => {
+  mode = 1;
+  modeSection.classList.add("hidden");
+  difficultySection.classList.remove("hidden");
+};
+
+document.getElementById("twoPlayers").onclick = () => {
+  mode = 2;
+  modeSection.classList.add("hidden");
+  difficultySection.classList.remove("hidden");
+};
+
+document.getElementById("shopButton").onclick = openShop;
+document.getElementById("closeShopBtn").onclick = closeShop;
+
+document.getElementById("ballTabBtn").onclick = () => {
+  document.getElementById("ballTabBtn").classList.add("active");
+  document.getElementById("paddleTabBtn").classList.remove("active");
+  ballGrid.classList.remove("hidden");
+  paddleGrid.classList.add("hidden");
+};
+
+document.getElementById("paddleTabBtn").onclick = () => {
+  document.getElementById("paddleTabBtn").classList.add("active");
+  document.getElementById("ballTabBtn").classList.remove("active");
+  paddleGrid.classList.remove("hidden");
+  ballGrid.classList.add("hidden");
+};
+
+document.querySelectorAll("[data-difficulty]").forEach(b => b.onclick = () => {
+  difficulty = Number(b.dataset.difficulty);
+  document.querySelectorAll("[data-difficulty]").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  difficultyText.textContent = {
+    1: "Slow and forgiving bot · 10 coins/goal",
+    2: "Balanced acceleration and reactive bot · 20 coins/goal",
+    3: "Fast acceleration and fast bot · 35 coins/goal",
+    4: "Extreme speed and extremely fast bot · 60 coins/goal"
+  }[difficulty];
+});
+
+document.getElementById("startButton").onclick = startRound;
+document.getElementById("againButton").onclick = startRound;
+document.getElementById("backButton").onclick = () => {
+  difficultySection.classList.add("hidden");
+  modeSection.classList.remove("hidden");
+};
+document.getElementById("menuButton").onclick = () => {
+  running = false;
+  selectingDirection = false;
+  menu.classList.remove("hidden");
+  modeSection.classList.remove("hidden");
+  difficultySection.classList.add("hidden");
+  gameOver.classList.add("hidden");
+  directionScreen.classList.add("hidden");
+  hud.classList.add("hidden");
+};
+
+resetRound();
+draw();
 </script>
 </body>
 </html>
