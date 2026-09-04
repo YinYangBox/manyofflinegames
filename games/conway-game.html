@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#08130f">
+  <title>Conway's Game of Life</title>
+  <style>
+    :root {
+      --ink: #f3fbf6;
+      --muted: #9caf9f;
+      --night: #06100c;
+      --panel: #102219;
+      --panel-2: #183126;
+      --line: rgba(213,255,226,.13);
+      --lime: #9cf06b;
+      --mint: #5ee6b0;
+      --gold: #ffd46d;
+      --red: #ff7280;
+      --blue: #66d9ff;
+      --shadow: 0 28px 85px rgba(0,0,0,.5);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body {
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 9%, rgba(88,213,139,.16), transparent 29rem),
+        radial-gradient(circle at 87% 80%, rgba(77,141,255,.1), transparent 32rem),
+        #050d09;
+      font-family: Inter, ui-rounded, "Segoe UI", Arial, sans-serif;
+      overscroll-behavior: none;
+    }
+    button, input, select { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .hidden { display: none !important; }
+    .app { min-height: 100dvh; display: flex; flex-direction: column; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      min-height: 68px;
+      padding: max(11px,env(safe-area-inset-top)) clamp(16px,4vw,42px) 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5,14,9,.88);
+      backdrop-filter: blur(18px);
+    }
+    .brand { min-width: 0; display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      border: 2px solid rgba(202,255,216,.45);
+      border-radius: 13px;
+      background:
+        radial-gradient(circle at 27% 27%, #a9ff8e 0 12%, transparent 13%),
+        radial-gradient(circle at 73% 27%, #a9ff8e 0 12%, transparent 13%),
+        radial-gradient(circle at 50% 72%, #a9ff8e 0 12%, transparent 13%),
+        #153122;
+      box-shadow: 0 0 16px rgba(108,237,148,.18), inset 0 0 14px rgba(0,0,0,.28);
+    }
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border: 1px dashed rgba(205,255,219,.35);
+      border-radius: 50%;
+    }
+    .brand-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: clamp(15px,3vw,21px);
+      font-weight: 950;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .wallet {
+      min-width: 102px;
+      padding: 9px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid rgba(255,212,109,.34);
+      border-radius: 999px;
+      color: var(--gold);
+      background: rgba(255,212,109,.08);
+      font-weight: 950;
+    }
+    .coin { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; color: #422b05; background: linear-gradient(145deg,#fff1a5,#e7a12e); font-size: 10px; box-shadow: inset 0 0 0 2px rgba(103,60,2,.22); }
+
+    .screen { width: min(1180px,100%); margin: 0 auto; padding: clamp(25px,5vw,63px) clamp(16px,4vw,38px) max(32px,env(safe-area-inset-bottom)); flex: 1; }
+    .hero { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(310px,.92fr); gap: clamp(28px,6vw,75px); align-items: center; }
+    .eyebrow, .section-label { color: var(--lime); font-size: 11px; font-weight: 950; letter-spacing: .2em; text-transform: uppercase; }
+    h1 { margin: 13px 0 14px; font-size: clamp(53px,9vw,105px); line-height: .84; letter-spacing: -.07em; text-transform: uppercase; }
+    .tagline { max-width: 590px; margin: 0 0 27px; color: var(--muted); font-size: clamp(16px,2.1vw,19px); line-height: 1.55; }
+    .btn {
+      min-height: 46px;
+      padding: 11px 17px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--ink);
+      background: rgba(255,255,255,.055);
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+    }
+    .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,.1); border-color: rgba(205,255,220,.27); }
+    .btn:active { transform: translateY(1px) scale(.98); }
+    .btn:focus-visible { outline: 3px solid rgba(156,240,107,.38); outline-offset: 3px; }
+    .btn.primary { color: #092014; border-color: transparent; background: linear-gradient(145deg,#c2ff91,#69dc82); box-shadow: 0 12px 32px rgba(96,220,126,.22), inset 0 1px rgba(255,255,255,.58); }
+    .btn.gold { color: #382708; border-color: transparent; background: linear-gradient(145deg,#ffeca0,#eeb33e); }
+    .btn.danger { color: #ffb5bd; border-color: rgba(255,114,128,.34); background: rgba(255,114,128,.08); }
+    .btn.active { color: #092014; border-color: transparent; background: var(--lime); }
+    .btn[disabled] { opacity: .48; cursor: not-allowed; transform: none; }
+    .hero-actions, .menu-links, .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .menu-links { margin-top: 17px; }
+    .menu-links .btn { min-height: 40px; padding: 8px 13px; color: var(--muted); }
+
+    .board-summary {
+      margin: 30px 0 22px;
+      padding: 15px 17px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255,255,255,.04);
+    }
+    .board-summary small { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
+    .board-summary strong { font-size: 20px; }
+    .board-summary .btn { min-height: 38px; padding: 7px 12px; font-size: 11px; }
+
+    .life-preview {
+      position: relative;
+      min-height: 455px;
+      overflow: hidden;
+      border: 1px solid rgba(211,255,224,.16);
+      border-radius: 35px;
+      background: #0a1810;
+      box-shadow: var(--shadow), inset 0 0 80px rgba(0,0,0,.38);
+      transform: rotate(1.1deg);
+    }
+    .preview-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(183,255,202,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,202,.07) 1px,transparent 1px); background-size: 48px 48px; }
+    .preview-cell { position: absolute; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; color: #123018; background: linear-gradient(145deg,#caff8c,#65d77d); box-shadow: 0 0 15px rgba(135,244,118,.25), inset 0 2px rgba(255,255,255,.35); font-size: 22px; font-weight: 950; }
+    .preview-cell::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #15351e; box-shadow: 13px 0 #15351e; transform: translate(-6px,-5px); }
+    .preview-cell::after { content: ""; position: absolute; width: 16px; height: 8px; bottom: 9px; border-bottom: 3px solid #15351e; border-radius: 0 0 50% 50%; }
+    .preview-cell.c1 { left: 18%; top: 16%; }
+    .preview-cell.c2 { left: calc(18% + 48px); top: calc(16% + 48px); }
+    .preview-cell.c3 { left: calc(18% + 96px); top: calc(16% + 48px); }
+    .preview-cell.c4 { left: 18%; top: calc(16% + 96px); }
+    .preview-cell.c5 { left: calc(18% + 48px); top: calc(16% + 96px); }
+    .preview-dead { position: absolute; right: 13%; bottom: 19%; width: 135px; height: 135px; display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; transform: rotate(-8deg); }
+    .preview-dead span { position: relative; border: 1px solid rgba(173,212,184,.15); border-radius: 9px; background: rgba(72,96,79,.13); }
+    .preview-dead span::after { content: "·"; position: absolute; inset: 0; display: grid; place-items: center; color: rgba(189,224,199,.22); font-size: 26px; }
+    .preview-badge { position: absolute; left: 20px; bottom: 18px; padding: 9px 13px; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; color: #dbeadf; background: rgba(5,16,9,.67); font-size: 11px; font-weight: 850; backdrop-filter: blur(8px); }
+
+    .page-head { margin-bottom: 23px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+    .page-head h2 { margin: 7px 0 0; font-size: clamp(35px,6vw,63px); letter-spacing: -.045em; }
+    .page-head p { margin: 8px 0 0; color: var(--muted); }
+    .panel { border: 1px solid var(--line); border-radius: 21px; background: linear-gradient(145deg,rgba(24,48,36,.91),rgba(9,25,16,.94)); box-shadow: var(--shadow), inset 0 1px rgba(255,255,255,.05); }
+    .shop-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+    .skin-card { min-height: 255px; padding: 17px; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 18px; background: rgba(5,17,10,.48); transition: transform .15s ease,border-color .15s ease; }
+    .skin-card:hover { transform: translateY(-2px); border-color: rgba(207,255,220,.28); }
+    .skin-card.equipped { border-color: var(--lime); box-shadow: inset 0 0 0 1px rgba(156,240,107,.18); }
+    .skin-preview { height: 121px; margin-bottom: 13px; overflow: hidden; border-radius: 13px; background: #0a1710; }
+    .skin-preview canvas { width: 100%; height: 100%; }
+    .skin-card h3 { margin: 0 0 4px; font-size: 17px; }
+    .skin-card p { min-height: 35px; margin: 0 0 12px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .skin-card .btn { min-height: 40px; margin-top: auto; padding: 8px 11px; font-size: 12px; }
+    .rules-grid, .stats-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+    .info-card, .stat-card, .best-panel { padding: 22px; }
+    .info-card h3 { margin: 0 0 9px; }
+    .info-card p, .info-card li { color: var(--muted); line-height: 1.6; }
+    .info-card ul { margin: 0; padding-left: 19px; }
+    .rule-formula { margin-top: 12px; display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+    .rule-chip { padding: 12px; border-radius: 12px; background: rgba(0,0,0,.2); text-align: center; }
+    .rule-chip b { display: block; color: var(--lime); font-size: 22px; }
+    .rule-chip span { color: var(--muted); font-size: 10px; }
+    .stat-value { display: block; margin-top: 7px; font-size: clamp(28px,5vw,44px); font-weight: 950; letter-spacing: -.04em; }
+    .best-panel { grid-column: 1/-1; }
+    .best-row { padding: 11px 0; display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); }
+    .best-row:last-child { border: 0; }
+    .best-row span:last-child { color: var(--gold); font-weight: 900; }
+
+    #gameScreen { width: 100%; max-width: 1450px; padding: 16px clamp(9px,2vw,24px) max(18px,env(safe-area-inset-bottom)); }
+    .game-shell { display: grid; grid-template-columns: minmax(0,1fr) 285px; gap: 15px; align-items: start; }
+    .canvas-card { position: relative; overflow: hidden; border: 1px solid rgba(198,255,215,.2); border-radius: 22px; background: #07110b; box-shadow: 0 28px 85px rgba(0,0,0,.55); touch-action: none; }
+    #lifeCanvas { display: block; width: 100%; height: auto; aspect-ratio: 20/13; cursor: crosshair; touch-action: none; }
+    .canvas-message { position: absolute; left: 50%; bottom: 13px; transform: translateX(-50%); max-width: calc(100% - 24px); padding: 7px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #e5f4e9; background: rgba(4,14,8,.7); font-size: 11px; font-weight: 850; white-space: nowrap; pointer-events: none; backdrop-filter: blur(7px); opacity: 0; transition: opacity .18s ease; }
+    .canvas-message.show { opacity: 1; }
+    .side-hud { display: flex; flex-direction: column; gap: 10px; }
+    .hud-card, .credit-card, .tool-card { padding: 16px; }
+    .generation-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .generation-line strong { font-size: 23px; }
+    .size-chip { padding: 6px 9px; border-radius: 999px; color: var(--lime); background: rgba(156,240,107,.1); font-size: 9px; font-weight: 950; letter-spacing: .08em; }
+    .hud-grid { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .hud-stat { padding: 10px; border-radius: 12px; background: rgba(0,0,0,.2); }
+    .hud-stat span { display: block; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .hud-stat b { display: block; margin-top: 5px; font-size: 19px; }
+    .hud-stat.credit b { color: var(--gold); }
+    .credit-progress { height: 9px; margin-top: 11px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.08); }
+    .credit-progress div { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#f4b842,#ffe88c); transition: width .15s linear; }
+    .credit-card p { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .main-controls { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 7px; }
+    .main-controls .btn { min-height: 43px; padding: 8px; font-size: 11px; }
+    .pattern-row, .tool-row, .zoom-row { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .tool-card label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink); background: #0c1d13; outline: none; }
+    .tool-row .btn, .zoom-row .btn { min-height: 39px; padding: 7px; font-size: 10px; }
+    .game-buttons { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+    .game-buttons .btn { min-height: 40px; padding: 7px 3px; font-size: 9px; }
+
+    .overlay { position: fixed; inset: 0; z-index: 100; padding: 18px; display: grid; place-items: center; background: rgba(2,9,5,.78); backdrop-filter: blur(12px); }
+    .modal { width: min(490px,100%); max-height: calc(100dvh - 36px); overflow: auto; padding: clamp(23px,5vw,35px); border: 1px solid rgba(211,255,224,.18); border-radius: 25px; background: linear-gradient(145deg,#1a3828,#091b10); box-shadow: 0 34px 100px rgba(0,0,0,.72),inset 0 1px rgba(255,255,255,.06); }
+    .modal.center { text-align: center; }
+    .modal h2 { margin: 0 0 8px; font-size: clamp(30px,8vw,44px); letter-spacing: -.04em; }
+    .modal p { color: var(--muted); line-height: 1.5; }
+    .form-grid { margin: 20px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .field input, .field select { width: 100%; min-height: 43px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink); background: #0b1e12; outline: none; }
+    .field input:focus, .field select:focus { border-color: var(--lime); }
+    .field.full { grid-column: 1/-1; }
+    .range-line { display: flex; align-items: center; gap: 10px; }
+    .range-line input { min-height: 30px; padding: 0; }
+    .range-value { min-width: 45px; color: var(--lime); font-weight: 900; text-align: right; }
+    .preset-row { margin: 12px 0; display: flex; flex-wrap: wrap; gap: 7px; }
+    .preset-row .btn { min-height: 35px; padding: 6px 10px; font-size: 10px; }
+    .modal .button-row { justify-content: center; }
+    .toast { position: fixed; z-index: 200; left: 50%; bottom: max(18px,env(safe-area-inset-bottom)); max-width: calc(100vw - 28px); padding: 11px 16px; border: 1px solid rgba(210,255,224,.18); border-radius: 999px; color: var(--ink); background: rgba(7,24,13,.95); box-shadow: 0 14px 40px rgba(0,0,0,.55); font-size: 12px; font-weight: 850; transform: translate(-50%,110px); opacity: 0; transition: transform .23s ease,opacity .23s ease; pointer-events: none; }
+    .toast.show { transform: translate(-50%,0); opacity: 1; }
+
+    @media (max-width:900px) {
+      .hero { grid-template-columns: 1fr; }
+      .life-preview { min-height: 325px; }
+      .shop-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .game-shell { grid-template-columns: 1fr; }
+      .side-hud { display: grid; grid-template-columns: 1fr 1fr; }
+      .tool-card { grid-row: span 2; }
+    }
+    @media (max-width:620px) {
+      .topbar { min-height: 59px; }
+      .brand-mark { width: 33px; height: 33px; }
+      .brand-name { max-width: 190px; }
+      .wallet { min-width: 86px; padding: 8px 10px; font-size: 13px; }
+      .screen { padding-top: 26px; }
+      h1 { font-size: clamp(53px,19vw,79px); }
+      .life-preview { min-height: 280px; }
+      .shop-grid, .rules-grid, .stats-grid { grid-template-columns: 1fr; }
+      .page-head { align-items: flex-start; }
+      .page-head p { display: none; }
+      .side-hud { grid-template-columns: 1fr; }
+      .hud-card { padding: 12px 14px; }
+      .hud-grid { margin-top: 8px; grid-template-columns: repeat(4,1fr); }
+      .hud-stat { padding: 8px 3px; text-align: center; }
+      .hud-stat b { font-size: 15px; }
+      .credit-card { display: none; }
+      .tool-card { grid-row: auto; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+    }
+    @media (max-height:650px) and (orientation:landscape) {
+      .topbar { position: relative; min-height: 52px; padding-top: 7px; padding-bottom: 7px; }
+      #gameScreen { padding-top: 8px; }
+      .game-shell { grid-template-columns: minmax(0,1fr) 255px; }
+      .hud-card,.credit-card,.tool-card { padding: 11px; }
+      .side-hud { gap: 7px; }
+    }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.001ms!important; transition-duration:.001ms!important; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Conway's Game of Life</span></div><div class="wallet"><span class="coin">C</span><span id="creditsValue">0</span></div></header>
+
+    <main id="homeScreen" class="screen">
+      <div class="hero">
+        <section>
+          <div class="eyebrow">Cellular automaton</div>
+          <h1>Game<br>of Life</h1>
+          <p class="tagline">Create a population, press play, and watch simple rules build surprising worlds.</p>
+          <div class="board-summary"><div><small>Board setup</small><strong id="homeBoardSize">80 × 60</strong></div><button id="homeSetupButton" class="btn">Change</button></div>
+          <div class="hero-actions"><button id="newButton" class="btn primary">New Universe</button><button id="continueButton" class="btn gold hidden">Continue</button></div>
+          <div class="menu-links"><button class="btn" data-screen="shop">Cell Themes</button><button class="btn" data-screen="rules">Rules</button><button class="btn" data-screen="stats">Stats</button><button id="soundButton" class="btn">Sound: On</button></div>
+        </section>
+        <div class="life-preview" aria-hidden="true"><div class="preview-grid"></div><span class="preview-cell c1"></span><span class="preview-cell c2"></span><span class="preview-cell c3"></span><span class="preview-cell c4"></span><span class="preview-cell c5"></span><div class="preview-dead"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="preview-badge">Boards up to 1000 × 1000</div></div>
+      </div>
+    </main>
+
+    <main id="shopScreen" class="screen hidden"><div class="page-head"><div><div class="eyebrow">Living collection</div><h2>Cell Themes</h2><p>Each theme redesigns both living and dead cells.</p></div><button class="btn" data-screen="home">Back</button></div><div id="shopGrid" class="shop-grid"></div></main>
+
+    <main id="rulesScreen" class="screen hidden">
+      <div class="page-head"><div><div class="eyebrow">B3 / S23</div><h2>Rules</h2></div><button class="btn" data-screen="home">Back</button></div>
+      <div class="rules-grid">
+        <article class="panel info-card"><h3>Birth</h3><p>A dead cell with exactly three living neighbors becomes alive in the next generation.</p><div class="rule-formula"><div class="rule-chip"><b>3</b><span>neighbors</span></div><div class="rule-chip"><b>Birth</b><span>dead → alive</span></div></div></article>
+        <article class="panel info-card"><h3>Survival</h3><p>A living cell survives with two or three living neighbors. Every other living cell dies from isolation or overcrowding.</p><div class="rule-formula"><div class="rule-chip"><b>2–3</b><span>survives</span></div><div class="rule-chip"><b>0–1 / 4+</b><span>dies</span></div></div></article>
+        <article class="panel info-card"><h3>Build a universe</h3><p>Choose a pattern and tap the board to stamp it. Draw adds cells, Erase removes them, and Pan moves the camera. Pinch or use the zoom buttons to inspect large boards.</p></article>
+        <article class="panel info-card"><h3>Credits</h3><p>You earn only <strong>one credit for every 60 real seconds</strong> that a non-empty simulation is running. Faster generation speed does not increase the reward.</p></article>
+      </div>
+    </main>
+
+    <main id="statsScreen" class="screen hidden"><div class="page-head"><div><div class="eyebrow">Laboratory record</div><h2>Stats</h2></div><button class="btn" data-screen="home">Back</button></div><div id="statsGrid" class="stats-grid"></div></main>
+
+    <main id="gameScreen" class="screen hidden">
+      <div class="game-shell">
+        <div class="canvas-card"><canvas id="lifeCanvas" width="1000" height="650" aria-label="Game of Life board"></canvas><div id="canvasMessage" class="canvas-message">Tap cells to bring them to life</div></div>
+        <aside class="side-hud">
+          <section class="panel hud-card"><div class="generation-line"><strong id="generationValue">Gen 0</strong><span id="sizeChip" class="size-chip">80 × 60</span></div><div class="hud-grid"><div class="hud-stat"><span>Population</span><b id="populationValue">0</b></div><div class="hud-stat"><span>Peak</span><b id="peakValue">0</b></div><div class="hud-stat"><span>Runtime</span><b id="runtimeValue">00:00</b></div><div class="hud-stat credit"><span>Earned</span><b id="runCreditsValue">C 0</b></div></div></section>
+          <section class="panel credit-card"><div class="section-label">Next credit</div><div class="credit-progress"><div id="creditProgress"></div></div><p id="creditHint">Run living cells for 60 real seconds.</p></section>
+          <section class="panel tool-card"><div class="main-controls"><button id="playButton" class="btn primary">Play</button><button id="stepButton" class="btn">Step</button><button id="clearButton" class="btn">Clear</button></div><div class="pattern-row"><div><label for="patternSelect">Pattern</label><select id="patternSelect" class="select"></select></div><div><label for="speedSelect">Speed</label><select id="speedSelect" class="select"><option value="1">1 gen/s</option><option value="3">3 gen/s</option><option value="6" selected>6 gen/s</option><option value="12">12 gen/s</option><option value="20">20 gen/s</option><option value="30">30 gen/s</option></select></div></div><div class="tool-row"><button class="btn active" data-tool="draw">Draw</button><button class="btn" data-tool="erase">Erase</button><button class="btn" data-tool="pan">Pan</button><button id="randomButton" class="btn">Random</button></div><div class="zoom-row"><button id="zoomOutButton" class="btn">Zoom −</button><button id="zoomInButton" class="btn">Zoom +</button><button id="fitButton" class="btn">Fit Board</button><button id="centerButton" class="btn">Center</button></div></section>
+          <div class="game-buttons"><button id="setupButton" class="btn">Setup</button><button id="soundGameButton" class="btn">Sound</button><button id="gameMenuButton" class="btn">Menu</button></div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div id="setupOverlay" class="overlay hidden"><div class="modal"><div class="eyebrow">Board setup</div><h2>New Universe</h2><p>Applying these settings creates an empty board.</p><div class="preset-row"><button class="btn" data-preset="40,30">40 × 30</button><button class="btn" data-preset="80,60">80 × 60</button><button class="btn" data-preset="200,150">200 × 150</button><button class="btn" data-preset="500,500">500 × 500</button><button class="btn" data-preset="1000,1000">1000 × 1000</button></div><div class="form-grid"><div class="field"><label for="columnsInput">Columns</label><input id="columnsInput" type="number" min="10" max="1000" step="1" value="80"></div><div class="field"><label for="rowsInput">Rows</label><input id="rowsInput" type="number" min="10" max="1000" step="1" value="60"></div><div class="field full"><label for="densityInput">Random density</label><div class="range-line"><input id="densityInput" type="range" min="3" max="45" value="18"><span id="densityValue" class="range-value">18%</span></div></div><div class="field full"><label for="edgeSelect">Edges</label><select id="edgeSelect"><option value="wrap">Wrap around</option><option value="finite">Finite</option></select></div></div><div class="button-row"><button id="applySetupButton" class="btn primary">Create Board</button><button id="cancelSetupButton" class="btn">Cancel</button></div></div></div>
+  <div id="confirmOverlay" class="overlay hidden"><div class="modal center"><h2 id="confirmTitle">Clear board?</h2><p id="confirmText">Every living cell will be removed.</p><div class="button-row"><button id="confirmYes" class="btn danger">Clear</button><button id="confirmNo" class="btn">Cancel</button></div></div></div>
+  <div id="toast" class="toast"></div>
+
+  <script>
+  "use strict";
+
+  /* ================================================================
+     CONWAY'S GAME OF LIFE
+     Offline B3/S23 cellular automaton.
+     ================================================================ */
+
+  const CANVAS_WIDTH = 1000;
+  const CANVAS_HEIGHT = 650;
+  const MIN_BOARD = 10;
+  const MAX_BOARD = 1000;
+  const CREDIT_SECONDS = 60;
+  const MAX_POPULATION = 150000;
+  const MAX_RANDOM_CELLS = 60000;
+  const SAVE_INTERVAL = 4;
+
+  const THEMES = [
+    { id: "classic", name: "Classic Life", price: 0, description: "Bright living cells and quiet dormant tiles.", live: "#a8f276", dead: "#102018", accent: "#e8ffd6" },
+    { id: "smileys", name: "Happy Colony", price: 12, description: "Smiling lives and sleepy resting faces.", live: "#ffd65f", dead: "#302b22", accent: "#633f12" },
+    { id: "robot", name: "Robot Grid", price: 30, description: "Powered droids and offline machine panels.", live: "#70e8ff", dead: "#122632", accent: "#12445f" },
+    { id: "radioactive", name: "Radioactive", price: 55, description: "Glowing hazard cells and cracked containers.", live: "#c8ff49", dead: "#263018", accent: "#283500" },
+    { id: "bearded", name: "Bearded Folk", price: 90, description: "Tiny bearded citizens and sleepy old stones.", live: "#ffca85", dead: "#342921", accent: "#4b2a18" },
+    { id: "alien", name: "Alien Slime", price: 140, description: "One-eyed organisms and fossilized pods.", live: "#bc7cff", dead: "#251c34", accent: "#421b68" },
+    { id: "garden", name: "Pocket Garden", price: 210, description: "Blooming flowers and patterned garden soil.", live: "#ff83ae", dead: "#203222", accent: "#5ee596" }
+  ];
+
+  const PATTERNS = {
+    single: { name: "Single Cell", cells: [[0,0]] },
+    glider: { name: "Glider", cells: [[1,0],[2,1],[0,2],[1,2],[2,2]] },
+    blinker: { name: "Blinker", cells: [[0,0],[1,0],[2,0]] },
+    toad: { name: "Toad", cells: [[1,0],[2,0],[3,0],[0,1],[1,1],[2,1]] },
+    beacon: { name: "Beacon", cells: [[0,0],[1,0],[0,1],[1,1],[2,2],[3,2],[2,3],[3,3]] },
+    pulsar: {
+      name: "Pulsar",
+      cells: [
+        [2,0],[3,0],[4,0],[8,0],[9,0],[10,0],
+        [0,2],[5,2],[7,2],[12,2],[0,3],[5,3],[7,3],[12,3],[0,4],[5,4],[7,4],[12,4],
+        [2,5],[3,5],[4,5],[8,5],[9,5],[10,5],
+        [2,7],[3,7],[4,7],[8,7],[9,7],[10,7],
+        [0,8],[5,8],[7,8],[12,8],[0,9],[5,9],[7,9],[12,9],[0,10],[5,10],[7,10],[12,10],
+        [2,12],[3,12],[4,12],[8,12],[9,12],[10,12]
+      ]
+    },
+    gosper: {
+      name: "Gosper Glider Gun",
+      cells: [
+        [0,4],[0,5],[1,4],[1,5],[10,4],[10,5],[10,6],[11,3],[11,7],[12,2],[12,8],[13,2],[13,8],
+        [14,5],[15,3],[15,7],[16,4],[16,5],[16,6],[17,5],[20,2],[20,3],[20,4],[21,2],[21,3],[21,4],
+        [22,1],[22,5],[24,0],[24,1],[24,5],[24,6],[34,2],[34,3],[35,2],[35,3]
+      ]
+    }
+  };
+
+  function clamp(value, minimum, maximum) {
+    return Math.max(minimum, Math.min(maximum, value));
+  }
+
+  function finite(value, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  function integer(value, fallback, minimum = 0, maximum = Number.MAX_SAFE_INTEGER) {
+    const number = Number(value);
+    return Number.isFinite(number)
+      ? clamp(Math.floor(number), minimum, maximum)
+      : fallback;
+  }
+
+  function formatTime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const minutes = Math.floor(total / 60);
+    return String(minutes).padStart(2, "0") + ":" + String(total % 60).padStart(2, "0");
+  }
+
+  function randomSeed() {
+    if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === "function") {
+      const values = new Uint32Array(1);
+      globalThis.crypto.getRandomValues(values);
+      return values[0];
+    }
+    return Math.floor(Math.random() * 4294967295);
+  }
+
+  class Random {
+    constructor(seed) {
+      this.state = seed >>> 0 || 1831565813;
+    }
+
+    next() {
+      this.state = (this.state + 1831565813) >>> 0;
+      let value = this.state;
+      value = Math.imul(value ^ value >>> 15, value | 1);
+      value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+      return ((value ^ value >>> 14) >>> 0) / 4294967296;
+    }
+
+    integer(minimum, maximum) {
+      return Math.floor(minimum + this.next() * (maximum - minimum + 1));
+    }
+  }
+
+  /* ----------------------------------------------------------------
+     Compact board serialization
+     ---------------------------------------------------------------- */
+
+  function encodePopulation(live) {
+    const cells = [...live].sort((a, b) => a - b);
+    const ranges = [];
+    let index = 0;
+    while (index < cells.length) {
+      const start = cells[index];
+      let length = 1;
+      while (index + length < cells.length && cells[index + length] === start + length) {
+        length += 1;
+      }
+      ranges.push(start.toString(36) + (length > 1 ? ":" + length.toString(36) : ""));
+      index += length;
+    }
+    return ranges.join(",");
+  }
+
+  function decodePopulation(encoded, maximumCell) {
+    const live = new Set();
+    if (typeof encoded !== "string" || !encoded) return live;
+    const ranges = encoded.slice(0, 2500000).split(",");
+    for (let index = 0; index < ranges.length && live.size < MAX_POPULATION; index += 1) {
+      const parts = ranges[index].split(":");
+      const start = parseInt(parts[0], 36);
+      const length = parts.length > 1 ? parseInt(parts[1], 36) : 1;
+      if (!Number.isFinite(start) || !Number.isFinite(length) || length < 1) continue;
+      const safeLength = Math.min(length, MAX_POPULATION - live.size, maximumCell - start);
+      for (let offset = 0; offset < safeLength; offset += 1) {
+        const cell = start + offset;
+        if (cell >= 0 && cell < maximumCell) live.add(cell);
+      }
+    }
+    return live;
+  }
+
+  /* ----------------------------------------------------------------
+     Shared save object
+     ---------------------------------------------------------------- */
+
+  class SaveManager {
+    static ROOT_KEY = "ARCADE_GAMES";
+    static STORAGE_KEY = "conway-game";
+    static VERSION = 1;
+
+    static defaults() {
+      return {
+        version: SaveManager.VERSION,
+        credits: 0,
+        theme: "classic",
+        ownedThemes: ["classic"],
+        sound: true,
+        settings: {
+          columns: 80,
+          rows: 60,
+          density: 18,
+          wrap: true,
+          speed: 6,
+          pattern: "single"
+        },
+        activeRun: null,
+        stats: {
+          universesCreated: 0,
+          totalGenerations: 0,
+          runningSeconds: 0,
+          peakPopulation: 0,
+          largestBoard: 0,
+          extinctionEvents: 0,
+          creditsEarned: 0
+        }
+      };
+    }
+
+    static readRoot() {
+      try {
+        const raw = localStorage.getItem(SaveManager.ROOT_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    static writeRoot(root) {
+      try {
+        localStorage.setItem(SaveManager.ROOT_KEY, JSON.stringify(root));
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    static load() {
+      const root = SaveManager.readRoot();
+      return SaveManager.sanitize(root[SaveManager.STORAGE_KEY]);
+    }
+
+    static save(data) {
+      const root = SaveManager.readRoot();
+      root[SaveManager.STORAGE_KEY] = SaveManager.sanitize(data);
+      return SaveManager.writeRoot(root);
+    }
+
+    static sanitize(value) {
+      const base = SaveManager.defaults();
+      const source = value && typeof value === "object" ? value : {};
+      const settingsSource = source.settings && typeof source.settings === "object" ? source.settings : {};
+      const statsSource = source.stats && typeof source.stats === "object" ? source.stats : {};
+      const themeIds = new Set(THEMES.map((theme) => theme.id));
+      const owned = Array.isArray(source.ownedThemes)
+        ? source.ownedThemes.filter((id) => themeIds.has(id))
+        : [];
+      if (!owned.includes("classic")) owned.unshift("classic");
+      const settings = {
+        columns: integer(settingsSource.columns, 80, MIN_BOARD, MAX_BOARD),
+        rows: integer(settingsSource.rows, 60, MIN_BOARD, MAX_BOARD),
+        density: integer(settingsSource.density, 18, 3, 45),
+        wrap: settingsSource.wrap !== false,
+        speed: [1,3,6,12,20,30].includes(Number(settingsSource.speed)) ? Number(settingsSource.speed) : 6,
+        pattern: PATTERNS[settingsSource.pattern] ? settingsSource.pattern : "single"
+      };
+      const output = {
+        ...base,
+        ...source,
+        version: SaveManager.VERSION,
+        credits: integer(source.credits, 0),
+        theme: themeIds.has(source.theme) ? source.theme : "classic",
+        ownedThemes: [...new Set(owned)],
+        sound: source.sound !== false,
+        settings,
+        activeRun: sanitizeRun(source.activeRun),
+        stats: {
+          universesCreated: integer(statsSource.universesCreated, 0),
+          totalGenerations: integer(statsSource.totalGenerations, 0),
+          runningSeconds: integer(statsSource.runningSeconds, 0),
+          peakPopulation: integer(statsSource.peakPopulation, 0),
+          largestBoard: integer(statsSource.largestBoard, 0),
+          extinctionEvents: integer(statsSource.extinctionEvents, 0),
+          creditsEarned: integer(statsSource.creditsEarned, 0)
+        }
+      };
+      if (!output.ownedThemes.includes(output.theme)) output.theme = "classic";
+      return output;
+    }
+  }
+
+  function sanitizeRun(value) {
+    if (!value || typeof value !== "object") return null;
+    const columns = integer(value.columns, 0, MIN_BOARD, MAX_BOARD);
+    const rows = integer(value.rows, 0, MIN_BOARD, MAX_BOARD);
+    if (!columns || !rows) return null;
+    return {
+      columns,
+      rows,
+      wrap: value.wrap !== false,
+      generation: integer(value.generation, 0),
+      runtime: clamp(finite(value.runtime, 0), 0, 864000),
+      runCredits: integer(value.runCredits, 0),
+      peak: integer(value.peak, 0, 0, MAX_POPULATION),
+      encoded: typeof value.encoded === "string" ? value.encoded.slice(0, 2500000) : "",
+      zoom: clamp(finite(value.zoom, 10), .45, 42),
+      offsetX: clamp(finite(value.offsetX, 0), -50000, 50000),
+      offsetY: clamp(finite(value.offsetY, 0), -50000, 50000)
+    };
+  }
+
+  /* ----------------------------------------------------------------
+     Tiny offline sounds
+     ---------------------------------------------------------------- */
+
+  class SoundEngine {
+    constructor() { this.context = null; }
+    ensure() {
+      if (!App.data.sound) return null;
+      if (!this.context) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        this.context = new AudioContextClass();
+      }
+      if (this.context.state === "suspended") this.context.resume();
+      return this.context;
+    }
+    tone(frequency, duration, type = "sine", volume = .025) {
+      const context = this.ensure();
+      if (!context) return;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+      gain.gain.setValueAtTime(volume, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + duration);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + duration);
+    }
+    tick() { this.tone(190, .035, "square", .009); }
+    cell() { this.tone(430, .045, "sine", .018); }
+    credit() {
+      this.tone(520, .12, "triangle", .03);
+      setTimeout(() => this.tone(780, .16, "triangle", .025), 70);
+    }
+    buy() {
+      this.tone(460, .1, "square", .022);
+      setTimeout(() => this.tone(720, .17, "triangle", .025), 75);
+    }
+  }
+
+  /* ----------------------------------------------------------------
+     Board renderer and themed cells
+     ---------------------------------------------------------------- */
+
+  class Renderer {
+    constructor(canvas) {
+      this.canvas = canvas;
+      this.context = canvas.getContext("2d");
+    }
+
+    draw(game, time) {
+      const context = this.context;
+      context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      const background = context.createRadialGradient(500, 325, 60, 500, 325, 650);
+      background.addColorStop(0, "#0d2116");
+      background.addColorStop(1, "#050d09");
+      context.fillStyle = background;
+      context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      this.drawBoard(context, game, time);
+    }
+
+    drawBoard(context, game, time) {
+      const zoom = game.zoom;
+      const boardX = game.offsetX;
+      const boardY = game.offsetY;
+      const boardWidth = game.columns * zoom;
+      const boardHeight = game.rows * zoom;
+      const theme = THEMES.find((item) => item.id === App.data.theme) || THEMES[0];
+
+      context.save();
+      context.beginPath();
+      context.rect(Math.max(0,boardX), Math.max(0,boardY), Math.min(CANVAS_WIDTH,boardX+boardWidth)-Math.max(0,boardX), Math.min(CANVAS_HEIGHT,boardY+boardHeight)-Math.max(0,boardY));
+      context.clip();
+      context.fillStyle = theme.dead;
+      context.fillRect(boardX, boardY, boardWidth, boardHeight);
+
+      const minColumn = clamp(Math.floor(-boardX / zoom), 0, game.columns - 1);
+      const maxColumn = clamp(Math.ceil((CANVAS_WIDTH - boardX) / zoom), 0, game.columns);
+      const minRow = clamp(Math.floor(-boardY / zoom), 0, game.rows - 1);
+      const maxRow = clamp(Math.ceil((CANVAS_HEIGHT - boardY) / zoom), 0, game.rows);
+
+      if (zoom >= 4) {
+        for (let row = minRow; row < maxRow; row += 1) {
+          for (let column = minColumn; column < maxColumn; column += 1) {
+            const id = row * game.columns + column;
+            if (!game.live.has(id)) {
+              this.drawCell(context, boardX + column * zoom, boardY + row * zoom, zoom, theme.id, false, id, time);
+            }
+          }
+        }
+      }
+
+      game.live.forEach((id) => {
+        const row = Math.floor(id / game.columns);
+        const column = id - row * game.columns;
+        if (column < minColumn || column >= maxColumn || row < minRow || row >= maxRow) return;
+        this.drawCell(context, boardX + column * zoom, boardY + row * zoom, zoom, theme.id, true, id, time);
+      });
+
+      if (zoom >= 5) {
+        context.beginPath();
+        context.strokeStyle = theme.id === "radioactive" ? "rgba(205,255,75,.12)" : "rgba(209,255,221,.095)";
+        context.lineWidth = 1;
+        for (let column = minColumn; column <= maxColumn; column += 1) {
+          const x = Math.round(boardX + column * zoom) + .5;
+          context.moveTo(x, Math.max(0,boardY));
+          context.lineTo(x, Math.min(CANVAS_HEIGHT,boardY+boardHeight));
+        }
+        for (let row = minRow; row <= maxRow; row += 1) {
+          const y = Math.round(boardY + row * zoom) + .5;
+          context.moveTo(Math.max(0,boardX), y);
+          context.lineTo(Math.min(CANVAS_WIDTH,boardX+boardWidth), y);
+        }
+        context.stroke();
+      }
+      context.restore();
+
+      context.strokeStyle = "rgba(213,255,225,.3)";
+      context.lineWidth = 2;
+      context.strokeRect(boardX, boardY, boardWidth, boardHeight);
+    }
+
+    drawCell(context, x, y, size, themeId, alive, id, time) {
+      const inset = size >= 8 ? Math.max(1, size * .08) : 0;
+      const px = x + inset;
+      const py = y + inset;
+      const cellSize = Math.max(.7, size - inset * 2);
+      const detail = size >= 8;
+      context.save();
+
+      if (alive && size < 4) {
+        const theme = THEMES.find((item) => item.id === themeId) || THEMES[0];
+        context.fillStyle = theme.live;
+        context.fillRect(x, y, Math.max(1, size), Math.max(1, size));
+        context.restore();
+        return;
+      }
+
+      if (!alive) {
+        if (size < 7) {
+          context.fillStyle = this.deadColor(themeId, id);
+          context.fillRect(x, y, size + .2, size + .2);
+          context.restore();
+          return;
+        }
+        this.drawDeadCell(context, px, py, cellSize, themeId, id, detail);
+        context.restore();
+        return;
+      }
+
+      if (themeId === "smileys") {
+        roundedRect(context, px, py, cellSize, cellSize, cellSize * .25);
+        context.fillStyle = "#ffd65f";
+        context.fill();
+        if (detail) this.drawFace(context, px, py, cellSize, "#5b3b10", "smile");
+      } else if (themeId === "robot") {
+        roundedRect(context, px, py, cellSize, cellSize, cellSize * .14);
+        const gradient = context.createLinearGradient(px,py,px+cellSize,py+cellSize);
+        gradient.addColorStop(0,"#c3fbff"); gradient.addColorStop(.48,"#58d8ef"); gradient.addColorStop(1,"#24779c");
+        context.fillStyle = gradient; context.fill();
+        if (detail) {
+          context.fillStyle = "#103249";
+          roundedRect(context, px+cellSize*.18,py+cellSize*.27,cellSize*.64,cellSize*.34,cellSize*.08); context.fill();
+          context.fillStyle = "#e8ffff";
+          context.fillRect(px+cellSize*.28,py+cellSize*.37,cellSize*.1,cellSize*.1);
+          context.fillRect(px+cellSize*.62,py+cellSize*.37,cellSize*.1,cellSize*.1);
+          context.strokeStyle = "#123d55"; context.lineWidth = Math.max(1,cellSize*.06);
+          context.beginPath();context.moveTo(px+cellSize*.5,py+cellSize*.27);context.lineTo(px+cellSize*.5,py+cellSize*.1);context.stroke();
+        }
+      } else if (themeId === "radioactive") {
+        roundedRect(context, px, py, cellSize, cellSize, cellSize * .22);
+        context.fillStyle = "#c8ff49"; context.fill();
+        context.shadowColor = "#aaff32"; context.shadowBlur = detail ? cellSize*.35 : 0;
+        if (detail) this.drawRadiation(context, px+cellSize/2, py+cellSize/2, cellSize*.34, "#243000");
+      } else if (themeId === "bearded") {
+        roundedRect(context, px, py, cellSize, cellSize, cellSize * .31);
+        context.fillStyle = "#ffca85"; context.fill();
+        if (detail) {
+          this.drawFace(context, px, py, cellSize, "#4b2b18", "neutral");
+          context.beginPath();
+          context.moveTo(px+cellSize*.18,py+cellSize*.58);
+          context.quadraticCurveTo(px+cellSize*.5,py+cellSize*1.02,px+cellSize*.82,py+cellSize*.58);
+          context.quadraticCurveTo(px+cellSize*.5,py+cellSize*.72,px+cellSize*.18,py+cellSize*.58);
+          context.fillStyle="#59301d";context.fill();
+          context.fillStyle="#8c5a34";
+          context.beginPath();context.arc(px+cellSize*.5,py+cellSize*.72,cellSize*.08,0,Math.PI*2);context.fill();
+        }
+      } else if (themeId === "alien") {
+        context.beginPath();context.ellipse(px+cellSize*.5,py+cellSize*.53,cellSize*.46,cellSize*.44,0,0,Math.PI*2);
+        const gradient=context.createRadialGradient(px+cellSize*.35,py+cellSize*.3,1,px+cellSize*.5,py+cellSize*.5,cellSize*.55);
+        gradient.addColorStop(0,"#e3b7ff");gradient.addColorStop(.48,"#ae6df0");gradient.addColorStop(1,"#5e2d93");
+        context.fillStyle=gradient;context.fill();
+        if (detail) {
+          context.beginPath();context.ellipse(px+cellSize*.5,py+cellSize*.47,cellSize*.2,cellSize*.25,0,0,Math.PI*2);
+          context.fillStyle="#171226";context.fill();
+          context.beginPath();context.arc(px+cellSize*.46,py+cellSize*.4,cellSize*.055,0,Math.PI*2);context.fillStyle="#eaffff";context.fill();
+        }
+      } else if (themeId === "garden") {
+        roundedRect(context,px,py,cellSize,cellSize,cellSize*.18);context.fillStyle="#264c2d";context.fill();
+        const cx=px+cellSize*.5,cy=py+cellSize*.5;
+        context.fillStyle="#ff83ae";
+        for(let petal=0;petal<5;petal+=1){const angle=petal*Math.PI*2/5+id*.2;context.beginPath();context.ellipse(cx+Math.cos(angle)*cellSize*.2,cy+Math.sin(angle)*cellSize*.2,cellSize*.17,cellSize*.1,angle,0,Math.PI*2);context.fill();}
+        context.beginPath();context.arc(cx,cy,cellSize*.12,0,Math.PI*2);context.fillStyle="#ffe477";context.fill();
+      } else {
+        roundedRect(context,px,py,cellSize,cellSize,cellSize*.2);
+        const gradient=context.createLinearGradient(px,py,px+cellSize,py+cellSize);
+        gradient.addColorStop(0,"#dcff9e");gradient.addColorStop(.5,"#9cf06b");gradient.addColorStop(1,"#4cbf72");
+        context.fillStyle=gradient;context.fill();
+        if(detail){context.beginPath();context.arc(px+cellSize*.38,py+cellSize*.36,cellSize*.12,0,Math.PI*2);context.fillStyle="rgba(255,255,255,.48)";context.fill();}
+      }
+      context.restore();
+    }
+
+    deadColor(themeId, id) {
+      const shift = id % 3;
+      const colors = {
+        classic:["#102018","#11231a","#0e1d16"], smileys:["#302b22","#332e24","#2b271f"],
+        robot:["#122632","#142a37","#10232e"], radioactive:["#263018","#29341a","#222c16"],
+        bearded:["#342921","#382c23","#30261f"], alien:["#251c34","#291f39","#21192f"],
+        garden:["#203222","#233725","#1d2e1f"]
+      };
+      return (colors[themeId] || colors.classic)[shift];
+    }
+
+    drawDeadCell(context,x,y,size,themeId,id,detail) {
+      roundedRect(context,x,y,size,size,size*.16);context.fillStyle=this.deadColor(themeId,id);context.fill();
+      if(!detail)return;
+      context.globalAlpha=.42;
+      if(themeId==="smileys"){
+        this.drawFace(context,x,y,size,"#9f8d62","sleep");
+      }else if(themeId==="robot"){
+        context.strokeStyle="#416171";context.lineWidth=Math.max(1,size*.05);roundedRect(context,x+size*.18,y+size*.27,size*.64,size*.34,size*.07);context.stroke();
+        context.fillStyle="#3c5260";context.fillRect(x+size*.27,y+size*.38,size*.12,size*.07);context.fillRect(x+size*.61,y+size*.38,size*.12,size*.07);
+      }else if(themeId==="radioactive"){
+        context.strokeStyle="#718146";context.lineWidth=Math.max(1,size*.05);context.beginPath();context.moveTo(x+size*.2,y+size*.22);context.lineTo(x+size*.72,y+size*.78);context.moveTo(x+size*.68,y+size*.18);context.lineTo(x+size*.42,y+size*.52);context.stroke();
+      }else if(themeId==="bearded"){
+        context.fillStyle="#816c5b";context.beginPath();context.arc(x+size*.36,y+size*.43,size*.045,0,Math.PI*2);context.arc(x+size*.64,y+size*.43,size*.045,0,Math.PI*2);context.fill();
+        context.strokeStyle="#7e604d";context.lineWidth=Math.max(1,size*.08);context.beginPath();context.moveTo(x+size*.25,y+size*.66);context.quadraticCurveTo(x+size*.5,y+size*.8,x+size*.75,y+size*.66);context.stroke();
+      }else if(themeId==="alien"){
+        context.strokeStyle="#705887";context.lineWidth=Math.max(1,size*.06);context.beginPath();context.ellipse(x+size*.5,y+size*.5,size*.24,size*.3,0,0,Math.PI*2);context.stroke();
+      }else if(themeId==="garden"){
+        context.strokeStyle="#52705a";context.lineWidth=Math.max(1,size*.05);context.beginPath();context.moveTo(x+size*.25,y+size*.7);context.quadraticCurveTo(x+size*.45,y+size*.45,x+size*.74,y+size*.28);context.stroke();
+      }else{
+        context.beginPath();context.arc(x+size*.5,y+size*.5,size*.09,0,Math.PI*2);context.fillStyle="#52665a";context.fill();
+      }
+      context.globalAlpha=1;
+    }
+
+    drawFace(context,x,y,size,color,mood) {
+      context.fillStyle=color;
+      if(mood==="sleep"){
+        context.strokeStyle=color;context.lineWidth=Math.max(1,size*.055);
+        context.beginPath();context.moveTo(x+size*.25,y+size*.42);context.lineTo(x+size*.4,y+size*.42);context.moveTo(x+size*.6,y+size*.42);context.lineTo(x+size*.75,y+size*.42);context.stroke();
+      }else{
+        context.beginPath();context.arc(x+size*.34,y+size*.39,size*.055,0,Math.PI*2);context.arc(x+size*.66,y+size*.39,size*.055,0,Math.PI*2);context.fill();
+      }
+      context.strokeStyle=color;context.lineWidth=Math.max(1,size*.06);context.lineCap="round";context.beginPath();
+      if(mood==="smile")context.arc(x+size*.5,y+size*.52,size*.2,.15*Math.PI,.85*Math.PI);
+      else context.moveTo(x+size*.39,y+size*.65),context.lineTo(x+size*.61,y+size*.65);
+      context.stroke();
+    }
+
+    drawRadiation(context,cx,cy,radius,color) {
+      context.save();context.translate(cx,cy);context.fillStyle=color;
+      for(let i=0;i<3;i+=1){context.save();context.rotate(i*Math.PI*2/3);context.beginPath();context.moveTo(0,-radius*.28);context.arc(0,0,radius,-1.32,-.77);context.arc(0,0,radius*.42,-.77,-1.32,true);context.closePath();context.fill();context.restore();}
+      context.beginPath();context.arc(0,0,radius*.22,0,Math.PI*2);context.fill();context.restore();
+    }
+
+    drawThemePreview(canvas,themeId) {
+      const context=canvas.getContext("2d");context.clearRect(0,0,canvas.width,canvas.height);
+      const theme=THEMES.find((item)=>item.id===themeId)||THEMES[0];context.fillStyle=theme.dead;context.fillRect(0,0,canvas.width,canvas.height);
+      for(let row=0;row<2;row+=1){for(let col=0;col<4;col+=1){this.drawCell(context,12+col*31,18+row*43,27,themeId,(row+col)%3!==0,row*4+col,1);}}
+      context.fillStyle="rgba(255,255,255,.7)";context.font="800 10px sans-serif";context.fillText("ALIVE",150,39);context.fillText("DEAD",150,83);
+      this.drawCell(context,203,15,34,themeId,true,99,1);this.drawCell(context,203,61,34,themeId,false,100,1);
+    }
+  }
+
+  function roundedRect(context,x,y,width,height,radius) {
+    const r=Math.min(radius,Math.abs(width)/2,Math.abs(height)/2);context.beginPath();context.moveTo(x+r,y);context.arcTo(x+width,y,x+width,y+height,r);context.arcTo(x+width,y+height,x,y+height,r);context.arcTo(x,y+height,x,y,r);context.arcTo(x,y,x+width,y,r);context.closePath();
+  }
+
+  /* ----------------------------------------------------------------
+     Sparse Game of Life engine
+     ---------------------------------------------------------------- */
+
+  class LifeGame {
+    constructor(canvas,renderer,sounds) {
+      this.canvas=canvas;this.renderer=renderer;this.sounds=sounds;
+      this.columns=80;this.rows=60;this.wrap=true;this.live=new Set();
+      this.generation=0;this.runtime=0;this.runCredits=0;this.peak=0;
+      this.running=false;this.speed=6;this.accumulator=0;this.saveTimer=0;
+      this.statSecondAccumulator=0;
+      this.zoom=10;this.offsetX=100;this.offsetY=25;this.tool="draw";
+      this.pattern="single";this.pointers=new Map();this.dragging=false;this.lastPaint=null;
+      this.panStart=null;this.pinchStart=null;this.loopActive=false;this.animationFrame=0;this.lastFrame=0;
+      this.tickSoundTimer=0;this.messageTimer=0;
+    }
+
+    create(columns,rows,wrap) {
+      this.columns=columns;this.rows=rows;this.wrap=wrap;this.live=new Set();
+      this.generation=0;this.runtime=0;this.runCredits=0;this.peak=0;this.running=false;
+      this.accumulator=0;this.fitBoard();this.startLoop();
+      this.statSecondAccumulator=0;
+    }
+
+    load(run) {
+      this.columns=run.columns;this.rows=run.rows;this.wrap=run.wrap;
+      this.live=decodePopulation(run.encoded,this.columns*this.rows);
+      this.generation=run.generation;this.runtime=run.runtime;this.runCredits=run.runCredits;
+      this.peak=Math.max(run.peak,this.live.size);this.zoom=run.zoom;this.offsetX=run.offsetX;this.offsetY=run.offsetY;
+      this.speed=App.data.settings.speed;this.pattern=App.data.settings.pattern;this.running=false;this.accumulator=0;
+      this.statSecondAccumulator=0;
+      this.startLoop();
+    }
+
+    startLoop() {
+      if(this.animationFrame)cancelAnimationFrame(this.animationFrame);this.loopActive=true;this.lastFrame=performance.now();
+      const frame=(now)=>{if(!this.loopActive)return;const delta=Math.min((now-this.lastFrame)/1000,.08);this.lastFrame=now;this.update(delta);this.renderer.draw(this,now/1000);if(this.loopActive)this.animationFrame=requestAnimationFrame(frame);};
+      this.animationFrame=requestAnimationFrame(frame);
+    }
+
+    stopLoop(){this.loopActive=false;if(this.animationFrame)cancelAnimationFrame(this.animationFrame);this.animationFrame=0;}
+
+    update(delta) {
+      if(this.messageTimer>0){this.messageTimer-=delta;if(this.messageTimer<=0)Elements.canvasMessage.classList.remove("show");}
+      if(!this.running)return;
+      if(this.live.size===0){this.running=false;App.data.stats.extinctionEvents+=1;App.showBoardMessage("Population extinct");App.showToast("The universe is empty");App.saveActiveRun();App.updateHud();return;}
+      this.runtime+=delta;this.saveTimer+=delta;this.accumulator+=delta;
+      this.statSecondAccumulator+=delta;
+      if(this.statSecondAccumulator>=1){const completedSeconds=Math.floor(this.statSecondAccumulator);this.statSecondAccumulator-=completedSeconds;App.data.stats.runningSeconds+=completedSeconds;}
+      const effectiveSpeed=this.live.size>50000?1:this.live.size>25000?Math.min(this.speed,3):this.speed;
+      const stepTime=1/effectiveSpeed;let steps=0;
+      while(this.accumulator>=stepTime&&steps<3){this.accumulator-=stepTime;this.step();steps+=1;if(!this.running)break;}
+      this.checkCredit();
+      if(this.saveTimer>=SAVE_INTERVAL){this.saveTimer=0;App.saveActiveRun();}
+      App.updateHud();
+    }
+
+    step() {
+      if(this.live.size===0)return;
+      const counts=new Map();const columns=this.columns,rows=this.rows,wrapEdges=this.wrap;
+      this.live.forEach((id)=>{
+        const row=Math.floor(id/columns),column=id-row*columns;
+        for(let dy=-1;dy<=1;dy+=1){for(let dx=-1;dx<=1;dx+=1){if(dx===0&&dy===0)continue;let nx=column+dx,ny=row+dy;if(wrapEdges){nx=(nx+columns)%columns;ny=(ny+rows)%rows;}else if(nx<0||nx>=columns||ny<0||ny>=rows)continue;const neighbor=ny*columns+nx;counts.set(neighbor,(counts.get(neighbor)||0)+1);}}
+      });
+      const next=new Set();
+      for(const [id,count] of counts){if(count===3||(count===2&&this.live.has(id))){next.add(id);if(next.size>=MAX_POPULATION)break;}}
+      this.live=next;this.generation+=1;this.peak=Math.max(this.peak,next.size);
+      App.data.stats.totalGenerations+=1;App.data.stats.peakPopulation=Math.max(App.data.stats.peakPopulation,next.size);
+      if(next.size>=MAX_POPULATION){this.running=false;App.showBoardMessage("Population safety limit reached");App.showToast("Paused at 150,000 living cells");}
+      this.tickSoundTimer+=1;if(this.tickSoundTimer>=Math.max(1,Math.round(this.speed/3))){this.tickSoundTimer=0;this.sounds.tick();}
+    }
+
+    checkCredit() {
+      const earned=Math.floor(this.runtime/CREDIT_SECONDS);
+      if(earned<=this.runCredits)return;
+      const difference=earned-this.runCredits;this.runCredits=earned;App.data.credits+=difference;App.data.stats.creditsEarned+=difference;this.sounds.credit();App.showToast("+C "+difference+" · survival time");App.refreshWallet();App.saveActiveRun();
+    }
+
+    randomize(density) {
+      this.running=false;this.live.clear();const total=this.columns*this.rows;
+      const target=Math.min(MAX_RANDOM_CELLS,Math.floor(total*density/100));const random=new Random(randomSeed());
+      while(this.live.size<target)this.live.add(random.integer(0,total-1));
+      this.resetRunProgress();this.peak=this.live.size;this.fitBoard();App.showBoardMessage(target<Math.floor(total*density/100)?"Random population capped for performance":"Random population created");
+    }
+
+    clear() {
+      this.running=false;this.live.clear();this.resetRunProgress();App.showBoardMessage("Board cleared");
+    }
+
+    resetRunProgress(){this.generation=0;this.runtime=0;this.runCredits=0;this.peak=this.live.size;this.accumulator=0;}
+
+    toggleRunning() {
+      if(!this.running&&this.live.size===0){App.showToast("Add living cells first");App.showBoardMessage("Tap cells to bring them to life");return;}
+      this.running=!this.running;this.accumulator=0;if(this.running)this.sounds.ensure();App.updateHud();App.saveActiveRun();
+    }
+
+    idAt(column,row){return row*this.columns+column;}
+    coordinateFromId(id){const row=Math.floor(id/this.columns);return {column:id-row*this.columns,row};}
+
+    stamp(column,row,erase=false) {
+      const pattern=erase?PATTERNS.single:PATTERNS[this.pattern]||PATTERNS.single;let changed=false;
+      for(const [dx,dy] of pattern.cells){let x=column+dx,y=row+dy;if(this.wrap){x=(x+this.columns)%this.columns;y=(y+this.rows)%this.rows;}else if(x<0||x>=this.columns||y<0||y>=this.rows)continue;const id=this.idAt(x,y);if(erase){if(this.live.delete(id))changed=true;}else if(this.live.size<MAX_POPULATION&&!this.live.has(id)){this.live.add(id);changed=true;}}
+      if(changed){this.peak=Math.max(this.peak,this.live.size);App.data.stats.peakPopulation=Math.max(App.data.stats.peakPopulation,this.live.size);}
+      return changed;
+    }
+
+    canvasPoint(event){const rect=this.canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*CANVAS_WIDTH/rect.width,y:(event.clientY-rect.top)*CANVAS_HEIGHT/rect.height};}
+    cellAt(point){return{column:Math.floor((point.x-this.offsetX)/this.zoom),row:Math.floor((point.y-this.offsetY)/this.zoom)};}
+    validCell(cell){return cell.column>=0&&cell.column<this.columns&&cell.row>=0&&cell.row<this.rows;}
+
+    pointerDown(event) {
+      event.preventDefault();this.canvas.setPointerCapture?.(event.pointerId);const point=this.canvasPoint(event);this.pointers.set(event.pointerId,point);
+      if(this.pointers.size===2){const points=[...this.pointers.values()];this.pinchStart={distance:Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y),zoom:this.zoom,midX:(points[0].x+points[1].x)/2,midY:(points[0].y+points[1].y)/2,worldX:((points[0].x+points[1].x)/2-this.offsetX)/this.zoom,worldY:((points[0].y+points[1].y)/2-this.offsetY)/this.zoom};this.dragging=false;return;}
+      this.dragging=true;this.lastPaint=null;
+      if(this.tool==="pan"){this.panStart={x:point.x,y:point.y,offsetX:this.offsetX,offsetY:this.offsetY};return;}
+      if(this.running){this.running=false;App.updateHud();}
+      this.paintAt(point);
+    }
+
+    pointerMove(event) {
+      if(!this.pointers.has(event.pointerId))return;event.preventDefault();const point=this.canvasPoint(event);this.pointers.set(event.pointerId,point);
+      if(this.pointers.size>=2&&this.pinchStart){const points=[...this.pointers.values()].slice(0,2);const currentDistance=Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y);const midX=(points[0].x+points[1].x)/2,midY=(points[0].y+points[1].y)/2;this.zoom=clamp(this.pinchStart.zoom*currentDistance/Math.max(1,this.pinchStart.distance),.45,42);this.offsetX=midX-this.pinchStart.worldX*this.zoom;this.offsetY=midY-this.pinchStart.worldY*this.zoom;return;}
+      if(!this.dragging)return;
+      if(this.tool==="pan"&&this.panStart){this.offsetX=this.panStart.offsetX+point.x-this.panStart.x;this.offsetY=this.panStart.offsetY+point.y-this.panStart.y;return;}
+      if(this.pattern==="single"||this.tool==="erase")this.paintAt(point);
+    }
+
+    pointerUp(event) {
+      event.preventDefault();this.pointers.delete(event.pointerId);try{this.canvas.releasePointerCapture?.(event.pointerId);}catch(error){}
+      if(this.pointers.size<2)this.pinchStart=null;if(this.pointers.size===0){this.dragging=false;this.panStart=null;this.lastPaint=null;App.saveActiveRun();}
+    }
+
+    paintAt(point) {
+      const cell=this.cellAt(point);if(!this.validCell(cell))return;const signature=cell.column+","+cell.row;if(signature===this.lastPaint)return;this.lastPaint=signature;
+      if(this.stamp(cell.column,cell.row,this.tool==="erase")){this.sounds.cell();App.updateHud();}
+    }
+
+    zoomAt(factor,x=CANVAS_WIDTH/2,y=CANVAS_HEIGHT/2){const worldX=(x-this.offsetX)/this.zoom,worldY=(y-this.offsetY)/this.zoom;this.zoom=clamp(this.zoom*factor,.45,42);this.offsetX=x-worldX*this.zoom;this.offsetY=y-worldY*this.zoom;App.saveActiveRun();}
+    fitBoard(){this.zoom=clamp(Math.min((CANVAS_WIDTH-50)/this.columns,(CANVAS_HEIGHT-50)/this.rows),.45,30);this.offsetX=(CANVAS_WIDTH-this.columns*this.zoom)/2;this.offsetY=(CANVAS_HEIGHT-this.rows*this.zoom)/2;}
+    centerBoard(){this.offsetX=(CANVAS_WIDTH-this.columns*this.zoom)/2;this.offsetY=(CANVAS_HEIGHT-this.rows*this.zoom)/2;App.saveActiveRun();}
+    snapshot(){return{columns:this.columns,rows:this.rows,wrap:this.wrap,generation:this.generation,runtime:this.runtime,runCredits:this.runCredits,peak:this.peak,encoded:encodePopulation(this.live),zoom:this.zoom,offsetX:this.offsetX,offsetY:this.offsetY};}
+  }
+
+  /* ----------------------------------------------------------------
+     Interface controller
+     ---------------------------------------------------------------- */
+
+  const Elements={};
+  const App={
+    data:null,renderer:null,sounds:null,game:null,currentScreen:"home",setupOrigin:"home",confirmAction:null,toastTimer:0,
+
+    init(){
+      this.cache();this.data=SaveManager.load();this.sounds=new SoundEngine();this.renderer=new Renderer(Elements.lifeCanvas);this.game=new LifeGame(Elements.lifeCanvas,this.renderer,this.sounds);this.bind();this.renderPatterns();this.refreshAll();this.showScreen("home");
+    },
+
+    cache(){
+      ["creditsValue","homeScreen","shopScreen","rulesScreen","statsScreen","gameScreen","homeBoardSize","homeSetupButton","newButton","continueButton","soundButton","shopGrid","statsGrid","lifeCanvas","canvasMessage","generationValue","sizeChip","populationValue","peakValue","runtimeValue","runCreditsValue","creditProgress","creditHint","playButton","stepButton","clearButton","patternSelect","speedSelect","randomButton","zoomOutButton","zoomInButton","fitButton","centerButton","setupButton","soundGameButton","gameMenuButton","setupOverlay","columnsInput","rowsInput","densityInput","densityValue","edgeSelect","applySetupButton","cancelSetupButton","confirmOverlay","confirmTitle","confirmText","confirmYes","confirmNo","toast"].forEach((id)=>Elements[id]=document.getElementById(id));
+    },
+
+    bind(){
+      document.querySelectorAll("[data-screen]").forEach((button)=>button.addEventListener("click",()=>this.showScreen(button.dataset.screen)));
+      Elements.homeSetupButton.addEventListener("click",()=>this.openSetup("home"));
+      Elements.setupButton.addEventListener("click",()=>this.openSetup("game"));
+      Elements.newButton.addEventListener("click",()=>{if(this.data.activeRun)this.confirm("Replace universe?","Your saved universe will be replaced.","Replace",()=>this.createUniverse());else this.createUniverse();});
+      Elements.continueButton.addEventListener("click",()=>this.continueUniverse());
+      Elements.soundButton.addEventListener("click",()=>this.toggleSound());
+      Elements.soundGameButton.addEventListener("click",()=>this.toggleSound());
+      Elements.playButton.addEventListener("click",()=>this.game.toggleRunning());
+      Elements.stepButton.addEventListener("click",()=>{if(this.game.live.size===0){this.showToast("Add living cells first");return;}this.game.running=false;this.game.step();this.updateHud();this.saveActiveRun();});
+      Elements.clearButton.addEventListener("click",()=>{if(!this.game.live.size)return;this.confirm("Clear board?","Every living cell will be removed.","Clear",()=>{this.game.clear();this.updateHud();this.saveActiveRun();});});
+      Elements.randomButton.addEventListener("click",()=>{const action=()=>{this.game.randomize(this.data.settings.density);this.updateHud();this.saveActiveRun();};if(this.game.live.size)this.confirm("Replace population?","The current cells will be replaced with a random population.","Randomize",action);else action();});
+      Elements.patternSelect.addEventListener("change",()=>{this.game.pattern=Elements.patternSelect.value;this.data.settings.pattern=this.game.pattern;SaveManager.save(this.data);});
+      Elements.speedSelect.addEventListener("change",()=>{this.game.speed=Number(Elements.speedSelect.value);this.data.settings.speed=this.game.speed;SaveManager.save(this.data);});
+      document.querySelectorAll("[data-tool]").forEach((button)=>button.addEventListener("click",()=>this.setTool(button.dataset.tool)));
+      Elements.zoomOutButton.addEventListener("click",()=>this.game.zoomAt(.78));
+      Elements.zoomInButton.addEventListener("click",()=>this.game.zoomAt(1.28));
+      Elements.fitButton.addEventListener("click",()=>{this.game.fitBoard();this.saveActiveRun();});
+      Elements.centerButton.addEventListener("click",()=>this.game.centerBoard());
+      Elements.gameMenuButton.addEventListener("click",()=>this.leaveGame());
+      Elements.lifeCanvas.addEventListener("pointerdown",(event)=>this.game.pointerDown(event));
+      Elements.lifeCanvas.addEventListener("pointermove",(event)=>this.game.pointerMove(event));
+      Elements.lifeCanvas.addEventListener("pointerup",(event)=>this.game.pointerUp(event));
+      Elements.lifeCanvas.addEventListener("pointercancel",(event)=>this.game.pointerUp(event));
+      Elements.lifeCanvas.addEventListener("contextmenu",(event)=>event.preventDefault());
+      Elements.lifeCanvas.addEventListener("wheel",(event)=>{event.preventDefault();const point=this.game.canvasPoint(event);this.game.zoomAt(event.deltaY<0?1.13:.885,point.x,point.y);},{passive:false});
+      Elements.densityInput.addEventListener("input",()=>Elements.densityValue.textContent=Elements.densityInput.value+"%");
+      document.querySelectorAll("[data-preset]").forEach((button)=>button.addEventListener("click",()=>{const [columns,rows]=button.dataset.preset.split(",");Elements.columnsInput.value=columns;Elements.rowsInput.value=rows;}));
+      Elements.applySetupButton.addEventListener("click",()=>this.applySetup());
+      Elements.cancelSetupButton.addEventListener("click",()=>Elements.setupOverlay.classList.add("hidden"));
+      Elements.shopGrid.addEventListener("click",(event)=>{const button=event.target.closest("[data-theme]");if(button)this.buyOrEquip(button.dataset.theme);});
+      Elements.confirmNo.addEventListener("click",()=>this.closeConfirm());
+      Elements.confirmYes.addEventListener("click",()=>{const action=this.confirmAction;this.closeConfirm();if(action)action();});
+      window.addEventListener("keydown",(event)=>{if(this.currentScreen!=="game")return;if(event.code==="Space"){event.preventDefault();this.game.toggleRunning();}else if(event.code==="KeyS"){event.preventDefault();if(this.game.live.size){this.game.running=false;this.game.step();this.updateHud();}}else if(event.code==="Escape"){event.preventDefault();this.leaveGame();}});
+      document.addEventListener("visibilitychange",()=>{if(document.hidden&&this.currentScreen==="game"){this.game.running=false;this.updateHud();this.saveActiveRun();}});
+      window.addEventListener("pagehide",()=>this.saveActiveRun());
+      window.addEventListener("resize",()=>{if(this.currentScreen==="shop")this.renderShop();});
+    },
+
+    refreshAll(){this.refreshWallet();Elements.soundButton.textContent=this.data.sound?"Sound: On":"Sound: Off";Elements.soundGameButton.textContent=this.data.sound?"Sound On":"Sound Off";Elements.continueButton.classList.toggle("hidden",!this.data.activeRun);Elements.homeBoardSize.textContent=this.data.settings.columns+" × "+this.data.settings.rows;this.renderShop();this.renderStats();},
+    refreshWallet(){Elements.creditsValue.textContent=this.data.credits.toLocaleString("en-US");},
+
+    showScreen(name){const screens={home:Elements.homeScreen,shop:Elements.shopScreen,rules:Elements.rulesScreen,stats:Elements.statsScreen,game:Elements.gameScreen};Object.values(screens).forEach((screen)=>screen.classList.add("hidden"));const target=screens[name]||screens.home;target.classList.remove("hidden");this.currentScreen=screens[name]?name:"home";document.documentElement.scrollTop=0;document.body.scrollTop=0;if(name==="home")this.refreshAll();if(name==="shop")this.renderShop();if(name==="stats")this.renderStats();},
+
+    renderPatterns(){Elements.patternSelect.innerHTML="";Object.entries(PATTERNS).forEach(([id,pattern])=>{const option=document.createElement("option");option.value=id;option.textContent=pattern.name;Elements.patternSelect.append(option);});Elements.patternSelect.value=this.data.settings.pattern;Elements.speedSelect.value=String(this.data.settings.speed);},
+
+    openSetup(origin){this.setupOrigin=origin;Elements.columnsInput.value=this.data.settings.columns;Elements.rowsInput.value=this.data.settings.rows;Elements.densityInput.value=this.data.settings.density;Elements.densityValue.textContent=this.data.settings.density+"%";Elements.edgeSelect.value=this.data.settings.wrap?"wrap":"finite";Elements.setupOverlay.classList.remove("hidden");},
+    applySetup(){const columns=integer(Elements.columnsInput.value,80,MIN_BOARD,MAX_BOARD),rows=integer(Elements.rowsInput.value,60,MIN_BOARD,MAX_BOARD);this.data.settings.columns=columns;this.data.settings.rows=rows;this.data.settings.density=integer(Elements.densityInput.value,18,3,45);this.data.settings.wrap=Elements.edgeSelect.value==="wrap";Elements.setupOverlay.classList.add("hidden");this.createUniverse();},
+
+    createUniverse(){const s=this.data.settings;this.game.create(s.columns,s.rows,s.wrap);this.game.speed=s.speed;this.game.pattern=s.pattern;this.data.stats.universesCreated+=1;this.data.stats.largestBoard=Math.max(this.data.stats.largestBoard,s.columns*s.rows);this.data.activeRun=this.game.snapshot();SaveManager.save(this.data);this.showScreen("game");this.renderPatterns();this.setTool("draw");this.updateHud();this.showBoardMessage("Tap cells or choose a pattern");},
+    continueUniverse(){if(!this.data.activeRun){this.showToast("No saved universe");return;}this.game.load(this.data.activeRun);this.showScreen("game");this.renderPatterns();this.setTool("draw");this.updateHud();},
+    leaveGame(){this.game.running=false;this.saveActiveRun();this.game.stopLoop();this.showScreen("home");},
+    saveActiveRun(){if(!this.game||!this.game.loopActive||!this.data.activeRun)return;this.data.activeRun=this.game.snapshot();SaveManager.save(this.data);},
+
+    setTool(tool){if(!["draw","erase","pan"].includes(tool))return;this.game.tool=tool;document.querySelectorAll("[data-tool]").forEach((button)=>button.classList.toggle("active",button.dataset.tool===tool));Elements.lifeCanvas.style.cursor=tool==="pan"?"grab":"crosshair";this.showBoardMessage(tool==="pan"?"Drag to move the board":tool==="erase"?"Drag to erase cells":"Tap or drag to add cells");},
+
+    updateHud(){if(!this.game)return;Elements.generationValue.textContent="Gen "+this.game.generation.toLocaleString("en-US");Elements.sizeChip.textContent=this.game.columns+" × "+this.game.rows;Elements.populationValue.textContent=this.game.live.size.toLocaleString("en-US");Elements.peakValue.textContent=this.game.peak.toLocaleString("en-US");Elements.runtimeValue.textContent=formatTime(this.game.runtime);Elements.runCreditsValue.textContent="C "+this.game.runCredits;Elements.playButton.textContent=this.game.running?"Pause":"Play";Elements.playButton.classList.toggle("primary",!this.game.running);Elements.playButton.classList.toggle("gold",this.game.running);const remainder=this.game.runtime%CREDIT_SECONDS;Elements.creditProgress.style.width=remainder/CREDIT_SECONDS*100+"%";Elements.creditHint.textContent=this.game.live.size?"C 1 after "+Math.max(1,Math.ceil(CREDIT_SECONDS-remainder))+" more seconds.":"Add cells to start earning.";},
+
+    renderShop(){if(!this.data||!this.renderer)return;Elements.shopGrid.innerHTML="";THEMES.forEach((theme)=>{const owned=this.data.ownedThemes.includes(theme.id),equipped=this.data.theme===theme.id;const card=document.createElement("article");card.className="skin-card"+(equipped?" equipped":"");const preview=document.createElement("div");preview.className="skin-preview";const canvas=document.createElement("canvas");canvas.width=250;canvas.height=121;preview.append(canvas);const title=document.createElement("h3");title.textContent=theme.name;const description=document.createElement("p");description.textContent=theme.description;const button=document.createElement("button");button.type="button";button.className="btn"+(equipped?" primary":"");button.dataset.theme=theme.id;if(equipped){button.textContent="Equipped";button.disabled=true;}else if(owned)button.textContent="Equip";else button.textContent="Unlock · C "+theme.price;card.append(preview,title,description,button);Elements.shopGrid.append(card);this.renderer.drawThemePreview(canvas,theme.id);});},
+    buyOrEquip(themeId){const theme=THEMES.find((item)=>item.id===themeId);if(!theme)return;if(this.data.ownedThemes.includes(themeId)){this.data.theme=themeId;this.showToast(theme.name+" equipped");}else if(this.data.credits>=theme.price){this.data.credits-=theme.price;this.data.ownedThemes.push(themeId);this.data.theme=themeId;this.sounds.buy();this.showToast(theme.name+" unlocked");}else{this.showToast("You need C "+(theme.price-this.data.credits)+" more");return;}SaveManager.save(this.data);this.refreshAll();},
+
+    renderStats(){if(!this.data)return;const stats=this.data.stats;const cards=[["Universes",stats.universesCreated],["Generations",stats.totalGenerations.toLocaleString("en-US")],["Running time",formatTime(stats.runningSeconds)],["Peak population",stats.peakPopulation.toLocaleString("en-US")],["Extinctions",stats.extinctionEvents],["Credits earned","C "+stats.creditsEarned]];Elements.statsGrid.innerHTML="";cards.forEach(([label,value])=>{const card=document.createElement("article");card.className="panel stat-card";const name=document.createElement("div");name.className="section-label";name.textContent=label;const number=document.createElement("span");number.className="stat-value";number.textContent=value;card.append(name,number);Elements.statsGrid.append(card);});const best=document.createElement("article");best.className="panel best-panel";const label=document.createElement("div");label.className="section-label";label.textContent="Largest board created";const row=document.createElement("div");row.className="best-row";const name=document.createElement("span");name.textContent="Board area";const value=document.createElement("span");value.textContent=stats.largestBoard?stats.largestBoard.toLocaleString("en-US")+" cells":"—";row.append(name,value);best.append(label,row);Elements.statsGrid.append(best);},
+
+    toggleSound(){this.data.sound=!this.data.sound;if(this.data.sound)this.sounds.ensure();SaveManager.save(this.data);this.refreshAll();},
+    confirm(title,text,buttonText,action){Elements.confirmTitle.textContent=title;Elements.confirmText.textContent=text;Elements.confirmYes.textContent=buttonText;this.confirmAction=action;Elements.confirmOverlay.classList.remove("hidden");},
+    closeConfirm(){Elements.confirmOverlay.classList.add("hidden");this.confirmAction=null;},
+    showToast(message){clearTimeout(this.toastTimer);Elements.toast.textContent=message;Elements.toast.classList.add("show");this.toastTimer=setTimeout(()=>Elements.toast.classList.remove("show"),2200);},
+    showBoardMessage(message){Elements.canvasMessage.textContent=message;Elements.canvasMessage.classList.add("show");this.game.messageTimer=2.2;}
+  };
+
+  App.init();
+  </script>
+</body>
+</html>

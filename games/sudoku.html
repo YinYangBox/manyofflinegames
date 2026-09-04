@@ -1,0 +1,5045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <title>Sudoku</title>
+  <style>
+    :root {
+      --bg: #080c18;
+      --panel: #11182a;
+      --panel-2: #171f35;
+      --line: rgba(255,255,255,.11);
+      --text: #f4f7ff;
+      --muted: #8e99b5;
+      --gold: #f0bc62;
+      --gold-2: #ffda8a;
+      --cyan: #63d7e7;
+      --red: #ff6878;
+      --green: #71dfa2;
+      --shadow: 0 24px 70px rgba(0,0,0,.42);
+      --board-size: min(72vh, 670px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100dvh;
+      overflow: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 10%, rgba(66,89,156,.20), transparent 34%),
+        radial-gradient(circle at 87% 86%, rgba(194,127,52,.13), transparent 31%),
+        linear-gradient(145deg, #070a13, #0c1222 56%, #090d19);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    button {
+      color: inherit;
+      font: inherit;
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(99,215,231,.72);
+      outline-offset: 3px;
+    }
+
+    .app {
+      position: relative;
+      width: 100%;
+      min-height: 100dvh;
+    }
+
+    .screen,
+    .game-screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      min-height: 100dvh;
+    }
+
+    .screen.active,
+    .game-screen.active {
+      display: block;
+    }
+
+    .screen-bar {
+      position: relative;
+      z-index: 4;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(18px, 4vw, 58px);
+      border-bottom: 1px solid var(--line);
+      background: rgba(8,12,24,.66);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: 3px;
+    }
+
+    .brand-mark {
+      width: 29px;
+      height: 29px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 2px solid var(--gold);
+      border-radius: 7px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(240,188,98,.22);
+    }
+
+    .brand-mark i:nth-child(odd) {
+      background: var(--gold);
+    }
+
+    .credit-chip {
+      min-width: 84px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      border: 1px solid rgba(240,188,98,.34);
+      border-radius: 999px;
+      color: var(--gold-2);
+      background: rgba(240,188,98,.08);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .credit-icon {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      font: 900 10px/1 Georgia, serif;
+    }
+
+    .home-shell {
+      width: min(1080px, calc(100% - 32px));
+      min-height: calc(100dvh - 70px);
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      align-items: center;
+      gap: clamp(28px, 6vw, 80px);
+      margin: 0 auto;
+      padding: 28px 0 38px;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 460px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hero-board {
+      position: absolute;
+      left: -58px;
+      top: 50%;
+      width: min(40vw, 430px);
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      transform: translateY(-50%) rotate(-8deg);
+      opacity: .13;
+      border: 5px solid var(--gold);
+      box-shadow: 0 30px 80px rgba(0,0,0,.5);
+      pointer-events: none;
+    }
+
+    .hero-board i {
+      border: 1px solid var(--gold);
+    }
+
+    .eyebrow,
+    .section-label {
+      margin: 0 0 10px;
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      position: relative;
+      margin: 0;
+      font: 900 clamp(58px, 8vw, 105px)/.88 Georgia, "Times New Roman", serif;
+      letter-spacing: -5px;
+      text-shadow: 0 14px 38px rgba(0,0,0,.5);
+    }
+
+    .hero p:last-child {
+      position: relative;
+      max-width: 390px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .setup-card,
+    .content-shell {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(24,33,56,.92), rgba(13,19,34,.94));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .setup-card {
+      padding: clamp(20px, 3vw, 30px);
+      border-radius: 24px;
+    }
+
+    .difficulty-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+      margin-bottom: 22px;
+    }
+
+    .mode-select {
+      width: 100%;
+      min-height: 74px;
+      display: grid;
+      grid-template-columns: 54px 1fr auto;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 19px;
+      padding: 9px 12px;
+      text-align: left;
+      border: 1px solid rgba(99,215,231,.24);
+      border-radius: 14px;
+      color: var(--text);
+      background: rgba(99,215,231,.055);
+      cursor: pointer;
+    }
+
+    .mode-select-icon,
+    .mode-card-icon {
+      display: grid;
+      place-items: center;
+      color: var(--cyan);
+      border: 1px solid rgba(99,215,231,.35);
+      background: rgba(99,215,231,.08);
+      font: 900 16px/1 Georgia, serif;
+    }
+
+    .mode-select-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      font-size: 30px;
+      text-shadow: 0 0 16px rgba(99,215,231,.42);
+    }
+
+    .mode-select-icon[data-icon-length="2"] {
+      font-size: 25px;
+    }
+
+    .mode-select-icon[data-icon-length="3"] {
+      font-size: 20px;
+    }
+
+    .mode-select-copy,
+    .mode-select-copy strong,
+    .mode-select-copy span {
+      display: block;
+    }
+
+    .mode-select-copy strong {
+      font-size: 11px;
+      letter-spacing: .8px;
+    }
+
+    .mode-select-copy span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 8px;
+    }
+
+    .mode-select-arrow {
+      color: var(--gold-2);
+      font-size: 18px;
+    }
+
+    .difficulty {
+      min-height: 73px;
+      padding: 12px;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+      cursor: pointer;
+      transition: .16s ease;
+    }
+
+    .difficulty:hover {
+      transform: translateY(-2px);
+      border-color: rgba(240,188,98,.38);
+    }
+
+    .difficulty.active {
+      border-color: var(--gold);
+      background: rgba(240,188,98,.10);
+      box-shadow: inset 0 0 0 1px rgba(240,188,98,.10), 0 8px 24px rgba(0,0,0,.18);
+    }
+
+    .difficulty strong,
+    .difficulty span {
+      display: block;
+    }
+
+    .difficulty strong {
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    .difficulty span {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 750;
+    }
+
+    .difficulty em {
+      float: right;
+      color: var(--gold-2);
+      font-style: normal;
+      font-size: 10px;
+    }
+
+    .setup-actions {
+      display: grid;
+      gap: 9px;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .btn,
+    .icon-btn,
+    .tool-btn,
+    .number-btn,
+    .shop-btn,
+    .segment {
+      border: 0;
+      cursor: pointer;
+      transition: transform .14s ease, filter .14s ease, background .14s ease, border-color .14s ease;
+    }
+
+    .btn:hover:not(:disabled),
+    .icon-btn:hover:not(:disabled),
+    .tool-btn:hover:not(:disabled),
+    .number-btn:hover:not(:disabled),
+    .shop-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    .btn:active:not(:disabled),
+    .tool-btn:active:not(:disabled),
+    .number-btn:active:not(:disabled) {
+      transform: translateY(0) scale(.98);
+    }
+
+    .btn {
+      min-height: 48px;
+      padding: 0 16px;
+      border-radius: 13px;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: 1.2px;
+    }
+
+    .btn-primary {
+      color: #251803;
+      background: linear-gradient(135deg, var(--gold-2), #d99a3d);
+      box-shadow: 0 12px 30px rgba(222,153,55,.22);
+    }
+
+    .btn-secondary {
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: rgba(255,255,255,.045);
+    }
+
+    .btn-danger {
+      border: 1px solid rgba(255,104,120,.32);
+      color: #ff9ca6;
+      background: rgba(255,104,120,.08);
+    }
+
+    .btn:disabled,
+    .shop-btn:disabled {
+      opacity: .42;
+      cursor: not-allowed;
+    }
+
+    .continue-button.hidden {
+      display: none;
+    }
+
+    .content-shell {
+      width: min(960px, calc(100% - 32px));
+      max-height: calc(100dvh - 38px);
+      margin: 19px auto;
+      padding: 22px;
+      overflow: auto;
+      border-radius: 22px;
+    }
+
+    .content-head {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 20px;
+    }
+
+    .content-head h2 {
+      margin: 0;
+      font: 900 27px/1 Georgia, serif;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 11px;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 11px;
+    }
+
+    .mode-card {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255,255,255,.028);
+    }
+
+    .mode-card.selected {
+      border-color: rgba(240,188,98,.72);
+      box-shadow: inset 0 0 0 1px rgba(240,188,98,.12);
+    }
+
+    .mode-card-head {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mode-card-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+    }
+
+    .mode-card h3 {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .mode-card p {
+      min-height: 45px;
+      margin: 10px 0 12px;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.5;
+    }
+
+    .mode-card .shop-btn {
+      margin-top: auto;
+    }
+
+    .rules-hero {
+      margin-bottom: 14px;
+      padding: 18px;
+      border: 1px solid rgba(99,215,231,.22);
+      border-radius: 17px;
+      background: rgba(99,215,231,.05);
+    }
+
+    .rules-hero strong,
+    .rules-hero span {
+      display: block;
+    }
+
+    .rules-hero strong {
+      font: 900 24px/1 Georgia, serif;
+    }
+
+    .rules-hero span {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    .shop-card {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.028);
+    }
+
+    .shop-card.selected {
+      border-color: rgba(240,188,98,.72);
+      box-shadow: inset 0 0 0 1px rgba(240,188,98,.16);
+    }
+
+    .skin-art {
+      height: 140px;
+      display: grid;
+      place-items: center;
+      background: rgba(0,0,0,.15);
+    }
+
+    .skin-preview {
+      --mini-bg: #f3efe3;
+      --mini-line: #303443;
+      --mini-text: #26355f;
+      width: 112px;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 7px;
+      border: 4px solid var(--mini-line);
+      background: var(--mini-line);
+      box-shadow: 0 12px 26px rgba(0,0,0,.34);
+    }
+
+    .mini-cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: var(--mini-text);
+      background: var(--mini-bg);
+      border: 1px solid color-mix(in srgb, var(--mini-line), transparent 48%);
+      font: 800 16px/1 Georgia, serif;
+    }
+
+    .mini-cell::before,
+    .cell::before,
+    .cell::after {
+      position: absolute;
+      content: "";
+      pointer-events: none;
+    }
+
+    .skin-preview[data-preview-skin="neon"] {
+      --mini-bg: #07131d;
+      --mini-line: #29d8ee;
+      --mini-text: #70eeff;
+    }
+
+    .skin-preview[data-preview-skin="neon"] .mini-cell::before {
+      inset: 4px;
+      border: 1px solid #29d8ee;
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+      box-shadow: inset 0 0 8px rgba(41,216,238,.26);
+    }
+
+    .skin-preview[data-preview-skin="glass"] {
+      --mini-bg: #9bc7dc;
+      --mini-line: #d7f6ff;
+      --mini-text: #153f64;
+      border-radius: 16px;
+    }
+
+    .skin-preview[data-preview-skin="glass"] .mini-cell {
+      margin: 2px;
+      border-radius: 8px;
+      box-shadow: inset 0 1px rgba(255,255,255,.8);
+    }
+
+    .skin-preview[data-preview-skin="circuit"] {
+      --mini-bg: #101b18;
+      --mini-line: #7ae3a0;
+      --mini-text: #a4ffbd;
+    }
+
+    .skin-preview[data-preview-skin="circuit"] .mini-cell::before {
+      width: 8px;
+      height: 8px;
+      top: 3px;
+      left: 3px;
+      border-top: 2px solid #7ae3a0;
+      border-left: 2px solid #7ae3a0;
+    }
+
+    .skin-preview[data-preview-skin="candy"] {
+      --mini-bg: #fff0f6;
+      --mini-line: #d76596;
+      --mini-text: #8b315d;
+      border-radius: 21px;
+    }
+
+    .skin-preview[data-preview-skin="candy"] .mini-cell {
+      margin: 2px;
+      border-radius: 30%;
+      box-shadow: inset 0 -3px rgba(215,101,150,.15);
+    }
+
+    .skin-preview[data-preview-skin="pixel"] {
+      --mini-bg: #161b22;
+      --mini-line: #f3bd56;
+      --mini-text: #ffe09a;
+      box-shadow: 6px 6px 0 #05070a;
+    }
+
+    .skin-preview[data-preview-skin="pixel"] .mini-cell {
+      margin: 2px;
+      border: 2px solid #35404c;
+      box-shadow: inset -3px -3px #07090c;
+      font-family: monospace;
+    }
+
+    .shop-copy {
+      padding: 14px;
+    }
+
+    .shop-copy strong,
+    .shop-copy span {
+      display: block;
+    }
+
+    .shop-copy strong {
+      font-size: 13px;
+    }
+
+    .shop-copy span {
+      min-height: 31px;
+      margin: 4px 0 10px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .shop-btn {
+      width: 100%;
+      min-height: 36px;
+      border-radius: 10px;
+      color: #251803;
+      background: linear-gradient(135deg, var(--gold-2), #d99a3d);
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .8px;
+    }
+
+    .shop-btn.owned {
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+    }
+
+    .stats-grid,
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .stat-card,
+    .rule-card {
+      min-height: 110px;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255,255,255,.028);
+    }
+
+    .stat-card span,
+    .stat-card strong,
+    .rule-card span,
+    .rule-card strong {
+      display: block;
+    }
+
+    .stat-card span,
+    .rule-card span {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.55;
+    }
+
+    .stat-card strong {
+      margin-top: 12px;
+      color: var(--gold-2);
+      font: 900 25px/1 Georgia, serif;
+    }
+
+    .rule-card strong {
+      margin-bottom: 9px;
+      color: var(--gold);
+      font-size: 10px;
+      letter-spacing: 1.2px;
+    }
+
+    /* Game layout */
+    .game-layout {
+      width: 100%;
+      min-height: 100dvh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+    }
+
+    .board-stage {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 62px minmax(0, 1fr);
+      padding: 12px 24px 18px;
+      border-right: 1px solid var(--line);
+    }
+
+    .game-topbar {
+      width: min(var(--board-size), 100%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 auto;
+    }
+
+    .game-topbar .icon-btn {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      font-size: 19px;
+    }
+
+    .game-title {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .game-title strong,
+    .game-title span {
+      display: block;
+    }
+
+    .game-title strong {
+      font: 900 16px/1 Georgia, serif;
+      letter-spacing: .7px;
+    }
+
+    .game-title span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 850;
+      letter-spacing: 1px;
+    }
+
+    .top-stat {
+      min-width: 66px;
+      text-align: right;
+    }
+
+    .top-stat span,
+    .top-stat strong {
+      display: block;
+    }
+
+    .top-stat span {
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 850;
+      letter-spacing: .8px;
+    }
+
+    .top-stat strong {
+      margin-top: 3px;
+      font-size: 13px;
+    }
+
+    .board-wrap {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .board-shell {
+      --cell-bg: #f4f1e8;
+      --cell-alt: #ece7db;
+      --grid-line: #697082;
+      --grid-heavy: #222a3d;
+      --given: #17233d;
+      --user: #34629d;
+      --note: #61708b;
+      --select: #ffd678;
+      --peer: #dbe8f1;
+      --same: #c8dded;
+      position: relative;
+      width: min(var(--board-size), 100%);
+      aspect-ratio: 1;
+      padding: clamp(7px, 1vw, 12px);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 18px;
+      background: linear-gradient(145deg, #293249, #111726);
+      box-shadow: 0 26px 70px rgba(0,0,0,.42);
+    }
+
+    #sudoku-grid {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(var(--grid-size, 9), 1fr);
+      grid-template-rows: repeat(var(--grid-size, 9), 1fr);
+      overflow: hidden;
+      border: 3px solid var(--grid-heavy);
+      background: var(--grid-heavy);
+    }
+
+    .cell {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-right: 1px solid var(--grid-line);
+      border-bottom: 1px solid var(--grid-line);
+      color: var(--given);
+      background: var(--cell-bg);
+      cursor: pointer;
+      isolation: isolate;
+    }
+
+    .cell:nth-child(even) {
+      background: var(--cell-alt);
+    }
+
+    .cell.box-right,
+    .cell.region-right {
+      border-right: 3px solid var(--grid-heavy);
+    }
+
+    .cell.edge-right {
+      border-right: 0;
+    }
+
+    .cell.box-bottom,
+    .cell.region-bottom {
+      border-bottom: 3px solid var(--grid-heavy);
+    }
+
+    .cell.edge-bottom {
+      border-bottom: 0;
+    }
+
+    .cell.region-top {
+      border-top: 3px solid var(--grid-heavy);
+    }
+
+    .cell.region-left {
+      border-left: 3px solid var(--grid-heavy);
+    }
+
+    .cell.block-cell,
+    .cell.clue-cell {
+      color: #eef2ff;
+      background: #111828 !important;
+      cursor: default;
+    }
+
+    .cell.clue-cell {
+      overflow: hidden;
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .cell.clue-cell::before {
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(to top right, transparent 49%, rgba(255,255,255,.34) 49.5%, rgba(255,255,255,.34) 50.5%, transparent 51%);
+    }
+
+    .kakuro-down,
+    .kakuro-across {
+      position: absolute;
+      z-index: 3;
+      color: #dce5ff;
+      font-size: clamp(6px, 1.1vh, 10px);
+      font-weight: 850;
+    }
+
+    .kakuro-down {
+      top: 9%;
+      right: 11%;
+    }
+
+    .kakuro-across {
+      left: 11%;
+      bottom: 9%;
+    }
+
+    .constraint-mark {
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .parity-even {
+      width: 42%;
+      height: 42%;
+      border-radius: 5px;
+      background: rgba(79,111,153,.22);
+      box-shadow: inset 0 0 0 2px rgba(79,111,153,.24);
+    }
+
+    .parity-odd {
+      width: 44%;
+      height: 44%;
+      border-radius: 50%;
+      background: rgba(79,111,153,.22);
+      box-shadow: inset 0 0 0 2px rgba(79,111,153,.24);
+    }
+
+    .hyper-cell::after {
+      inset: 5px;
+      z-index: 1;
+      border: 2px solid rgba(145,99,209,.34);
+      border-radius: 8px;
+    }
+
+    .diagonal-cell::after {
+      inset: 12%;
+      z-index: 1;
+      transform: rotate(45deg);
+      border: 1px solid rgba(99,215,231,.26);
+    }
+
+    .consecutive-dot {
+      width: 9px;
+      height: 9px;
+      border: 2px solid var(--cell-bg);
+      border-radius: 50%;
+      background: var(--grid-heavy);
+    }
+
+    .consecutive-dot.right {
+      top: 50%;
+      right: -5px;
+      transform: translateY(-50%);
+    }
+
+    .consecutive-dot.bottom {
+      left: 50%;
+      bottom: -5px;
+      transform: translateX(-50%);
+    }
+
+    .inequality-mark {
+      color: var(--grid-heavy);
+      font-size: clamp(10px, 2.2vh, 19px);
+      font-weight: 950;
+      text-shadow: 0 1px var(--cell-bg);
+    }
+
+    .inequality-mark.right {
+      top: 50%;
+      right: -8px;
+      transform: translateY(-50%);
+    }
+
+    .inequality-mark.bottom {
+      left: 50%;
+      bottom: -9px;
+      transform: translateX(-50%) rotate(90deg);
+    }
+
+    .cage-top { border-top: 2px dashed rgba(112,76,34,.72); }
+    .cage-right { border-right: 2px dashed rgba(112,76,34,.72); }
+    .cage-bottom { border-bottom: 2px dashed rgba(112,76,34,.72); }
+    .cage-left { border-left: 2px dashed rgba(112,76,34,.72); }
+
+    .cage-label {
+      position: absolute;
+      z-index: 4;
+      top: 2px;
+      left: 3px;
+      color: #6e4525;
+      font-size: clamp(6px, 1vh, 9px);
+      font-weight: 950;
+    }
+
+    .constraint-overlay,
+    .edge-overlay {
+      position: absolute;
+      z-index: 5;
+      inset: clamp(7px, 1vw, 12px);
+      width: calc(100% - clamp(14px, 2vw, 24px));
+      height: calc(100% - clamp(14px, 2vw, 24px));
+      pointer-events: none;
+    }
+
+    .constraint-overlay {
+      overflow: visible;
+    }
+
+    .edge-clue {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      color: var(--gold-2);
+      font-size: clamp(7px, 1.2vh, 10px);
+      font-weight: 950;
+    }
+
+    .edge-clue.column {
+      top: -27px;
+      width: calc(100% / 9);
+      height: 24px;
+    }
+
+    .edge-clue.row {
+      left: -31px;
+      width: 27px;
+      height: calc(100% / 9);
+    }
+
+    .board-shell.sandwich-shell {
+      padding: 36px;
+    }
+
+    .board-shell.sandwich-shell .constraint-overlay,
+    .board-shell.sandwich-shell .edge-overlay {
+      inset: 36px;
+      width: calc(100% - 72px);
+      height: calc(100% - 72px);
+    }
+
+    .board-shell[data-mode="binary"] .value {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    .cell.peer {
+      background: var(--peer);
+    }
+
+    .cell.same {
+      background: var(--same);
+    }
+
+    .cell.selected {
+      z-index: 3;
+      background: var(--select);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.64);
+    }
+
+    .cell.wrong {
+      color: #ad1935;
+      background: #ffd5dc;
+    }
+
+    .cell.hinted .value {
+      color: #8a5a13;
+    }
+
+    .value {
+      position: relative;
+      z-index: 2;
+      font: 800 clamp(19px, 4.2vh, 37px)/1 Georgia, serif;
+    }
+
+    .cell.user .value {
+      color: var(--user);
+    }
+
+    .note-grid {
+      position: absolute;
+      inset: 5%;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+    }
+
+    .note-grid i {
+      display: grid;
+      place-items: center;
+      color: var(--note);
+      font: 750 clamp(6px, 1.25vh, 11px)/1 ui-sans-serif, system-ui, sans-serif;
+      font-style: normal;
+    }
+
+    .cell.pop .value {
+      animation: cell-pop .2s ease;
+    }
+
+    .cell.shake {
+      animation: cell-shake .24s ease;
+    }
+
+    @keyframes cell-pop {
+      0% { transform: scale(.58); opacity: .2; }
+      75% { transform: scale(1.14); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes cell-shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* Cell skins: each one changes cell geometry as well as color. */
+    body[data-cell-skin="neon"] .board-shell {
+      --cell-bg: #07131c;
+      --cell-alt: #091824;
+      --grid-line: #174250;
+      --grid-heavy: #3bdcf0;
+      --given: #e9fdff;
+      --user: #5cecff;
+      --note: #51a9b5;
+      --select: #173e48;
+      --peer: #0d2631;
+      --same: #123640;
+      border-color: #3bdcf0;
+      border-radius: 5px;
+      background: #050d14;
+      box-shadow: 0 0 32px rgba(59,220,240,.22), 0 24px 70px rgba(0,0,0,.46);
+    }
+
+    body[data-cell-skin="neon"] .cell::before {
+      inset: 4px;
+      z-index: 1;
+      border: 1px solid rgba(59,220,240,.26);
+      clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+    }
+
+    body[data-cell-skin="neon"] .value {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    body[data-cell-skin="glass"] .board-shell {
+      --cell-bg: rgba(222,247,255,.76);
+      --cell-alt: rgba(180,222,239,.76);
+      --grid-line: rgba(36,91,124,.38);
+      --grid-heavy: #d7f7ff;
+      --given: #15354d;
+      --user: #0d70a3;
+      --note: #46748e;
+      --select: #fff0ae;
+      --peer: rgba(171,220,238,.92);
+      --same: rgba(137,202,229,.9);
+      padding: 12px;
+      border-radius: 27px;
+      background: linear-gradient(145deg, rgba(211,244,255,.6), rgba(68,128,161,.52));
+      backdrop-filter: blur(12px);
+    }
+
+    body[data-cell-skin="glass"] #sudoku-grid {
+      gap: 2px;
+      padding: 4px;
+      border: 0;
+      border-radius: 17px;
+      background: rgba(223,248,255,.82);
+    }
+
+    body[data-cell-skin="glass"] .cell {
+      margin: 1px;
+      border: 0;
+      border-radius: 13%;
+      box-shadow: inset 0 2px rgba(255,255,255,.74), 0 2px 4px rgba(25,74,103,.18);
+    }
+
+    body[data-cell-skin="glass"] .cell:nth-child(3n) {
+      margin-right: 4px;
+    }
+
+    body[data-cell-skin="glass"] .cell:nth-child(9n) {
+      margin-right: 1px;
+    }
+
+    body[data-cell-skin="glass"] .cell:nth-child(n+19):nth-child(-n+27),
+    body[data-cell-skin="glass"] .cell:nth-child(n+46):nth-child(-n+54) {
+      margin-bottom: 4px;
+    }
+
+    body[data-cell-skin="circuit"] .board-shell {
+      --cell-bg: #111c18;
+      --cell-alt: #14211c;
+      --grid-line: #305b40;
+      --grid-heavy: #79e39e;
+      --given: #e2ffe9;
+      --user: #80efa5;
+      --note: #6ba57d;
+      --select: #2c5b3b;
+      --peer: #1a3124;
+      --same: #21452e;
+      border-radius: 3px;
+      border-color: #79e39e;
+      background: #09110e;
+    }
+
+    body[data-cell-skin="circuit"] .cell::before {
+      width: 12px;
+      height: 12px;
+      top: 4px;
+      left: 4px;
+      z-index: 1;
+      border-top: 2px solid rgba(121,227,158,.45);
+      border-left: 2px solid rgba(121,227,158,.45);
+    }
+
+    body[data-cell-skin="circuit"] .cell::after {
+      width: 4px;
+      height: 4px;
+      right: 4px;
+      bottom: 4px;
+      z-index: 1;
+      border-radius: 50%;
+      background: rgba(121,227,158,.5);
+      box-shadow: 0 0 6px rgba(121,227,158,.8);
+    }
+
+    body[data-cell-skin="circuit"] .value,
+    body[data-cell-skin="circuit"] .note-grid i {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    body[data-cell-skin="candy"] .board-shell {
+      --cell-bg: #fff2f7;
+      --cell-alt: #ffe7f1;
+      --grid-line: rgba(167,64,111,.24);
+      --grid-heavy: #b94f80;
+      --given: #713251;
+      --user: #bf3f78;
+      --note: #aa6a88;
+      --select: #ffe083;
+      --peer: #ffd9e8;
+      --same: #ffc2db;
+      padding: 12px;
+      border-radius: 30px;
+      border-color: #f39abb;
+      background: linear-gradient(145deg, #ffd7e7, #cb6e98);
+    }
+
+    body[data-cell-skin="candy"] #sudoku-grid {
+      gap: 2px;
+      padding: 5px;
+      border: 0;
+      border-radius: 20px;
+      background: #b94f80;
+    }
+
+    body[data-cell-skin="candy"] .cell {
+      margin: 1px;
+      border: 0;
+      border-radius: 24%;
+      box-shadow: inset 0 -4px rgba(185,79,128,.13), inset 0 2px rgba(255,255,255,.8);
+    }
+
+    body[data-cell-skin="candy"] .cell:nth-child(3n) {
+      margin-right: 4px;
+    }
+
+    body[data-cell-skin="candy"] .cell:nth-child(9n) {
+      margin-right: 1px;
+    }
+
+    body[data-cell-skin="candy"] .cell:nth-child(n+19):nth-child(-n+27),
+    body[data-cell-skin="candy"] .cell:nth-child(n+46):nth-child(-n+54) {
+      margin-bottom: 4px;
+    }
+
+    body[data-cell-skin="pixel"] .board-shell {
+      --cell-bg: #161c23;
+      --cell-alt: #1b222b;
+      --grid-line: #3b4654;
+      --grid-heavy: #f2bd59;
+      --given: #f8f2e5;
+      --user: #ffd36f;
+      --note: #8b96a4;
+      --select: #624d21;
+      --peer: #252e38;
+      --same: #333c44;
+      padding: 10px;
+      border: 4px solid #f2bd59;
+      border-radius: 0;
+      background: #090c10;
+      box-shadow: 9px 9px 0 #030405;
+    }
+
+    body[data-cell-skin="pixel"] #sudoku-grid {
+      border-color: #f2bd59;
+    }
+
+    body[data-cell-skin="pixel"] .cell {
+      box-shadow: inset -3px -3px rgba(0,0,0,.25);
+    }
+
+    body[data-cell-skin="pixel"] .value,
+    body[data-cell-skin="pixel"] .note-grid i {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-weight: 950;
+    }
+
+    .pause-layer {
+      position: absolute;
+      inset: clamp(7px, 1vw, 12px);
+      z-index: 12;
+      display: grid;
+      place-items: center;
+      padding: 25px;
+      text-align: center;
+      color: var(--text);
+      background: rgba(7,10,18,.94);
+      backdrop-filter: blur(16px);
+    }
+
+    .pause-layer.closed {
+      display: none;
+    }
+
+    .pause-layer h2 {
+      margin: 0 0 9px;
+      font: 900 33px/1 Georgia, serif;
+    }
+
+    .pause-layer p {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .game-side {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 23px;
+      background: rgba(8,12,23,.68);
+      backdrop-filter: blur(18px);
+    }
+
+    .game-brand {
+      font: 900 25px/1 Georgia, serif;
+    }
+
+    .game-brand small {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font: 850 8px/1 ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: 1.6px;
+    }
+
+    .status-card {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+    }
+
+    .status-box {
+      min-width: 0;
+      padding: 11px 8px;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .status-box span,
+    .status-box strong {
+      display: block;
+    }
+
+    .status-box span {
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: .7px;
+    }
+
+    .status-box strong {
+      margin-top: 5px;
+      color: var(--gold-2);
+      font-size: 13px;
+    }
+
+    .number-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .number-pad[data-count="2"] {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .number-btn {
+      aspect-ratio: 1.35;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--cyan);
+      background: rgba(255,255,255,.045);
+      font: 850 24px/1 Georgia, serif;
+    }
+
+    .number-btn.complete {
+      opacity: .23;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .tool-btn {
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .8px;
+    }
+
+    .tool-btn.active {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: rgba(99,215,231,.10);
+    }
+
+    .tool-btn span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 7px;
+    }
+
+    .reward-line {
+      padding: 11px 13px;
+      border: 1px solid rgba(240,188,98,.24);
+      border-radius: 12px;
+      color: var(--muted);
+      background: rgba(240,188,98,.055);
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
+    .reward-line strong {
+      color: var(--gold-2);
+    }
+
+    .side-spacer {
+      flex: 1;
+    }
+
+    .game-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .game-actions .btn {
+      min-height: 42px;
+      padding: 0 7px;
+      font-size: 8px;
+    }
+
+    .modal-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(3,5,10,.78);
+      backdrop-filter: blur(13px);
+    }
+
+    .modal-layer.closed {
+      display: none;
+    }
+
+    .modal {
+      width: min(410px, 100%);
+      padding: 27px;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(150deg, #1a233a, #0d1322);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-symbol {
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 17px;
+      border: 2px solid var(--gold);
+      border-radius: 18px;
+      color: var(--gold-2);
+      background: rgba(240,188,98,.08);
+      font: 900 33px/1 Georgia, serif;
+    }
+
+    .modal h2 {
+      margin: 0;
+      font: 900 30px/1 Georgia, serif;
+    }
+
+    .modal p {
+      margin: 10px 0 20px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 19px;
+    }
+
+    .result-box {
+      padding: 11px 7px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .result-box span,
+    .result-box strong {
+      display: block;
+    }
+
+    .result-box span {
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 850;
+      letter-spacing: .6px;
+    }
+
+    .result-box strong {
+      margin-top: 5px;
+      color: var(--gold-2);
+      font-size: 16px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .toast-stack {
+      position: fixed;
+      z-index: 60;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      min-width: 190px;
+      padding: 12px 15px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--text);
+      background: rgba(20,28,47,.96);
+      box-shadow: 0 14px 34px rgba(0,0,0,.35);
+      font-size: 10px;
+      animation: toast-in .22s ease, toast-out .25s ease 2.45s forwards;
+    }
+
+    .toast b {
+      color: var(--gold-2);
+    }
+
+    @keyframes toast-in {
+      from { transform: translateY(10px); opacity: 0; }
+    }
+
+    @keyframes toast-out {
+      to { transform: translateY(8px); opacity: 0; }
+    }
+
+    @media (max-width: 900px) {
+      :root {
+        --board-size: min(63vh, calc(100vw - 34px));
+      }
+
+      body {
+        overflow: auto;
+      }
+
+      .home-shell {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding-top: 20px;
+      }
+
+      .hero {
+        min-height: 190px;
+        justify-content: flex-end;
+      }
+
+      .hero-board {
+        width: 210px;
+        left: auto;
+        right: 0;
+      }
+
+      .hero h1 {
+        font-size: 62px;
+      }
+
+      .hero p:last-child {
+        margin-top: 12px;
+      }
+
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .board-stage {
+        min-height: auto;
+        padding: 8px 12px 12px;
+        border-right: 0;
+      }
+
+      .game-side {
+        min-height: auto;
+        padding: 13px 16px 22px;
+        border-top: 1px solid var(--line);
+      }
+
+      .game-brand,
+      .game-side > .credit-chip {
+        display: none;
+      }
+
+      .number-pad {
+        grid-template-columns: repeat(9, 1fr);
+      }
+
+      .number-btn {
+        aspect-ratio: 1;
+        border-radius: 9px;
+        font-size: clamp(16px, 4vw, 24px);
+      }
+
+      .tool-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .side-spacer {
+        display: none;
+      }
+    }
+
+    @media (max-width: 620px) {
+      :root {
+        --board-size: calc(100vw - 20px);
+      }
+
+      .screen-bar {
+        height: 58px;
+        padding: 0 13px;
+      }
+
+      .home-shell {
+        width: min(100% - 20px, 560px);
+        min-height: calc(100dvh - 58px);
+      }
+
+      .hero {
+        min-height: 160px;
+      }
+
+      .hero h1 {
+        font-size: 50px;
+        letter-spacing: -3px;
+      }
+
+      .hero p:last-child {
+        max-width: 280px;
+        font-size: 11px;
+      }
+
+      .setup-card {
+        padding: 16px;
+        border-radius: 18px;
+      }
+
+      .difficulty {
+        min-height: 61px;
+      }
+
+      .content-shell {
+        width: calc(100% - 16px);
+        max-height: none;
+        margin: 8px;
+        padding: 14px;
+      }
+
+      .shop-grid,
+      .mode-grid,
+      .stats-grid,
+      .rules-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .skin-art {
+        height: 116px;
+      }
+
+      .skin-preview {
+        width: 90px;
+      }
+
+      .board-stage {
+        grid-template-rows: 54px auto;
+        padding: 4px 4px 8px;
+      }
+
+      .board-shell {
+        padding: 5px;
+        border-radius: 10px;
+      }
+
+      body[data-cell-skin="glass"] .board-shell,
+      body[data-cell-skin="candy"] .board-shell {
+        padding: 6px;
+      }
+
+      body[data-cell-skin="glass"] #sudoku-grid,
+      body[data-cell-skin="candy"] #sudoku-grid {
+        gap: 1px;
+        padding: 2px;
+      }
+
+      body[data-cell-skin="glass"] .cell:nth-child(3n),
+      body[data-cell-skin="candy"] .cell:nth-child(3n) {
+        margin-right: 2px;
+      }
+
+      body[data-cell-skin="glass"] .cell:nth-child(n+19):nth-child(-n+27),
+      body[data-cell-skin="glass"] .cell:nth-child(n+46):nth-child(-n+54),
+      body[data-cell-skin="candy"] .cell:nth-child(n+19):nth-child(-n+27),
+      body[data-cell-skin="candy"] .cell:nth-child(n+46):nth-child(-n+54) {
+        margin-bottom: 2px;
+      }
+
+      .game-topbar {
+        padding: 0 6px;
+      }
+
+      .game-topbar .credit-chip {
+        min-width: 60px;
+        height: 30px;
+        padding: 0 7px;
+      }
+
+      .top-stat {
+        min-width: 55px;
+      }
+
+      .game-side {
+        gap: 9px;
+        padding: 10px 10px 16px;
+      }
+
+      .status-card {
+        display: none;
+      }
+
+      .reward-line {
+        display: none;
+      }
+
+      .tool-btn {
+        min-height: 43px;
+      }
+
+      .game-actions .btn {
+        min-height: 38px;
+      }
+
+      .value {
+        font-size: clamp(18px, 7vw, 31px);
+      }
+
+      .note-grid i {
+        font-size: clamp(6px, 2.3vw, 10px);
+      }
+    }
+
+    @media (max-height: 700px) and (min-width: 901px) {
+      :root {
+        --board-size: min(79vh, 590px);
+      }
+
+      .game-side {
+        gap: 9px;
+        padding: 14px 20px;
+      }
+
+      .number-btn {
+        aspect-ratio: 1.7;
+      }
+
+      .tool-btn {
+        min-height: 42px;
+      }
+
+      .reward-line {
+        padding: 8px 11px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-cell-skin="paper">
+  <main class="app" id="app">
+    <section class="screen active" id="home-screen">
+      <div class="screen-bar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span>SUDOKU</span>
+        </div>
+        <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+      </div>
+
+      <div class="home-shell">
+        <article class="hero">
+          <div class="hero-board" id="hero-board" aria-hidden="true"></div>
+          <p class="eyebrow">NUMBER PUZZLE</p>
+          <h1>SUDOKU</h1>
+          <p>Fill every row, column and box. Clean logic earns the best rewards.</p>
+        </article>
+
+        <article class="setup-card">
+          <p class="section-label">Mode</p>
+          <button class="mode-select" id="mode-select-button">
+            <span class="mode-select-icon" id="selected-mode-icon">9</span>
+            <span class="mode-select-copy"><strong id="selected-mode-name">CLASSIC SUDOKU</strong><span id="selected-mode-copy">Rows, columns and 3×3 boxes</span></span>
+            <span class="mode-select-arrow">›</span>
+          </button>
+
+          <p class="section-label">Difficulty</p>
+          <div class="difficulty-grid" id="difficulty-grid">
+            <button class="difficulty" data-difficulty="easy"><strong>EASY <em>C 150</em></strong><span>5 mistakes · relaxed</span></button>
+            <button class="difficulty active" data-difficulty="medium"><strong>MEDIUM <em>C 300</em></strong><span>4 mistakes · balanced</span></button>
+            <button class="difficulty" data-difficulty="hard"><strong>HARD <em>C 550</em></strong><span>3 mistakes · demanding</span></button>
+            <button class="difficulty" data-difficulty="expert"><strong>EXPERT <em>C 900</em></strong><span>3 mistakes · brutal</span></button>
+          </div>
+
+          <div class="setup-actions">
+            <button class="btn btn-primary" id="play-button">NEW PUZZLE</button>
+            <button class="btn btn-secondary continue-button hidden" id="continue-button">CONTINUE</button>
+            <div class="quick-grid">
+              <button class="btn btn-secondary" data-open="modes-screen">MODES</button>
+              <button class="btn btn-secondary" data-open="skins-screen">SKINS</button>
+              <button class="btn btn-secondary" data-open="stats-screen">STATS</button>
+              <button class="btn btn-secondary" data-open="rules-screen">RULES</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="screen" id="modes-screen">
+      <div class="content-shell">
+        <div class="content-head">
+          <button class="icon-btn" data-open="home-screen" aria-label="Back">‹</button>
+          <h2>Game modes</h2>
+          <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+        </div>
+        <div class="mode-grid" id="mode-grid"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="skins-screen">
+      <div class="content-shell">
+        <div class="content-head">
+          <button class="icon-btn" data-open="home-screen" aria-label="Back">‹</button>
+          <h2>Cell skins</h2>
+          <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+        </div>
+        <div class="shop-grid" id="skin-grid"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="stats-screen">
+      <div class="content-shell">
+        <div class="content-head">
+          <button class="icon-btn" data-open="home-screen" aria-label="Back">‹</button>
+          <h2>Stats</h2>
+          <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+        </div>
+        <div class="stats-grid" id="stats-grid"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="rules-screen">
+      <div class="content-shell">
+        <div class="content-head">
+          <button class="icon-btn" data-open="home-screen" aria-label="Back">‹</button>
+          <h2>How to play</h2>
+        </div>
+        <div class="rules-hero"><strong id="rules-mode-name">Classic Sudoku</strong><span id="rules-mode-intro">Fill the grid with logic.</span></div>
+        <div class="rules-grid" id="rules-grid"></div>
+      </div>
+    </section>
+
+    <section class="game-screen" id="game-screen">
+      <div class="game-layout">
+        <section class="board-stage">
+          <div class="game-topbar">
+            <button class="icon-btn" id="game-menu-button" aria-label="Menu">‹</button>
+            <div class="game-title"><strong id="game-mode-name">SUDOKU</strong><span id="game-difficulty">MEDIUM</span></div>
+            <div class="top-stat"><span>TIME</span><strong id="game-time">00:00</strong></div>
+            <div class="top-stat"><span>MISTAKES</span><strong id="game-mistakes">0 / 4</strong></div>
+            <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+          </div>
+
+          <div class="board-wrap">
+            <div class="board-shell" id="board-shell" data-mode="classic">
+              <div id="sudoku-grid" role="grid" aria-label="Sudoku board"></div>
+              <svg class="constraint-overlay" id="constraint-overlay" viewBox="0 0 100 100" aria-hidden="true"></svg>
+              <div class="edge-overlay" id="edge-overlay" aria-hidden="true"></div>
+              <div class="pause-layer closed" id="pause-layer">
+                <div>
+                  <h2>Paused</h2>
+                  <p>The board is hidden and the timer is stopped.</p>
+                  <button class="btn btn-primary" id="resume-button">RESUME</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="game-side">
+          <div class="game-brand">SUDOKU<small>LOGIC MODE</small></div>
+          <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+
+          <div class="status-card">
+            <div class="status-box"><span>MODE</span><strong id="side-mode">CLASSIC</strong></div>
+            <div class="status-box"><span>DIFFICULTY</span><strong id="side-difficulty">MEDIUM</strong></div>
+            <div class="status-box"><span>EMPTY</span><strong id="empty-count">0</strong></div>
+            <div class="status-box"><span>HINTS</span><strong id="hint-count">0</strong></div>
+          </div>
+
+          <div class="number-pad" id="number-pad"></div>
+
+          <div class="tool-grid">
+            <button class="tool-btn" id="notes-button">NOTES<span id="notes-state">OFF</span></button>
+            <button class="tool-btn" id="erase-button">ERASE<span>BACKSPACE</span></button>
+            <button class="tool-btn" id="undo-button">UNDO<span>LAST MOVE</span></button>
+            <button class="tool-btn" id="hint-button">HINT<span>LESS REWARD</span></button>
+          </div>
+
+          <div class="reward-line" id="reward-line">Complete this puzzle for <strong>C 300</strong>. Clean and fast solves earn more.</div>
+          <div class="side-spacer"></div>
+
+          <div class="game-actions">
+            <button class="btn btn-secondary" id="pause-button">PAUSE</button>
+            <button class="btn btn-secondary" id="new-button">NEW</button>
+            <button class="btn btn-danger" id="quit-button">MENU</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="modal-layer closed" id="result-modal">
+      <div class="modal">
+        <div class="modal-symbol" id="result-symbol">✓</div>
+        <h2 id="result-title">Solved</h2>
+        <p id="result-copy">Every row, column and box is complete.</p>
+        <div class="result-grid">
+          <div class="result-box"><span>TIME</span><strong id="result-time">00:00</strong></div>
+          <div class="result-box"><span>MISTAKES</span><strong id="result-mistakes">0</strong></div>
+          <div class="result-box"><span>CREDITS</span><strong id="result-credits">0</strong></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="result-menu">MENU</button>
+          <button class="btn btn-primary" id="result-again">AGAIN</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="modal-layer closed" id="confirm-modal">
+      <div class="modal">
+        <div class="modal-symbol">?</div>
+        <h2 id="confirm-title">New puzzle?</h2>
+        <p id="confirm-copy">Your current puzzle will be replaced.</p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="confirm-no">CANCEL</button>
+          <button class="btn btn-danger" id="confirm-yes">CONFIRM</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+  </main>
+
+  <script>
+  "use strict";
+
+  /* ---------- Configuration ---------- */
+
+  const DIFFICULTIES = {
+    easy: {
+      name: "Easy",
+      mistakes: 5,
+      reward: 50,
+      par: 720
+    },
+    medium: {
+      name: "Medium",
+      mistakes: 4,
+      reward: 150,
+      par: 1080
+    },
+    hard: {
+      name: "Hard",
+      mistakes: 3,
+      reward: 300,
+      par: 1680
+    },
+    expert: {
+      name: "Expert",
+      mistakes: 3,
+      reward: 500,
+      par: 2400
+    }
+  };
+
+  const PUZZLE_TEMPLATES = {
+    easy: [
+      "534678000672195000198000560800761003420803001700020006060000280000419005000080079"
+    ],
+    medium: [
+      "000260701680070090190004500820100040004602900050003028009300074040050036703018000"
+    ],
+    hard: [
+      "000000907000420180000705026100904000050000040000507009920108000034059000507000000"
+    ],
+    expert: [
+      "005300000800000020070010500400005300010070006003200080060500009004000030000009700"
+    ]
+  };
+
+  const CELL_SKINS = {
+    paper: {
+      name: "Paper",
+      price: 0,
+      copy: "Crisp tournament squares"
+    },
+    neon: {
+      name: "Neon",
+      price: 350,
+      copy: "Cut-corner energy cells"
+    },
+    glass: {
+      name: "Glass",
+      price: 800,
+      copy: "Rounded translucent tiles"
+    },
+    circuit: {
+      name: "Circuit",
+      price: 1500,
+      copy: "Traced electronic cells"
+    },
+    candy: {
+      name: "Candy",
+      price: 2600,
+      copy: "Soft raised candy buttons"
+    },
+    pixel: {
+      name: "Pixel",
+      price: 4200,
+      copy: "Hard-edged arcade blocks"
+    }
+  };
+
+  const MODES = {
+    classic: {
+      name: "Classic Sudoku",
+      short: "Classic",
+      icon: "9",
+      price: 0,
+      reward: 1,
+      copy: "Rows, columns and 3×3 boxes",
+      intro: "The original 9×9 number puzzle. Every empty cell has one logical value.",
+      rules: [
+        ["ROWS", "Place the digits 1 through 9 so every horizontal row contains each digit exactly once."],
+        ["COLUMNS", "Every vertical column must also contain the digits 1 through 9 without repetition."],
+        ["BOXES", "The nine thick-bordered 3×3 boxes each need one copy of every digit from 1 through 9."],
+        ["GIVEN CELLS", "Dark fixed digits are clues and cannot be changed. Use them to eliminate candidates from their row, column and box."],
+        ["NOTES", "Turn on Notes to write small candidates. Placing a correct digit automatically removes that candidate from its peers."],
+        ["FINISH", "The puzzle is complete only when all 81 cells satisfy the row, column and box rules."]
+      ]
+    },
+    irregular: {
+      name: "Irregular Sudoku",
+      short: "Jigsaw",
+      icon: "J",
+      price: 1000,
+      reward: 1.12,
+      copy: "Nine twisted jigsaw regions",
+      intro: "The regular 3×3 boxes are replaced by nine connected regions with unusual shapes.",
+      rules: [
+        ["ROWS", "Every row contains the digits 1 through 9 exactly once."],
+        ["COLUMNS", "Every column contains the digits 1 through 9 exactly once."],
+        ["JIGSAW REGIONS", "Follow the thick irregular borders. Each connected region contains nine cells and must use every digit from 1 through 9 once."],
+        ["NO 3×3 RULE", "Ordinary 3×3 boxes do not matter in this mode. Only rows, columns and the drawn jigsaw regions restrict a cell."],
+        ["SOLVING TIP", "A bent region may touch several boxes. Scan all of its separated-looking corners before choosing a candidate."],
+        ["FINISH", "Complete all rows, columns and irregular regions without a repeated digit."]
+      ]
+    },
+    diagonal: {
+      name: "Diagonal Sudoku",
+      short: "X-Sudoku",
+      icon: "X",
+      price: 1250,
+      reward: 1.16,
+      copy: "Both long diagonals count",
+      intro: "Classic Sudoku gains two extra nine-cell groups crossing the board as an X.",
+      rules: [
+        ["CLASSIC RULES", "Rows, columns and normal 3×3 boxes must each contain 1 through 9 exactly once."],
+        ["MAIN DIAGONAL", "The cells running from the top-left corner to the bottom-right corner must contain 1 through 9 once."],
+        ["OTHER DIAGONAL", "The cells running from the top-right corner to the bottom-left corner must also contain 1 through 9 once."],
+        ["CENTER CELL", "The center belongs to both diagonals as well as its row, column and box, making it especially constrained."],
+        ["SOLVING TIP", "Treat each highlighted diagonal like an additional row. A digit already on that diagonal cannot appear there again."],
+        ["FINISH", "All five constraint types must be valid: rows, columns, boxes and both diagonals."]
+      ]
+    },
+    killer: {
+      name: "Killer Sudoku",
+      short: "Killer",
+      icon: "Σ",
+      price: 1700,
+      reward: 1.25,
+      copy: "Cages with target sums",
+      intro: "Dashed cages add arithmetic clues to the ordinary Sudoku restrictions.",
+      rules: [
+        ["CLASSIC RULES", "Rows, columns and 3×3 boxes still contain the digits 1 through 9 exactly once."],
+        ["CAGE SUMS", "The small number in a dashed cage is the total of every digit inside that cage."],
+        ["NO REPEATS IN CAGES", "A digit cannot repeat inside one cage, even when its cells lie in different rows or boxes."],
+        ["COMBINATIONS", "Use combinations before positions. For example, a two-cell cage totaling 3 must contain 1 and 2 in some order."],
+        ["SHARED LIMITS", "A placement must satisfy its cage, row, column and box simultaneously."],
+        ["FINISH", "The board is solved when every Sudoku group and every cage total is correct."]
+      ]
+    },
+    thermo: {
+      name: "Thermometer Sudoku",
+      short: "Thermo",
+      icon: "T",
+      price: 2100,
+      reward: 1.30,
+      copy: "Digits rise along thermometers",
+      intro: "Thermometers cross the classic grid and force strictly increasing sequences.",
+      rules: [
+        ["CLASSIC RULES", "Rows, columns and 3×3 boxes must contain 1 through 9 exactly once."],
+        ["BULB TO TIP", "Read each thermometer from its round bulb toward its narrow tip."],
+        ["STRICTLY INCREASING", "Every next digit on a thermometer must be larger than the previous digit. Equal values are never allowed."],
+        ["RANGE LOGIC", "A five-cell thermometer can never begin above 5, because it needs four larger digits after the bulb."],
+        ["OVERLAPS", "A cell on a thermometer still obeys its normal row, column and box restrictions."],
+        ["FINISH", "Complete the classic grid while every thermometer rises correctly from bulb to tip."]
+      ]
+    },
+    arrow: {
+      name: "Arrow Sudoku",
+      short: "Arrow",
+      icon: "→",
+      price: 2400,
+      reward: 1.34,
+      copy: "Circles equal their arrow sums",
+      intro: "Each circled digit equals the sum of all digits running along its attached arrow.",
+      rules: [
+        ["CLASSIC RULES", "Rows, columns and 3×3 boxes continue to use 1 through 9 exactly once."],
+        ["CIRCLE TOTAL", "The digit inside an arrow circle equals the sum of the digits on that arrow's line."],
+        ["ARROW CELLS", "Count every cell crossed after the circle. The circled cell itself is not part of the sum."],
+        ["REPETITION", "Digits may repeat along one arrow only when normal row, column and box rules permit it."],
+        ["SMALL TOTALS", "Because a circle contains only one digit, every arrow sum is between 1 and 9."],
+        ["FINISH", "Satisfy the standard Sudoku grid and every displayed circle-and-arrow equation."]
+      ]
+    },
+    parity: {
+      name: "Even / Odd Sudoku",
+      short: "Even / Odd",
+      icon: "◯",
+      price: 1400,
+      reward: 1.18,
+      copy: "Squares are even, circles are odd",
+      intro: "Cell shapes reveal parity before the exact digit is known.",
+      rules: [
+        ["CLASSIC RULES", "Fill rows, columns and 3×3 boxes with 1 through 9 exactly once."],
+        ["SQUARE CELLS", "A cell marked with a square must contain an even digit: 2, 4, 6 or 8."],
+        ["ROUND CELLS", "A cell marked with a circle must contain an odd digit: 1, 3, 5, 7 or 9."],
+        ["UNMARKED CELLS", "An unmarked cell has no parity clue and may be even or odd."],
+        ["SOLVING TIP", "Combine the shape with missing digits in its row, column and box to cut the candidate list quickly."],
+        ["FINISH", "Every marked cell must match its shape as well as all classic Sudoku rules."]
+      ]
+    },
+    antiknight: {
+      name: "Anti-Knight Sudoku",
+      short: "Anti-Knight",
+      icon: "♞",
+      price: 2800,
+      reward: 1.38,
+      copy: "Equal digits cannot be a knight apart",
+      intro: "Chess-knight geometry adds restrictions reaching beyond normal rows and boxes.",
+      rules: [
+        ["CLASSIC RULES", "Rows, columns and 3×3 boxes contain the digits 1 through 9 exactly once."],
+        ["KNIGHT MOVE", "Imagine a chess knight moving two cells in one direction and one cell sideways."],
+        ["ANTI-KNIGHT RULE", "Two cells separated by a knight move may never contain the same digit."],
+        ["EIGHT TARGETS", "A central cell can attack up to eight other cells. Edge and corner cells attack fewer."],
+        ["SOLVING TIP", "After placing a digit, eliminate it from every knight-move destination as well as ordinary peers."],
+        ["FINISH", "Complete the classic grid with no equal pair connected by any knight move."]
+      ]
+    },
+    sandwich: {
+      name: "Sandwich Sudoku",
+      short: "Sandwich",
+      icon: "1|9",
+      price: 3200,
+      reward: 1.43,
+      copy: "Edge clues sum between 1 and 9",
+      intro: "Numbers outside the grid reveal the sum trapped between 1 and 9 in that line.",
+      rules: [
+        ["CLASSIC RULES", "Rows, columns and 3×3 boxes use each digit from 1 through 9 once."],
+        ["THE BREAD", "Digits 1 and 9 are the two ends of a sandwich. Their order does not matter."],
+        ["THE FILLING", "Add every digit positioned strictly between 1 and 9 in that row or column."],
+        ["EDGE CLUE", "The number outside a row or column is the required filling total. Digits outside the two bread cells are ignored."],
+        ["ZERO CLUE", "A clue of 0 means 1 and 9 sit next to each other with no filling between them."],
+        ["FINISH", "All classic rules and every row and column sandwich sum must be correct."]
+      ]
+    },
+    hyper: {
+      name: "Hyper Sudoku",
+      short: "Windoku",
+      icon: "▦",
+      price: 2600,
+      reward: 1.36,
+      copy: "Four extra 3×3 regions",
+      intro: "Four shaded boxes overlap the normal Sudoku layout and act as additional groups.",
+      rules: [
+        ["CLASSIC RULES", "Rows, columns and the nine ordinary 3×3 boxes each use 1 through 9 once."],
+        ["HYPER REGIONS", "Each of the four inset highlighted 3×3 regions must also contain 1 through 9 exactly once."],
+        ["OVERLAPPING GROUPS", "A highlighted cell belongs to a row, column, normal box and hyper region at the same time."],
+        ["CENTRAL CROSS", "Cells outside the four hyper regions still obey all classic rules, but have no extra box restriction."],
+        ["SOLVING TIP", "Scan a hyper region exactly like an ordinary box, then transfer its eliminations into overlapping groups."],
+        ["FINISH", "Validate nine rows, nine columns, nine normal boxes and all four hyper regions."]
+      ]
+    },
+    consecutive: {
+      name: "Consecutive Sudoku",
+      short: "Consecutive",
+      icon: "•",
+      price: 1900,
+      reward: 1.27,
+      copy: "Dots join consecutive neighbours",
+      intro: "A dot between two orthogonally adjacent cells means their digits differ by exactly one.",
+      rules: [
+        ["CLASSIC RULES", "Rows, columns and 3×3 boxes contain 1 through 9 exactly once."],
+        ["WHITE DOTS", "Two cells joined by a dot contain consecutive digits, such as 3 and 4 or 8 and 9."],
+        ["EITHER ORDER", "The smaller digit may appear on either side of the dot."],
+        ["NO NEGATIVE RULE", "An unmarked pair is unrestricted; it may also happen to be consecutive."],
+        ["CHAIN LOGIC", "Several connected dots create a chain of step-by-one relationships that can strongly restrict candidates."],
+        ["FINISH", "Complete the classic grid and make every marked neighbouring pair differ by one."]
+      ]
+    },
+    kakuro: {
+      name: "Kakuro",
+      short: "Kakuro",
+      icon: "+",
+      price: 3700,
+      reward: 1.55,
+      copy: "Crossword-style sum runs",
+      intro: "Fill white runs with digits whose totals match the clues in the dark cells.",
+      rules: [
+        ["WHITE CELLS", "Only white cells receive digits. Use numbers 1 through 9."],
+        ["ACROSS CLUES", "A number below the diagonal in a dark clue cell is the total for the white run extending to its right."],
+        ["DOWN CLUES", "A number above the diagonal is the total for the white run extending downward."],
+        ["NO REPEATS", "A digit cannot repeat within a single horizontal or vertical run."],
+        ["INTERSECTIONS", "Each white cell belongs to one across run and one down run, so its digit must satisfy both totals."],
+        ["FINISH", "Every white cell must be filled, every run must reach its clue total and no run may repeat a digit."]
+      ]
+    },
+    futoshiki: {
+      name: "Futoshiki",
+      short: "Futoshiki",
+      icon: "<",
+      price: 4000,
+      reward: 1.62,
+      copy: "Latin squares with inequalities",
+      intro: "Complete a Latin square while obeying every greater-than and less-than sign.",
+      rules: [
+        ["NUMBER RANGE", "Use the numbers 1 through the board size. A 6×6 board uses 1 through 6."],
+        ["ROWS", "Every row contains each allowed number exactly once."],
+        ["COLUMNS", "Every column also contains each allowed number exactly once. There are no 3×3 box rules."],
+        ["INEQUALITIES", "The open side of a < or > sign points toward the larger value; the narrow point faces the smaller value."],
+        ["CHAINS", "Read linked inequalities as ordered chains. A cell above several smaller values must be near the top of the range."],
+        ["FINISH", "Complete the Latin square and satisfy every inequality drawn between neighbouring cells."]
+      ]
+    },
+    binary: {
+      name: "Binary",
+      short: "Takuzu",
+      icon: "01",
+      price: 4500,
+      reward: 1.70,
+      copy: "Balanced zeros and ones",
+      intro: "Fill an even-sized grid using only 0 and 1 under three strict pattern rules.",
+      rules: [
+        ["ONLY TWO SYMBOLS", "Every playable cell contains either 0 or 1."],
+        ["EQUAL BALANCE", "Each row and each column contains exactly the same number of zeros and ones."],
+        ["NO TRIPLES", "Three identical symbols may never appear consecutively horizontally or vertically."],
+        ["UNIQUE ROWS", "No two completed rows may be identical."],
+        ["UNIQUE COLUMNS", "No two completed columns may be identical."],
+        ["FINISH", "Fill the whole board while balance, triple and uniqueness rules all remain valid."]
+      ]
+    },
+    calcudoku: {
+      name: "Calcudoku",
+      short: "KenKen",
+      icon: "×",
+      price: 5000,
+      reward: 1.82,
+      copy: "Arithmetic cages in a Latin square",
+      intro: "Combine Latin-square logic with arithmetic targets inside bold cages.",
+      rules: [
+        ["NUMBER RANGE", "Use 1 through the board size. A 5×5 puzzle uses only 1, 2, 3, 4 and 5."],
+        ["LATIN SQUARE", "Each number appears exactly once in every row and exactly once in every column. There are no 3×3 boxes."],
+        ["CAGE TARGETS", "The small label gives a target and operation. The cage values must combine to make that target."],
+        ["OPERATIONS", "A + cage is added, a × cage is multiplied, and two-cell − or ÷ cages may be evaluated in either order."],
+        ["SINGLE CELLS", "A cage showing only a number fixes that cell to the displayed value."],
+        ["FINISH", "Complete the Latin square and satisfy the arithmetic target of every cage."]
+      ]
+    }
+  };
+
+  const SPECIAL_SUDOKU = {
+    irregular: {
+      solution: "534678912672195348198342567859761423426853791713924856961537284287419635345286179",
+      regions: "000111122000122222003111122033444444333445545363555555663667888666677788777778888",
+      puzzles: {
+        easy: "000678900072095000008000507050761003400053700700020056001037204280009605040086179",
+        medium: "000670012070105008198300060009701000400000791700004850061500004000009005345200000",
+        hard: "000600902000100040000002500050760003406800701000020006900500004000410035300200070",
+        expert: "504008000600000308000300000009060420006000001000020850000007280000009005000206100"
+      }
+    },
+    diagonal: {
+      solution: "571398624329476158846152739695823471782514396134967285418235967963781542257649813",
+      puzzles: {
+        easy: "070398004009076158006002739095000400080000000034900280400030967960081000007640800",
+        medium: "000090600300070158800002009090800400700004096100967080410000900000080042250640000",
+        hard: "070090600009476100040002009005023000002000306000000000400000060060081502200040003",
+        expert: "070008020300000000000000009000000470082010006030060280000005907903080002000009000"
+      }
+    },
+    antiknight: {
+      solution: "497625138831497526265138497928713645513946782746582913374859261152364879689271354",
+      puzzles: {
+        easy: "407005138001090020000108000020003605013046082740500913370809060000000809080001054",
+        medium: "407000138030000026060100000020000605500006000000000903304859201000300870609001304",
+        hard: "407625030031007500000000097900000045503000780006000000000009000002060009009001050",
+        expert: "007020008030097000200030090000000640003040080006000010070000000050060000009001350"
+      }
+    },
+    hyper: {
+      solution: "834219756271865394965374128129438675457126839683597412742983561516742983398651247",
+      puzzles: {
+        easy: "000000706270860390065374000000000605457126809083007010002000560016000003008650207",
+        medium: "030209756200865094000300100000030000000126030080097410000900560010000903008050000",
+        hard: "034200706000800090000070020100030600000000000000090010040080000006742903098600207",
+        expert: "030200756200060300000304000000038000400000000000000402700083001010000000090600007"
+      }
+    }
+  };
+
+  const DIGITS = [1,2,3,4,5,6,7,8,9];
+  const GAME_STORAGE_KEY = "sudoku";
+
+  /* ---------- Persistent data ---------- */
+
+  class SaveManager {
+    static ROOT_KEY = "ARCADE_GAMES";
+
+    constructor() {
+      this.defaults = {
+        version: 1,
+        credits: 0,
+        selectedMode: "classic",
+        unlockedModes: ["classic"],
+        selectedDifficulty: "medium",
+        selectedSkin: "paper",
+        ownedSkins: ["paper"],
+        sound: true,
+        activeGame: null,
+        stats: {
+          started: 0,
+          completed: 0,
+          failed: 0,
+          perfect: 0,
+          hintsUsed: 0,
+          totalTime: 0,
+          creditsEarned: 0,
+          modeCompletions: {},
+          bestTimes: {
+            easy: 0,
+            medium: 0,
+            hard: 0,
+            expert: 0
+          }
+        }
+      };
+
+      this.root = this.readRoot();
+      this.data = this.sanitize(this.root[GAME_STORAGE_KEY]);
+      this.persist();
+    }
+
+    readRoot() {
+      try {
+        const raw = localStorage.getItem(SaveManager.ROOT_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    sanitize(value) {
+      const source = value && typeof value === "object" ? value : {};
+      const clean = {
+        ...this.defaults,
+        ...source
+      };
+
+      clean.credits = this.integer(clean.credits);
+      clean.unlockedModes = Array.isArray(clean.unlockedModes)
+        ? [...new Set(clean.unlockedModes.filter(id => MODES[id]))]
+        : [];
+      if (!clean.unlockedModes.includes("classic")) clean.unlockedModes.unshift("classic");
+      clean.selectedMode = MODES[clean.selectedMode] && clean.unlockedModes.includes(clean.selectedMode)
+        ? clean.selectedMode
+        : "classic";
+      clean.selectedDifficulty = DIFFICULTIES[clean.selectedDifficulty] ? clean.selectedDifficulty : "medium";
+      clean.sound = clean.sound !== false;
+
+      const validSkins = new Set(Object.keys(CELL_SKINS));
+      clean.ownedSkins = Array.isArray(clean.ownedSkins)
+        ? [...new Set(clean.ownedSkins.filter(id => validSkins.has(id)))]
+        : [];
+      if (!clean.ownedSkins.includes("paper")) clean.ownedSkins.unshift("paper");
+      clean.selectedSkin = validSkins.has(clean.selectedSkin) && clean.ownedSkins.includes(clean.selectedSkin)
+        ? clean.selectedSkin
+        : "paper";
+
+      const sourceStats = source.stats && typeof source.stats === "object" ? source.stats : {};
+      clean.stats = {
+        ...this.defaults.stats,
+        ...sourceStats,
+        bestTimes: {
+          ...this.defaults.stats.bestTimes,
+          ...(sourceStats.bestTimes || {})
+        }
+      };
+
+      ["started","completed","failed","perfect","hintsUsed","totalTime","creditsEarned"].forEach(key => {
+        clean.stats[key] = this.integer(clean.stats[key]);
+      });
+      Object.keys(DIFFICULTIES).forEach(key => {
+        clean.stats.bestTimes[key] = this.integer(clean.stats.bestTimes[key]);
+      });
+      clean.stats.modeCompletions = clean.stats.modeCompletions && typeof clean.stats.modeCompletions === "object"
+        ? clean.stats.modeCompletions
+        : {};
+      Object.keys(MODES).forEach(key => {
+        clean.stats.modeCompletions[key] = this.integer(clean.stats.modeCompletions[key]);
+      });
+
+      clean.activeGame = this.sanitizeGame(clean.activeGame, clean.unlockedModes);
+      return clean;
+    }
+
+    sanitizeGame(game, unlockedModes = this.data?.unlockedModes || ["classic"]) {
+      if (!game || typeof game !== "object") return null;
+      const difficulty = DIFFICULTIES[game.difficulty] ? game.difficulty : null;
+      const mode = MODES[game.mode] && unlockedModes.includes(game.mode) ? game.mode : null;
+      const size = Number(game.size);
+      if (!difficulty || !mode || !Number.isInteger(size) || size < 4 || size > 13) return null;
+      const length = size * size;
+      const puzzle = this.numberArray(game.puzzle, length);
+      const solution = this.numberArray(game.solution, length);
+      const values = this.numberArray(game.values, length);
+      if (!puzzle || !solution || !values) return null;
+
+      for (let index = 0; index < length; index += 1) {
+        if (puzzle[index] && puzzle[index] !== solution[index]) return null;
+        if (puzzle[index]) values[index] = puzzle[index];
+      }
+
+      const notes = Array.from({ length }, (_, index) => {
+        const entry = Array.isArray(game.notes?.[index]) ? game.notes[index] : [];
+        return [...new Set(entry.map(Number).filter(number => number >= 1 && number <= 9))].sort();
+      });
+
+      const hinted = Array.from({ length }, (_, index) => Boolean(game.hinted?.[index]));
+      const cellTypes = Array.from({ length }, (_, index) => ["play","block","clue"].includes(game.cellTypes?.[index]) ? game.cellTypes[index] : "play");
+      const regions = Array.from({ length }, (_, index) => Number.isInteger(game.regions?.[index]) ? game.regions[index] : -1);
+      const selected = Number.isInteger(game.selected) && game.selected >= 0 && game.selected < length && cellTypes[game.selected] === "play"
+        ? game.selected
+        : values.findIndex((value, index) => !value && cellTypes[index] === "play");
+
+      return {
+        mode,
+        difficulty,
+        size,
+        maxSymbol: Number.isInteger(game.maxSymbol) ? Math.max(2, Math.min(9, game.maxSymbol)) : 9,
+        puzzle,
+        solution,
+        values,
+        notes,
+        hinted,
+        cellTypes,
+        regions,
+        meta: game.meta && typeof game.meta === "object" ? game.meta : {},
+        selected: selected < 0 ? 0 : selected,
+        mistakes: Math.min(this.integer(game.mistakes), DIFFICULTIES[difficulty].mistakes),
+        hints: this.integer(game.hints),
+        elapsed: this.integer(game.elapsed),
+        seed: typeof game.seed === "string" ? game.seed.slice(0, 80) : "saved"
+      };
+    }
+
+    numberArray(value, length = 81) {
+      if (!Array.isArray(value) || value.length !== length) return null;
+      const result = value.map(number => Number(number));
+      return result.every(number => Number.isInteger(number) && number >= 0 && number <= 9) ? result : null;
+    }
+
+    integer(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? Math.max(0, Math.floor(number)) : 0;
+    }
+
+    persist() {
+      try {
+        this.root[GAME_STORAGE_KEY] = this.data;
+        localStorage.setItem(SaveManager.ROOT_KEY, JSON.stringify(this.root));
+      } catch (_) {
+        /* A storage failure never blocks an offline puzzle. */
+      }
+      refreshCreditLabels(this.data);
+    }
+
+    update(patch) {
+      Object.assign(this.data, patch);
+      this.persist();
+    }
+
+    mutate(callback) {
+      callback(this.data);
+      this.persist();
+    }
+
+    buySkin(id) {
+      const skin = CELL_SKINS[id];
+      if (!skin || this.data.ownedSkins.includes(id) || this.data.credits < skin.price) return false;
+      this.data.credits -= skin.price;
+      this.data.ownedSkins = [...this.data.ownedSkins, id];
+      this.persist();
+      return true;
+    }
+
+    buyMode(id) {
+      const mode = MODES[id];
+      if (!mode || this.data.unlockedModes.includes(id) || this.data.credits < mode.price) return false;
+      this.data.credits -= mode.price;
+      this.data.unlockedModes = [...this.data.unlockedModes, id];
+      this.persist();
+      return true;
+    }
+  }
+
+  /* ---------- Elements and runtime state ---------- */
+
+  const ui = {
+    homeScreen: document.getElementById("home-screen"),
+    gameScreen: document.getElementById("game-screen"),
+    modeGrid: document.getElementById("mode-grid"),
+    selectedModeIcon: document.getElementById("selected-mode-icon"),
+    selectedModeName: document.getElementById("selected-mode-name"),
+    selectedModeCopy: document.getElementById("selected-mode-copy"),
+    difficultyGrid: document.getElementById("difficulty-grid"),
+    continueButton: document.getElementById("continue-button"),
+    skinGrid: document.getElementById("skin-grid"),
+    statsGrid: document.getElementById("stats-grid"),
+    heroBoard: document.getElementById("hero-board"),
+    rulesModeName: document.getElementById("rules-mode-name"),
+    rulesModeIntro: document.getElementById("rules-mode-intro"),
+    rulesGrid: document.getElementById("rules-grid"),
+    grid: document.getElementById("sudoku-grid"),
+    boardShell: document.getElementById("board-shell"),
+    constraintOverlay: document.getElementById("constraint-overlay"),
+    edgeOverlay: document.getElementById("edge-overlay"),
+    gameModeName: document.getElementById("game-mode-name"),
+    gameDifficulty: document.getElementById("game-difficulty"),
+    sideDifficulty: document.getElementById("side-difficulty"),
+    sideMode: document.getElementById("side-mode"),
+    gameTime: document.getElementById("game-time"),
+    gameMistakes: document.getElementById("game-mistakes"),
+    emptyCount: document.getElementById("empty-count"),
+    hintCount: document.getElementById("hint-count"),
+    numberPad: document.getElementById("number-pad"),
+    notesButton: document.getElementById("notes-button"),
+    notesState: document.getElementById("notes-state"),
+    undoButton: document.getElementById("undo-button"),
+    hintButton: document.getElementById("hint-button"),
+    rewardLine: document.getElementById("reward-line"),
+    pauseLayer: document.getElementById("pause-layer"),
+    pauseButton: document.getElementById("pause-button"),
+    resultModal: document.getElementById("result-modal"),
+    resultSymbol: document.getElementById("result-symbol"),
+    resultTitle: document.getElementById("result-title"),
+    resultCopy: document.getElementById("result-copy"),
+    resultTime: document.getElementById("result-time"),
+    resultMistakes: document.getElementById("result-mistakes"),
+    resultCredits: document.getElementById("result-credits"),
+    confirmModal: document.getElementById("confirm-modal"),
+    confirmTitle: document.getElementById("confirm-title"),
+    confirmCopy: document.getElementById("confirm-copy"),
+    toastStack: document.getElementById("toast-stack")
+  };
+
+  const save = new SaveManager();
+
+  let selectedMode = save.data.selectedMode;
+  let selectedDifficulty = save.data.selectedDifficulty;
+  let state = null;
+  let notesMode = false;
+  let timerId = 0;
+  let confirmAction = null;
+  let resumeAfterConfirm = false;
+  let audioContext = null;
+  let popIndex = -1;
+  let shakeIndex = -1;
+
+  /* ---------- Sudoku engine ---------- */
+
+  function stringToBoard(value) {
+    return [...value].map(character => Number(character));
+  }
+
+  function rowOf(index) {
+    return Math.floor(index / 9);
+  }
+
+  function colOf(index) {
+    return index % 9;
+  }
+
+  function boxOf(index) {
+    return Math.floor(rowOf(index) / 3) * 3 + Math.floor(colOf(index) / 3);
+  }
+
+  function isPeer(first, second) {
+    return first !== second && (
+      rowOf(first) === rowOf(second) ||
+      colOf(first) === colOf(second) ||
+      boxOf(first) === boxOf(second)
+    );
+  }
+
+  function allowedDigits(board, index) {
+    if (board[index]) return [];
+    const used = new Set();
+    for (let cursor = 0; cursor < 81; cursor += 1) {
+      if (isPeer(index, cursor) && board[cursor]) used.add(board[cursor]);
+    }
+    return DIGITS.filter(number => !used.has(number));
+  }
+
+  function findBestEmpty(board) {
+    let bestIndex = -1;
+    let bestOptions = null;
+
+    for (let index = 0; index < 81; index += 1) {
+      if (board[index]) continue;
+      const options = allowedDigits(board, index);
+      if (!options.length) return { index, options };
+      if (!bestOptions || options.length < bestOptions.length) {
+        bestIndex = index;
+        bestOptions = options;
+        if (options.length === 1) break;
+      }
+    }
+    return { index: bestIndex, options: bestOptions || [] };
+  }
+
+  function solveBoard(board) {
+    const target = findBestEmpty(board);
+    if (target.index < 0) return true;
+
+    for (const number of target.options) {
+      board[target.index] = number;
+      if (solveBoard(board)) return true;
+      board[target.index] = 0;
+    }
+    return false;
+  }
+
+  function countSolutions(board, limit = 2) {
+    let count = 0;
+
+    function search() {
+      if (count >= limit) return;
+      const target = findBestEmpty(board);
+      if (target.index < 0) {
+        count += 1;
+        return;
+      }
+      for (const number of target.options) {
+        board[target.index] = number;
+        search();
+        board[target.index] = 0;
+        if (count >= limit) return;
+      }
+    }
+
+    search();
+    return count;
+  }
+
+  function isCompleteSolution(board) {
+    if (!Array.isArray(board) || board.length !== 81 || board.some(number => number < 1 || number > 9)) return false;
+    for (let index = 0; index < 9; index += 1) {
+      const row = new Set();
+      const column = new Set();
+      const box = new Set();
+      for (let offset = 0; offset < 9; offset += 1) {
+        row.add(board[index * 9 + offset]);
+        column.add(board[offset * 9 + index]);
+        const boxRow = Math.floor(index / 3) * 3 + Math.floor(offset / 3);
+        const boxCol = (index % 3) * 3 + offset % 3;
+        box.add(board[boxRow * 9 + boxCol]);
+      }
+      if (row.size !== 9 || column.size !== 9 || box.size !== 9) return false;
+    }
+    return true;
+  }
+
+  function shuffle(values) {
+    const result = values.slice();
+    for (let index = result.length - 1; index > 0; index -= 1) {
+      const other = Math.floor(Math.random() * (index + 1));
+      [result[index], result[other]] = [result[other], result[index]];
+    }
+    return result;
+  }
+
+  function structuralOrder() {
+    return shuffle([0,1,2]).flatMap(group => shuffle([0,1,2]).map(item => group * 3 + item));
+  }
+
+  function transformedPuzzle(difficulty) {
+    const templates = PUZZLE_TEMPLATES[difficulty];
+    const template = templates[Math.floor(Math.random() * templates.length)];
+    const basePuzzle = stringToBoard(template);
+    const baseSolution = basePuzzle.slice();
+    if (!solveBoard(baseSolution)) throw new Error("Invalid Sudoku template");
+
+    const digitOrder = shuffle(DIGITS);
+    const digitMap = new Map(DIGITS.map((digit, index) => [digit, digitOrder[index]]));
+    const rows = structuralOrder();
+    const columns = structuralOrder();
+    const transpose = Math.random() < .5;
+    const puzzle = Array(81).fill(0);
+    const solution = Array(81).fill(0);
+
+    for (let row = 0; row < 9; row += 1) {
+      for (let column = 0; column < 9; column += 1) {
+        let sourceRow = rows[row];
+        let sourceColumn = columns[column];
+        if (transpose) [sourceRow, sourceColumn] = [sourceColumn, sourceRow];
+        const sourceIndex = sourceRow * 9 + sourceColumn;
+        const targetIndex = row * 9 + column;
+        puzzle[targetIndex] = basePuzzle[sourceIndex] ? digitMap.get(basePuzzle[sourceIndex]) : 0;
+        solution[targetIndex] = digitMap.get(baseSolution[sourceIndex]);
+      }
+    }
+
+    return {
+      puzzle,
+      solution,
+      seed: `${difficulty}-${Date.now()}-${Math.floor(Math.random() * 100000)}`
+    };
+  }
+
+  /* ---------- Game lifecycle ---------- */
+
+  function freshState(difficulty) {
+    const generated = transformedPuzzle(difficulty);
+    return {
+      difficulty,
+      puzzle: generated.puzzle,
+      solution: generated.solution,
+      values: generated.puzzle.slice(),
+      notes: Array.from({ length: 81 }, () => []),
+      hinted: Array(81).fill(false),
+      selected: generated.puzzle.findIndex(value => !value),
+      mistakes: 0,
+      hints: 0,
+      elapsed: 0,
+      seed: generated.seed,
+      paused: false,
+      over: false,
+      history: []
+    };
+  }
+
+  function newPuzzle(difficulty = selectedDifficulty) {
+    stopTimer();
+    selectedDifficulty = DIFFICULTIES[difficulty] ? difficulty : "medium";
+    save.update({ selectedDifficulty });
+    state = freshState(selectedDifficulty);
+    notesMode = false;
+    save.mutate(data => {
+      data.stats.started += 1;
+    });
+    saveActiveGame();
+    showGame();
+    playSound("start");
+  }
+
+  function resumeSavedGame() {
+    const stored = save.sanitizeGame(save.data.activeGame);
+    if (!stored) {
+      save.update({ activeGame: null });
+      refreshHome();
+      return;
+    }
+
+    stopTimer();
+    state = {
+      ...stored,
+      notes: stored.notes.map(entry => entry.slice()),
+      hinted: stored.hinted.slice(),
+      paused: false,
+      over: false,
+      history: []
+    };
+    selectedDifficulty = state.difficulty;
+    notesMode = false;
+    showGame();
+  }
+
+  function serializeGame() {
+    if (!state || state.over) return null;
+    return {
+      difficulty: state.difficulty,
+      puzzle: state.puzzle.slice(),
+      solution: state.solution.slice(),
+      values: state.values.slice(),
+      notes: state.notes.map(entry => entry.slice()),
+      hinted: state.hinted.slice(),
+      selected: state.selected,
+      mistakes: state.mistakes,
+      hints: state.hints,
+      elapsed: state.elapsed,
+      seed: state.seed
+    };
+  }
+
+  function saveActiveGame() {
+    if (!state || state.over) return;
+    save.data.activeGame = serializeGame();
+    save.persist();
+  }
+
+  function showGame() {
+    closeModals();
+    showOnlyScreen(null);
+    ui.gameScreen.classList.add("active");
+    applySkin();
+    ui.pauseLayer.classList.add("closed");
+    renderEverything();
+    startTimer();
+  }
+
+  function leaveForMenu() {
+    if (state && !state.over) saveActiveGame();
+    stopTimer();
+    if (state) state.paused = false;
+    state = null;
+    notesMode = false;
+    ui.gameScreen.classList.remove("active");
+    openScreen("home-screen");
+  }
+
+  function startTimer() {
+    stopTimer();
+    if (!state || state.paused || state.over) return;
+    timerId = window.setInterval(() => {
+      if (!state || state.paused || state.over) return;
+      state.elapsed += 1;
+      ui.gameTime.textContent = formatTime(state.elapsed);
+      if (state.elapsed % 5 === 0) saveActiveGame();
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerId) window.clearInterval(timerId);
+    timerId = 0;
+  }
+
+  function pauseGame() {
+    if (!state || state.over || state.paused) return;
+    state.paused = true;
+    stopTimer();
+    saveActiveGame();
+    ui.pauseLayer.classList.remove("closed");
+    ui.pauseButton.textContent = "RESUME";
+    playSound("pause");
+  }
+
+  function resumeGame() {
+    if (!state || state.over || !state.paused) return;
+    state.paused = false;
+    ui.pauseLayer.classList.add("closed");
+    ui.pauseButton.textContent = "PAUSE";
+    startTimer();
+    playSound("select");
+  }
+
+  function togglePause() {
+    if (!state) return;
+    if (state.paused) resumeGame();
+    else pauseGame();
+  }
+
+  function completePuzzle() {
+    if (!state || state.over) return;
+    state.over = true;
+    stopTimer();
+    const reward = calculateReward();
+    const difficulty = state.difficulty;
+
+    save.mutate(data => {
+      data.credits += reward;
+      data.stats.completed += 1;
+      data.stats.totalTime += state.elapsed;
+      data.stats.hintsUsed += state.hints;
+      data.stats.creditsEarned += reward;
+      if (state.mistakes === 0) data.stats.perfect += 1;
+      const best = data.stats.bestTimes[difficulty];
+      if (!best || state.elapsed < best) data.stats.bestTimes[difficulty] = state.elapsed;
+      data.activeGame = null;
+    });
+
+    ui.resultSymbol.textContent = "✓";
+    ui.resultTitle.textContent = "Solved";
+    ui.resultCopy.textContent = state.mistakes === 0
+      ? "Perfect board. Every number is exactly where it belongs."
+      : "Every row, column and box is complete.";
+    ui.resultTime.textContent = formatTime(state.elapsed);
+    ui.resultMistakes.textContent = String(state.mistakes);
+    ui.resultCredits.textContent = `+${reward}`;
+    ui.resultModal.classList.remove("closed");
+    refreshAll();
+    playSound("win");
+  }
+
+  function failPuzzle() {
+    if (!state || state.over) return;
+    state.over = true;
+    stopTimer();
+    save.mutate(data => {
+      data.stats.failed += 1;
+      data.stats.hintsUsed += state.hints;
+      data.activeGame = null;
+    });
+
+    ui.resultSymbol.textContent = "×";
+    ui.resultTitle.textContent = "Puzzle failed";
+    ui.resultCopy.textContent = "The mistake limit was reached. Try a fresh grid.";
+    ui.resultTime.textContent = formatTime(state.elapsed);
+    ui.resultMistakes.textContent = String(state.mistakes);
+    ui.resultCredits.textContent = "+0";
+    ui.resultModal.classList.remove("closed");
+    refreshAll();
+    playSound("lose");
+  }
+
+  function calculateReward() {
+    const config = DIFFICULTIES[state.difficulty];
+    let reward = config.reward;
+    const hintPenalty = Math.min(1, state.hints * .1);
+    return Math.round(reward * (1 - hintPenalty));
+  }
+
+  /* ---------- Board interaction ---------- */
+
+  function selectCell(index) {
+    if (!state || state.paused || state.over || index < 0 || index >= 81) return;
+    state.selected = index;
+    renderBoard();
+    playSound("select");
+  }
+
+  function pushHistory() {
+    state.history.push({
+      values: state.values.slice(),
+      notes: state.notes.map(entry => entry.slice()),
+      hinted: state.hinted.slice(),
+      selected: state.selected
+    });
+    if (state.history.length > 50) state.history.shift();
+  }
+
+  function inputNumber(number) {
+    if (!state || state.paused || state.over) return;
+    const index = state.selected;
+    if (!Number.isInteger(index) || index < 0 || state.puzzle[index]) {
+      showToast("Select an <b>empty cell</b>");
+      return;
+    }
+
+    if (notesMode) {
+      if (state.values[index]) return;
+      pushHistory();
+      const notes = new Set(state.notes[index]);
+      if (notes.has(number)) notes.delete(number);
+      else notes.add(number);
+      state.notes[index] = [...notes].sort();
+      renderBoard();
+      saveActiveGame();
+      playSound("note");
+      return;
+    }
+
+    if (state.values[index] === number) return;
+    pushHistory();
+    state.values[index] = number;
+    state.notes[index] = [];
+    state.hinted[index] = false;
+    popIndex = index;
+
+    if (number !== state.solution[index]) {
+      state.mistakes += 1;
+      shakeIndex = index;
+      renderEverything();
+      saveActiveGame();
+      playSound("error");
+      window.setTimeout(() => {
+        popIndex = -1;
+        shakeIndex = -1;
+        if (state && !state.over) renderBoard();
+      }, 280);
+      if (state.mistakes >= DIFFICULTIES[state.difficulty].mistakes) failPuzzle();
+      return;
+    }
+
+    removePeerNotes(index, number);
+    renderEverything();
+    saveActiveGame();
+    playSound("place");
+    window.setTimeout(() => {
+      popIndex = -1;
+      if (state && !state.over) renderBoard();
+    }, 230);
+
+    if (isPuzzleSolved()) completePuzzle();
+  }
+
+  function eraseSelected() {
+    if (!state || state.paused || state.over) return;
+    const index = state.selected;
+    if (!Number.isInteger(index) || state.puzzle[index]) return;
+    if (!state.values[index] && !state.notes[index].length) return;
+    pushHistory();
+    state.values[index] = 0;
+    state.notes[index] = [];
+    state.hinted[index] = false;
+    renderEverything();
+    saveActiveGame();
+    playSound("erase");
+  }
+
+  function undoMove() {
+    if (!state || state.paused || state.over || !state.history.length) return;
+    const previous = state.history.pop();
+    state.values = previous.values;
+    state.notes = previous.notes;
+    state.hinted = previous.hinted;
+    state.selected = previous.selected;
+    renderEverything();
+    saveActiveGame();
+    playSound("undo");
+  }
+
+  function useHint() {
+    if (!state || state.paused || state.over) return;
+    let index = state.selected;
+    if (!Number.isInteger(index) || state.puzzle[index] || state.values[index] === state.solution[index]) {
+      index = chooseHintCell();
+    }
+    if (index < 0) return;
+
+    pushHistory();
+    state.selected = index;
+    state.values[index] = state.solution[index];
+    state.notes[index] = [];
+    state.hinted[index] = true;
+    state.hints += 1;
+    popIndex = index;
+    removePeerNotes(index, state.solution[index]);
+    renderEverything();
+    saveActiveGame();
+    showToast("Hint used · <b>reward reduced</b>");
+    playSound("hint");
+
+    window.setTimeout(() => {
+      popIndex = -1;
+      if (state && !state.over) renderBoard();
+    }, 230);
+    if (isPuzzleSolved()) completePuzzle();
+  }
+
+  function chooseHintCell() {
+    let bestIndex = -1;
+    let bestScore = -1;
+    for (let index = 0; index < 81; index += 1) {
+      if (state.values[index] === state.solution[index]) continue;
+      let solvedPeers = 0;
+      for (let cursor = 0; cursor < 81; cursor += 1) {
+        if (isPeer(index, cursor) && state.values[cursor] === state.solution[cursor]) solvedPeers += 1;
+      }
+      if (solvedPeers > bestScore) {
+        bestScore = solvedPeers;
+        bestIndex = index;
+      }
+    }
+    return bestIndex;
+  }
+
+  function removePeerNotes(index, number) {
+    for (let cursor = 0; cursor < 81; cursor += 1) {
+      if (!isPeer(index, cursor)) continue;
+      state.notes[cursor] = state.notes[cursor].filter(note => note !== number);
+    }
+  }
+
+  function isPuzzleSolved() {
+    return state.values.every((number, index) => number === state.solution[index]);
+  }
+
+  function moveSelection(deltaRow, deltaColumn) {
+    if (!state || state.paused || state.over) return;
+    const current = Number.isInteger(state.selected) ? state.selected : 0;
+    const row = (rowOf(current) + deltaRow + 9) % 9;
+    const column = (colOf(current) + deltaColumn + 9) % 9;
+    state.selected = row * 9 + column;
+    renderBoard();
+  }
+
+  function toggleNotes() {
+    if (!state || state.paused || state.over) return;
+    notesMode = !notesMode;
+    refreshTools();
+    playSound("select");
+  }
+
+  /* ---------- Rendering ---------- */
+
+  function renderEverything() {
+    renderBoard();
+    refreshGameStatus();
+    refreshTools();
+  }
+
+  function renderBoard() {
+    if (!state) return;
+    ui.grid.replaceChildren();
+    const selectedValue = state.values[state.selected] || 0;
+
+    for (let index = 0; index < 81; index += 1) {
+      const value = state.values[index];
+      const cell = document.createElement("button");
+      cell.className = "cell";
+      cell.dataset.index = String(index);
+      cell.setAttribute("role", "gridcell");
+      cell.setAttribute("aria-label", cellLabel(index));
+
+      if (state.puzzle[index]) cell.classList.add("given");
+      else if (value) cell.classList.add("user");
+      if (index === state.selected) cell.classList.add("selected");
+      else if (isPeer(index, state.selected)) cell.classList.add("peer");
+      if (selectedValue && value === selectedValue && index !== state.selected) cell.classList.add("same");
+      if (value && value !== state.solution[index]) cell.classList.add("wrong");
+      if (state.hinted[index]) cell.classList.add("hinted");
+      if (index === popIndex) cell.classList.add("pop");
+      if (index === shakeIndex) cell.classList.add("shake");
+
+      if (value) {
+        const valueNode = document.createElement("span");
+        valueNode.className = "value";
+        valueNode.textContent = String(value);
+        cell.appendChild(valueNode);
+      } else if (state.notes[index].length) {
+        const noteGrid = document.createElement("span");
+        noteGrid.className = "note-grid";
+        const notes = new Set(state.notes[index]);
+        DIGITS.forEach(number => {
+          const note = document.createElement("i");
+          note.textContent = notes.has(number) ? String(number) : "";
+          noteGrid.appendChild(note);
+        });
+        cell.appendChild(noteGrid);
+      }
+
+      ui.grid.appendChild(cell);
+    }
+  }
+
+  function cellLabel(index) {
+    const row = rowOf(index) + 1;
+    const column = colOf(index) + 1;
+    const value = state.values[index];
+    if (value) return `Row ${row}, column ${column}, ${value}${state.puzzle[index] ? ", given" : ""}`;
+    if (state.notes[index].length) return `Row ${row}, column ${column}, notes ${state.notes[index].join(", ")}`;
+    return `Row ${row}, column ${column}, empty`;
+  }
+
+  function refreshGameStatus() {
+    if (!state) return;
+    const config = DIFFICULTIES[state.difficulty];
+    const name = config.name.toUpperCase();
+    ui.gameDifficulty.textContent = name;
+    ui.sideDifficulty.textContent = name;
+    ui.gameTime.textContent = formatTime(state.elapsed);
+    ui.gameMistakes.textContent = `${state.mistakes} / ${config.mistakes}`;
+    ui.emptyCount.textContent = String(state.values.filter(value => !value).length);
+    ui.hintCount.textContent = String(state.hints);
+    ui.rewardLine.innerHTML = `Complete this puzzle for <strong>C ${config.reward}</strong>. Clean and fast solves earn more.`;
+
+    ui.numberPad.querySelectorAll("[data-number]").forEach(button => {
+      const number = Number(button.dataset.number);
+      const count = state.values.filter(value => value === number).length;
+      button.classList.toggle("complete", count >= 9);
+    });
+  }
+
+  function refreshTools() {
+    ui.notesButton.classList.toggle("active", notesMode);
+    ui.notesState.textContent = notesMode ? "ON" : "OFF";
+    ui.undoButton.disabled = !state || !state.history.length;
+    ui.hintButton.disabled = !state || state.over;
+    ui.pauseButton.textContent = state?.paused ? "RESUME" : "PAUSE";
+  }
+
+  function formatTime(seconds) {
+    const safe = Math.max(0, Math.floor(Number(seconds) || 0));
+    const minutes = Math.floor(safe / 60);
+    const remainder = safe % 60;
+    return `${String(minutes).padStart(2,"0")}:${String(remainder).padStart(2,"0")}`;
+  }
+
+  /* ---------- Menus, skins and stats ---------- */
+
+  function showOnlyScreen(id) {
+    document.querySelectorAll(".screen").forEach(screen => {
+      screen.classList.toggle("active", screen.id === id);
+    });
+  }
+
+  function openScreen(id) {
+    closeModals();
+    ui.gameScreen.classList.remove("active");
+    showOnlyScreen(id);
+    refreshAll();
+  }
+
+  function refreshAll() {
+    refreshHome();
+    refreshSkinShop();
+    refreshStats();
+    refreshCreditLabels(save.data);
+    applySkin();
+  }
+
+  function refreshHome() {
+    selectedDifficulty = DIFFICULTIES[selectedDifficulty] ? selectedDifficulty : save.data.selectedDifficulty;
+    ui.difficultyGrid.querySelectorAll("[data-difficulty]").forEach(button => {
+      button.classList.toggle("active", button.dataset.difficulty === selectedDifficulty);
+    });
+    ui.continueButton.classList.toggle("hidden", !save.data.activeGame);
+  }
+
+  function refreshSkinShop() {
+    ui.skinGrid.replaceChildren();
+    Object.entries(CELL_SKINS).forEach(([id, skin]) => {
+      const owned = save.data.ownedSkins.includes(id);
+      const selected = save.data.selectedSkin === id;
+      const card = document.createElement("article");
+      card.className = `shop-card${selected ? " selected" : ""}`;
+
+      const art = document.createElement("div");
+      art.className = "skin-art";
+      const preview = document.createElement("div");
+      preview.className = "skin-preview";
+      preview.dataset.previewSkin = id;
+      [5,"",3,"",8,"",1,"",6].forEach(value => {
+        const mini = document.createElement("i");
+        mini.className = "mini-cell";
+        mini.textContent = String(value);
+        preview.appendChild(mini);
+      });
+      art.appendChild(preview);
+
+      const copy = document.createElement("div");
+      copy.className = "shop-copy";
+      copy.innerHTML = `<strong>${skin.name}</strong><span>${skin.copy}</span>`;
+      const button = document.createElement("button");
+      button.className = `shop-btn${owned ? " owned" : ""}`;
+      button.dataset.skinId = id;
+      button.disabled = selected || (!owned && save.data.credits < skin.price);
+      button.textContent = selected ? "SELECTED" : owned ? "USE" : `C ${skin.price}`;
+      copy.appendChild(button);
+
+      card.append(art, copy);
+      ui.skinGrid.appendChild(card);
+    });
+  }
+
+  function useOrBuySkin(id) {
+    const skin = CELL_SKINS[id];
+    if (!skin) return;
+    const owned = save.data.ownedSkins.includes(id);
+    if (!owned && !save.buySkin(id)) return;
+    save.data.selectedSkin = id;
+    save.persist();
+    applySkin();
+    refreshSkinShop();
+    playSound(owned ? "select" : "buy");
+    if (!owned) showToast(`<b>${skin.name}</b> unlocked`);
+  }
+
+  function applySkin() {
+    document.body.dataset.cellSkin = CELL_SKINS[save.data.selectedSkin] ? save.data.selectedSkin : "paper";
+  }
+
+  function refreshStats() {
+    const stats = save.data.stats;
+    const average = stats.completed ? Math.round(stats.totalTime / stats.completed) : 0;
+    const values = [
+      ["Started", stats.started],
+      ["Completed", stats.completed],
+      ["Failed", stats.failed],
+      ["Perfect", stats.perfect],
+      ["Hints used", stats.hintsUsed],
+      ["Average time", average ? formatTime(average) : "—"],
+      ["Credits earned", stats.creditsEarned],
+      ["Cell skins", `${save.data.ownedSkins.length}/${Object.keys(CELL_SKINS).length}`],
+      ["Easy best", stats.bestTimes.easy ? formatTime(stats.bestTimes.easy) : "—"],
+      ["Medium best", stats.bestTimes.medium ? formatTime(stats.bestTimes.medium) : "—"],
+      ["Hard best", stats.bestTimes.hard ? formatTime(stats.bestTimes.hard) : "—"],
+      ["Expert best", stats.bestTimes.expert ? formatTime(stats.bestTimes.expert) : "—"]
+    ];
+    ui.statsGrid.innerHTML = values.map(([label, value]) => {
+      const display = typeof value === "number" ? value.toLocaleString("en-US") : value;
+      return `<div class="stat-card"><span>${label}</span><strong>${display}</strong></div>`;
+    }).join("");
+  }
+
+  function refreshCreditLabels(data) {
+    if (!data || typeof document === "undefined") return;
+    document.querySelectorAll("[data-credits]").forEach(node => {
+      node.textContent = data.credits.toLocaleString("en-US");
+    });
+  }
+
+  /* ---------- Dialogs ---------- */
+
+  function askConfirmation(title, copy, action) {
+    resumeAfterConfirm = Boolean(state && !state.paused && !state.over && ui.gameScreen.classList.contains("active"));
+    if (resumeAfterConfirm) stopTimer();
+    confirmAction = action;
+    ui.confirmTitle.textContent = title;
+    ui.confirmCopy.textContent = copy;
+    ui.confirmModal.classList.remove("closed");
+  }
+
+  function closeModals() {
+    ui.resultModal.classList.add("closed");
+    ui.confirmModal.classList.add("closed");
+  }
+
+  function cancelConfirmation() {
+    confirmAction = null;
+    ui.confirmModal.classList.add("closed");
+    if (resumeAfterConfirm) startTimer();
+    resumeAfterConfirm = false;
+  }
+
+  function acceptConfirmation() {
+    const action = confirmAction;
+    confirmAction = null;
+    resumeAfterConfirm = false;
+    ui.confirmModal.classList.add("closed");
+    action?.();
+  }
+
+  function showToast(html) {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = html;
+    ui.toastStack.appendChild(toast);
+    window.setTimeout(() => toast.remove(), 2800);
+  }
+
+  /* ---------- Offline sound ---------- */
+
+  function getAudioContext() {
+    if (!audioContext) {
+      const AudioConstructor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioConstructor) return null;
+      audioContext = new AudioConstructor();
+    }
+    if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+    return audioContext;
+  }
+
+  function playSound(type) {
+    if (!save.data.sound) return;
+    const audio = getAudioContext();
+    if (!audio) return;
+    const patterns = {
+      select: [[280,.025,0]],
+      note: [[360,.025,0]],
+      place: [[310,.035,0],[450,.035,.045]],
+      erase: [[210,.035,0]],
+      undo: [[270,.035,0],[220,.035,.04]],
+      hint: [[430,.045,0],[630,.07,.055]],
+      error: [[130,.07,0],[105,.09,.06]],
+      pause: [[250,.04,0],[180,.05,.045]],
+      start: [[260,.04,0],[390,.05,.05],[520,.07,.11]],
+      buy: [[350,.04,0],[530,.05,.05],[730,.09,.11]],
+      win: [[390,.06,0],[520,.07,.07],[660,.08,.15],[790,.13,.24]],
+      lose: [[190,.08,0],[145,.1,.08],[105,.14,.18]]
+    };
+    const start = audio.currentTime;
+    (patterns[type] || patterns.select).forEach(([frequency, duration, delay]) => {
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = type === "error" || type === "lose" ? "triangle" : "sine";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(.0001, start + delay);
+      gain.gain.exponentialRampToValueAtTime(.04, start + delay + .008);
+      gain.gain.exponentialRampToValueAtTime(.0001, start + delay + duration + .05);
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start(start + delay);
+      oscillator.stop(start + delay + duration + .07);
+    });
+  }
+
+  /* ---------- Multi-mode puzzle generators ---------- */
+
+  const KAKURO_BLOCKS = {
+    "2x2": [
+      [3,7,8,9], [5,9,1,4], [2,1,5,3], [1,6,2,9],
+      [9,5,7,1], [4,8,3,1], [1,2,8,9], [5,7,8,9]
+    ],
+    "2x3": [
+      [3,1,2,9,3,4], [9,3,1,7,5,3], [9,3,5,8,1,2], [3,4,2,2,8,1],
+      [2,9,6,3,7,1], [9,8,5,4,6,1], [5,9,7,2,6,1], [6,9,8,4,7,5]
+    ],
+    "3x3": [
+      [6,8,9,1,6,3,2,9,1], [1,3,6,4,6,8,2,4,9], [9,2,6,2,1,8,7,4,9],
+      [9,3,7,2,1,4,8,6,9], [8,3,9,9,7,6,6,1,3]
+    ]
+  };
+
+  function modeIsSudoku(mode) {
+    return !["kakuro","futoshiki","binary","calcudoku"].includes(mode);
+  }
+
+  function blankArray(length, value = 0) {
+    return Array.from({ length }, () => value);
+  }
+
+  function shuffledDigits(maximum = 9) {
+    return shuffle(Array.from({ length: maximum }, (_, index) => index + 1));
+  }
+
+  function dihedralSource(row, column, size, operation) {
+    switch (operation) {
+      case 1: return [size - 1 - column, row];
+      case 2: return [size - 1 - row, size - 1 - column];
+      case 3: return [column, size - 1 - row];
+      case 4: return [row, size - 1 - column];
+      case 5: return [size - 1 - row, column];
+      case 6: return [column, row];
+      case 7: return [size - 1 - column, size - 1 - row];
+      default: return [row, column];
+    }
+  }
+
+  function transformSquareArray(values, size, operation) {
+    const output = blankArray(size * size);
+    for (let row = 0; row < size; row += 1) {
+      for (let column = 0; column < size; column += 1) {
+        const [sourceRow, sourceColumn] = dihedralSource(row, column, size, operation);
+        output[row * size + column] = values[sourceRow * size + sourceColumn];
+      }
+    }
+    return output;
+  }
+
+  function specialSudokuPuzzle(mode, difficulty) {
+    const source = SPECIAL_SUDOKU[mode];
+    const operation = Math.floor(Math.random() * 8);
+    const digitOrder = shuffledDigits(9);
+    const digitMap = new Map(DIGITS.map((digit, index) => [digit, digitOrder[index]]));
+    const mapDigits = values => values.map(value => value ? digitMap.get(value) : 0);
+    const puzzle = mapDigits(transformSquareArray(stringToBoard(source.puzzles[difficulty]), 9, operation));
+    const solution = mapDigits(transformSquareArray(stringToBoard(source.solution), 9, operation));
+    const regions = source.regions
+      ? transformSquareArray(stringToBoard(source.regions), 9, operation)
+      : blankArray(81, -1);
+    return { puzzle, solution, regions };
+  }
+
+  function standardSudokuPuzzle(difficulty) {
+    /*
+      Keep the solved boards beside their matching templates.  The original
+      classic generator solved a template at run time; that solver is fixed to
+      a 9x9 board and could accidentally inherit the size of the mode the
+      player had just left (for example a 10x10 Takuzu board).  Transforming a
+      known puzzle/solution pair is faster and makes cross-mode switching
+      completely independent from the current game state.
+    */
+    const classicSolutions = {
+      easy: "534678912672195348198342567859761423426853791713924856961537284287419635345286179",
+      medium: "435269781682571493197834562826195347374682915951743628519326874248957136763418259",
+      hard: "462831957795426183381795426173984265659312748248567319926178534834259671517643892",
+      expert: "145327698839654127672918543496185372218473956753296481367542819984761235521839764"
+    };
+    const basePuzzle = stringToBoard(PUZZLE_TEMPLATES[difficulty][0]);
+    const baseSolution = stringToBoard(classicSolutions[difficulty]);
+    const rows = structuralOrder();
+    const columns = structuralOrder();
+    const transpose = Math.random() < .5;
+    const digitOrder = shuffledDigits(9);
+    const digitMap = new Map(DIGITS.map((digit, index) => [digit, digitOrder[index]]));
+    const puzzle = blankArray(81);
+    const solution = blankArray(81);
+
+    for (let row = 0; row < 9; row += 1) {
+      for (let column = 0; column < 9; column += 1) {
+        let sourceRow = rows[row];
+        let sourceColumn = columns[column];
+        if (transpose) [sourceRow, sourceColumn] = [sourceColumn, sourceRow];
+        const sourceIndex = sourceRow * 9 + sourceColumn;
+        const targetIndex = row * 9 + column;
+        puzzle[targetIndex] = basePuzzle[sourceIndex] ? digitMap.get(basePuzzle[sourceIndex]) : 0;
+        solution[targetIndex] = digitMap.get(baseSolution[sourceIndex]);
+      }
+    }
+
+    return {
+      puzzle,
+      solution,
+      regions: blankArray(81, -1)
+    };
+  }
+
+  function orthogonalNeighbours(index, size) {
+    const row = Math.floor(index / size);
+    const column = index % size;
+    const neighbours = [];
+    [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc]) => {
+      const nextRow = row + dr;
+      const nextColumn = column + dc;
+      if (nextRow >= 0 && nextRow < size && nextColumn >= 0 && nextColumn < size) {
+        neighbours.push(nextRow * size + nextColumn);
+      }
+    });
+    return neighbours;
+  }
+
+  function surroundingNeighbours(index, size) {
+    const row = Math.floor(index / size);
+    const column = index % size;
+    const neighbours = [];
+    for (let dr = -1; dr <= 1; dr += 1) {
+      for (let dc = -1; dc <= 1; dc += 1) {
+        if (!dr && !dc) continue;
+        const nextRow = row + dr;
+        const nextColumn = column + dc;
+        if (nextRow >= 0 && nextRow < size && nextColumn >= 0 && nextColumn < size) {
+          neighbours.push(nextRow * size + nextColumn);
+        }
+      }
+    }
+    return neighbours;
+  }
+
+  function createCages(solution, size, maximumSize, arithmetic = false) {
+    const remaining = new Set(solution.map((_, index) => index));
+    const cages = [];
+
+    while (remaining.size) {
+      const start = shuffle([...remaining])[0];
+      const desired = 1 + Math.floor(Math.random() * maximumSize);
+      const cells = [start];
+      remaining.delete(start);
+
+      while (cells.length < desired) {
+        const candidates = shuffle([...new Set(cells.flatMap(index => orthogonalNeighbours(index, size)))])
+          .filter(index => remaining.has(index));
+        if (!candidates.length) break;
+        const candidate = candidates.find(index => arithmetic || !cells.some(cell => solution[cell] === solution[index]));
+        if (candidate === undefined) break;
+        cells.push(candidate);
+        remaining.delete(candidate);
+      }
+
+      if (arithmetic) cages.push(calcudokuCage(cells, solution));
+      else {
+        const total = cells.reduce((sum, index) => sum + solution[index], 0);
+        cages.push({ cells, target: total, operation: "+", label: String(total) });
+      }
+    }
+    return cages;
+  }
+
+  function calcudokuCage(cells, solution) {
+    const values = cells.map(index => solution[index]);
+    if (cells.length === 1) {
+      return { cells, target: values[0], operation: "=", label: String(values[0]) };
+    }
+
+    if (cells.length === 2) {
+      const high = Math.max(...values);
+      const low = Math.min(...values);
+      const possibilities = ["+","×","−"];
+      if (high % low === 0) possibilities.push("÷");
+      const operation = possibilities[Math.floor(Math.random() * possibilities.length)];
+      if (operation === "×") return { cells, target: high * low, operation, label: `${high * low}×` };
+      if (operation === "−") return { cells, target: high - low, operation, label: `${high - low}−` };
+      if (operation === "÷") return { cells, target: high / low, operation, label: `${high / low}÷` };
+      return { cells, target: high + low, operation, label: `${high + low}+` };
+    }
+
+    const useProduct = cells.length <= 3 && Math.random() < .34;
+    if (useProduct) {
+      const product = values.reduce((total, value) => total * value, 1);
+      return { cells, target: product, operation: "×", label: `${product}×` };
+    }
+    const sum = values.reduce((total, value) => total + value, 0);
+    return { cells, target: sum, operation: "+", label: `${sum}+` };
+  }
+
+  function cageIndexMap(cages, length) {
+    const result = blankArray(length, -1);
+    cages.forEach((cage, cageIndex) => {
+      cage.cells.forEach(index => result[index] = cageIndex);
+    });
+    return result;
+  }
+
+  function makeThermometers(solution, amount) {
+    const paths = [];
+    const starts = shuffle(solution.map((value, index) => ({ value, index })).filter(item => item.value <= 5));
+
+    function search(path, desired) {
+      if (path.length >= desired) return path;
+      const last = path[path.length - 1];
+      const candidates = shuffle(orthogonalNeighbours(last, 9)).filter(index => {
+        return !path.includes(index) && solution[index] > solution[last];
+      });
+      for (const candidate of candidates) {
+        const result = search([...path, candidate], desired);
+        if (result) return result;
+      }
+      return null;
+    }
+
+    for (const start of starts) {
+      if (paths.length >= amount) break;
+      const desired = 3 + Math.floor(Math.random() * 3);
+      const path = search([start.index], desired) || search([start.index], 2);
+      if (path && path.length >= 2 && !paths.some(existing => existing[0] === path[0])) paths.push(path);
+    }
+    return paths;
+  }
+
+  function makeArrows(solution, amount) {
+    const arrows = [];
+    const circles = shuffle(solution.map((value, index) => ({ value, index })).filter(item => item.value >= 3));
+
+    function search(circle, path, target, maximumLength) {
+      const total = path.reduce((sum, index) => sum + solution[index], 0);
+      if (path.length >= 2 && total === target) return path;
+      if (total >= target || path.length >= maximumLength) return null;
+      const anchor = path.length ? path[path.length - 1] : circle;
+      for (const next of shuffle(surroundingNeighbours(anchor, 9))) {
+        if (next === circle || path.includes(next)) continue;
+        const result = search(circle, [...path, next], target, maximumLength);
+        if (result) return result;
+      }
+      return null;
+    }
+
+    for (const circle of circles) {
+      if (arrows.length >= amount) break;
+      const path = search(circle.index, [], circle.value, 4);
+      if (path && !arrows.some(arrow => arrow.circle === circle.index)) arrows.push({ circle: circle.index, path });
+    }
+    return arrows;
+  }
+
+  function sandwichTotal(line) {
+    const first = line.indexOf(1);
+    const ninth = line.indexOf(9);
+    const start = Math.min(first, ninth) + 1;
+    const end = Math.max(first, ninth);
+    return line.slice(start, end).reduce((sum, number) => sum + number, 0);
+  }
+
+  function makeSandwichClues(solution) {
+    const rows = [];
+    const columns = [];
+    for (let index = 0; index < 9; index += 1) {
+      rows.push(sandwichTotal(solution.slice(index * 9, index * 9 + 9)));
+      columns.push(sandwichTotal(Array.from({ length: 9 }, (_, row) => solution[row * 9 + index])));
+    }
+    return { rows, columns };
+  }
+
+  function makeConsecutiveLinks(solution) {
+    const links = [];
+    for (let row = 0; row < 9; row += 1) {
+      for (let column = 0; column < 9; column += 1) {
+        const index = row * 9 + column;
+        if (column < 8 && Math.abs(solution[index] - solution[index + 1]) === 1) links.push({ index, side: "right" });
+        if (row < 8 && Math.abs(solution[index] - solution[index + 9]) === 1) links.push({ index, side: "bottom" });
+      }
+    }
+    return links;
+  }
+
+  function generateSudokuMode(mode, difficulty) {
+    const source = SPECIAL_SUDOKU[mode]
+      ? specialSudokuPuzzle(mode, difficulty)
+      : standardSudokuPuzzle(difficulty);
+    const meta = {};
+
+    if (mode === "killer") {
+      meta.cages = createCages(source.solution, 9, difficulty === "easy" ? 3 : 4, false);
+      meta.cageOf = cageIndexMap(meta.cages, 81);
+    }
+    if (mode === "thermo") meta.thermos = makeThermometers(source.solution, difficulty === "expert" ? 7 : 5);
+    if (mode === "arrow") meta.arrows = makeArrows(source.solution, difficulty === "expert" ? 7 : 5);
+    if (mode === "parity") {
+      const amount = { easy: 34, medium: 28, hard: 22, expert: 18 }[difficulty];
+      meta.parity = {};
+      shuffle(Array.from({ length: 81 }, (_, index) => index)).slice(0, amount).forEach(index => {
+        meta.parity[index] = source.solution[index] % 2 ? "odd" : "even";
+      });
+    }
+    if (mode === "sandwich") meta.sandwich = makeSandwichClues(source.solution);
+    if (mode === "consecutive") meta.consecutive = makeConsecutiveLinks(source.solution);
+
+    return {
+      mode,
+      size: 9,
+      maxSymbol: 9,
+      puzzle: source.puzzle,
+      solution: source.solution,
+      regions: source.regions,
+      cellTypes: blankArray(81, "play"),
+      meta
+    };
+  }
+
+  function latinSolution(size) {
+    const digits = shuffledDigits(size);
+    const rows = shuffle(Array.from({ length: size }, (_, index) => index));
+    const columns = shuffle(Array.from({ length: size }, (_, index) => index));
+    const solution = blankArray(size * size);
+    for (let row = 0; row < size; row += 1) {
+      for (let column = 0; column < size; column += 1) {
+        solution[row * size + column] = digits[(rows[row] + columns[column]) % size];
+      }
+    }
+    return solution;
+  }
+
+  function revealFromSolution(solution, amount, playable = null) {
+    const puzzle = blankArray(solution.length);
+    const indices = shuffle(solution.map((_, index) => index).filter(index => !playable || playable[index]));
+    indices.slice(0, Math.min(amount, indices.length)).forEach(index => puzzle[index] = solution[index]);
+    return puzzle;
+  }
+
+  function countFutoshikiSolutions(puzzle, size, inequalities, limit = 2) {
+    const board = puzzle.slice();
+    const related = Array.from({ length: board.length }, () => []);
+    inequalities.forEach(rule => {
+      related[rule.a].push(rule);
+      related[rule.b].push(rule);
+    });
+    let count = 0;
+
+    function fits(index, value) {
+      const row = Math.floor(index / size);
+      const column = index % size;
+      for (let offset = 0; offset < size; offset += 1) {
+        if (board[row * size + offset] === value || board[offset * size + column] === value) return false;
+      }
+      for (const rule of related[index]) {
+        const first = rule.a === index ? value : board[rule.a];
+        const second = rule.b === index ? value : board[rule.b];
+        if (!first || !second) continue;
+        if (rule.sign === "<" ? first >= second : first <= second) return false;
+      }
+      return true;
+    }
+
+    function search() {
+      if (count >= limit) return;
+      let bestIndex = -1;
+      let bestOptions = null;
+      for (let index = 0; index < board.length; index += 1) {
+        if (board[index]) continue;
+        const options = [];
+        for (let value = 1; value <= size; value += 1) if (fits(index, value)) options.push(value);
+        if (!options.length) return;
+        if (!bestOptions || options.length < bestOptions.length) {
+          bestIndex = index;
+          bestOptions = options;
+          if (options.length === 1) break;
+        }
+      }
+      if (bestIndex < 0) {
+        count += 1;
+        return;
+      }
+      for (const value of bestOptions) {
+        board[bestIndex] = value;
+        search();
+        board[bestIndex] = 0;
+        if (count >= limit) return;
+      }
+    }
+
+    search();
+    return count;
+  }
+
+  function generateFutoshiki(difficulty) {
+    const size = { easy: 4, medium: 5, hard: 6, expert: 7 }[difficulty];
+    const solution = latinSolution(size);
+    const clueCount = { easy: 7, medium: 8, hard: 9, expert: 10 }[difficulty];
+    const all = [];
+    for (let row = 0; row < size; row += 1) {
+      for (let column = 0; column < size; column += 1) {
+        const index = row * size + column;
+        if (column < size - 1) all.push({ a: index, b: index + 1, side: "right", sign: solution[index] < solution[index + 1] ? "<" : ">" });
+        if (row < size - 1) all.push({ a: index, b: index + size, side: "bottom", sign: solution[index] < solution[index + size] ? "<" : ">" });
+      }
+    }
+    const ratio = { easy: .78, medium: .62, hard: .48, expert: .38 }[difficulty];
+    const inequalities = shuffle(all).slice(0, Math.round(all.length * ratio));
+    const puzzle = solution.slice();
+    for (const index of shuffle(Array.from({ length: puzzle.length }, (_, item) => item))) {
+      if (puzzle.filter(Boolean).length <= clueCount) break;
+      const value = puzzle[index];
+      puzzle[index] = 0;
+      if (countFutoshikiSolutions(puzzle, size, inequalities, 2) !== 1) puzzle[index] = value;
+    }
+    return {
+      mode: "futoshiki",
+      size,
+      maxSymbol: size,
+      puzzle,
+      solution,
+      regions: blankArray(size * size, -1),
+      cellTypes: blankArray(size * size, "play"),
+      meta: { inequalities }
+    };
+  }
+
+  function validBinaryRows(size) {
+    const rows = [];
+    const maximum = 2 ** size;
+    for (let mask = 0; mask < maximum; mask += 1) {
+      const row = Array.from({ length: size }, (_, index) => ((mask >> index) & 1) + 1);
+      if (row.filter(value => value === 1).length !== size / 2) continue;
+      if (row.some((value, index) => index >= 2 && value === row[index - 1] && value === row[index - 2])) continue;
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function generateBinarySolution(size) {
+    const candidates = shuffle(validBinaryRows(size));
+    const rows = [];
+
+    function canAdd(candidate) {
+      if (rows.some(row => row.every((value, index) => value === candidate[index]))) return false;
+      for (let column = 0; column < size; column += 1) {
+        const values = [...rows.map(row => row[column]), candidate[column]];
+        if (values.filter(value => value === 1).length > size / 2) return false;
+        if (values.filter(value => value === 2).length > size / 2) return false;
+        const length = values.length;
+        if (length >= 3 && values[length - 1] === values[length - 2] && values[length - 1] === values[length - 3]) return false;
+      }
+      return true;
+    }
+
+    function search() {
+      if (rows.length === size) {
+        const columns = Array.from({ length: size }, (_, column) => rows.map(row => row[column]).join(""));
+        return new Set(columns).size === size;
+      }
+      for (const candidate of shuffle(candidates)) {
+        if (!canAdd(candidate)) continue;
+        rows.push(candidate);
+        if (search()) return true;
+        rows.pop();
+      }
+      return false;
+    }
+
+    if (!search()) throw new Error("Could not build a binary puzzle");
+    return rows.flat();
+  }
+
+  function binaryPartialValid(board, size) {
+    const lines = [];
+    for (let index = 0; index < size; index += 1) {
+      lines.push(board.slice(index * size, index * size + size));
+      lines.push(Array.from({ length: size }, (_, row) => board[row * size + index]));
+    }
+    for (const line of lines) {
+      if (line.filter(value => value === 1).length > size / 2 || line.filter(value => value === 2).length > size / 2) return false;
+      for (let index = 2; index < size; index += 1) {
+        if (line[index] && line[index] === line[index - 1] && line[index] === line[index - 2]) return false;
+      }
+    }
+    const completeRows = [];
+    const completeColumns = [];
+    for (let index = 0; index < size; index += 1) {
+      const row = board.slice(index * size, index * size + size);
+      const column = Array.from({ length: size }, (_, cursor) => board[cursor * size + index]);
+      if (row.every(Boolean)) completeRows.push(row.join(""));
+      if (column.every(Boolean)) completeColumns.push(column.join(""));
+    }
+    return new Set(completeRows).size === completeRows.length && new Set(completeColumns).size === completeColumns.length;
+  }
+
+  function countBinarySolutions(puzzle, size, limit = 2) {
+    const board = puzzle.slice();
+    let count = 0;
+    function search() {
+      if (count >= limit) return;
+      const index = board.indexOf(0);
+      if (index < 0) {
+        if (binaryPartialValid(board, size)) count += 1;
+        return;
+      }
+      for (const value of [1,2]) {
+        board[index] = value;
+        if (binaryPartialValid(board, size)) search();
+        board[index] = 0;
+        if (count >= limit) return;
+      }
+    }
+    search();
+    return count;
+  }
+
+  function generateBinary(difficulty) {
+    const size = { easy: 6, medium: 8, hard: 8, expert: 10 }[difficulty];
+    const solution = generateBinarySolution(size);
+    const targetRatio = { easy: .58, medium: .50, hard: .43, expert: .38 }[difficulty];
+    const target = Math.round(solution.length * targetRatio);
+    const puzzle = solution.slice();
+    for (const index of shuffle(Array.from({ length: solution.length }, (_, item) => item))) {
+      if (puzzle.filter(Boolean).length <= target) break;
+      const value = puzzle[index];
+      puzzle[index] = 0;
+      if (countBinarySolutions(puzzle, size) !== 1) puzzle[index] = value;
+    }
+    return {
+      mode: "binary",
+      size,
+      maxSymbol: 2,
+      puzzle,
+      solution,
+      regions: blankArray(size * size, -1),
+      cellTypes: blankArray(size * size, "play"),
+      meta: { binary: true }
+    };
+  }
+
+  function kakuroBlock(height, width) {
+    const key = `${height}x${width}`;
+    if (KAKURO_BLOCKS[key]) return shuffle(KAKURO_BLOCKS[key])[0].slice();
+    if (height === 3 && width === 2) {
+      const original = shuffle(KAKURO_BLOCKS["2x3"])[0];
+      return Array.from({ length: 6 }, (_, index) => {
+        const row = Math.floor(index / 2);
+        const column = index % 2;
+        return original[column * 3 + row];
+      });
+    }
+    return shuffle(KAKURO_BLOCKS["3x3"])[0].slice();
+  }
+
+  function kakuroRuns(solution, cellTypes, size) {
+    const runs = [];
+    const clues = {};
+    const cellRuns = Array.from({ length: size * size }, () => []);
+
+    for (let row = 0; row < size; row += 1) {
+      let column = 0;
+      while (column < size) {
+        if (cellTypes[row * size + column] !== "play") {
+          column += 1;
+          continue;
+        }
+        const cells = [];
+        const startColumn = column;
+        while (column < size && cellTypes[row * size + column] === "play") {
+          cells.push(row * size + column);
+          column += 1;
+        }
+        if (cells.length >= 2) {
+          const target = cells.reduce((sum, index) => sum + solution[index], 0);
+          const runIndex = runs.length;
+          runs.push({ cells, target, direction: "across" });
+          cells.forEach(index => cellRuns[index].push(runIndex));
+          const clueIndex = row * size + startColumn - 1;
+          clues[clueIndex] = { ...(clues[clueIndex] || {}), across: target };
+          cellTypes[clueIndex] = "clue";
+        }
+      }
+    }
+
+    for (let column = 0; column < size; column += 1) {
+      let row = 0;
+      while (row < size) {
+        if (cellTypes[row * size + column] !== "play") {
+          row += 1;
+          continue;
+        }
+        const cells = [];
+        const startRow = row;
+        while (row < size && cellTypes[row * size + column] === "play") {
+          cells.push(row * size + column);
+          row += 1;
+        }
+        if (cells.length >= 2) {
+          const target = cells.reduce((sum, index) => sum + solution[index], 0);
+          const runIndex = runs.length;
+          runs.push({ cells, target, direction: "down" });
+          cells.forEach(index => cellRuns[index].push(runIndex));
+          const clueIndex = (startRow - 1) * size + column;
+          clues[clueIndex] = { ...(clues[clueIndex] || {}), down: target };
+          cellTypes[clueIndex] = "clue";
+        }
+      }
+    }
+    return { runs, clues, cellRuns };
+  }
+
+  function generateKakuro(difficulty) {
+    const layout = {
+      easy: { height: 2, width: 2, groups: 2, size: 7 },
+      medium: { height: 2, width: 3, groups: 2, size: 9 },
+      hard: { height: 3, width: 2, groups: 2, size: 9 },
+      expert: { height: 3, width: 3, groups: 2, size: 9 }
+    }[difficulty];
+    const { height, width, groups, size } = layout;
+    const solution = blankArray(size * size);
+    const cellTypes = blankArray(size * size, "block");
+
+    for (let groupRow = 0; groupRow < groups; groupRow += 1) {
+      for (let groupColumn = 0; groupColumn < groups; groupColumn += 1) {
+        const block = kakuroBlock(height, width);
+        const startRow = 1 + groupRow * (height + 1);
+        const startColumn = 1 + groupColumn * (width + 1);
+        for (let row = 0; row < height; row += 1) {
+          for (let column = 0; column < width; column += 1) {
+            const index = (startRow + row) * size + startColumn + column;
+            solution[index] = block[row * width + column];
+            cellTypes[index] = "play";
+          }
+        }
+      }
+    }
+
+    const meta = kakuroRuns(solution, cellTypes, size);
+    return {
+      mode: "kakuro",
+      size,
+      maxSymbol: 9,
+      puzzle: blankArray(size * size),
+      solution,
+      regions: blankArray(size * size, -1),
+      cellTypes,
+      meta
+    };
+  }
+
+  function connectedCellGroup(cells, size) {
+    if (cells.length < 2) return true;
+    const allowed = new Set(cells);
+    const reached = new Set([cells[0]]);
+    const queue = [cells[0]];
+    while (queue.length) {
+      const current = queue.shift();
+      orthogonalNeighbours(current, size).forEach(next => {
+        if (allowed.has(next) && !reached.has(next)) {
+          reached.add(next);
+          queue.push(next);
+        }
+      });
+    }
+    return reached.size === cells.length;
+  }
+
+  function calcudokuCageAllows(cage, board, size) {
+    const values = cage.cells.map(index => board[index]);
+    const filled = values.filter(Boolean);
+    const missing = values.length - filled.length;
+
+    if (cage.operation === "=") return !filled.length || filled[0] === cage.target;
+    if (!missing) {
+      if (cage.operation === "+") return filled.reduce((total, value) => total + value, 0) === cage.target;
+      if (cage.operation === "×") return filled.reduce((total, value) => total * value, 1) === cage.target;
+      if (cage.operation === "−") return Math.abs(filled[0] - filled[1]) === cage.target;
+      if (cage.operation === "÷") return Math.max(...filled) / Math.min(...filled) === cage.target;
+    }
+
+    if (cage.operation === "+") {
+      const total = filled.reduce((sum, value) => sum + value, 0);
+      return total + missing <= cage.target && total + missing * size >= cage.target;
+    }
+    if (cage.operation === "×") {
+      const product = filled.reduce((total, value) => total * value, 1);
+      return product <= cage.target && cage.target % product === 0 && product * (size ** missing) >= cage.target;
+    }
+    if (filled.length === 1) {
+      return Array.from({ length: size }, (_, index) => index + 1).some(other => {
+        if (cage.operation === "−") return Math.abs(filled[0] - other) === cage.target;
+        return Math.max(filled[0], other) / Math.min(filled[0], other) === cage.target;
+      });
+    }
+    return true;
+  }
+
+  function countCalcudokuSolutions(puzzle, size, cages, limit = 2) {
+    const board = puzzle.slice();
+    const cageOf = cageIndexMap(cages, board.length);
+    let count = 0;
+
+    function fits(index, value) {
+      const row = Math.floor(index / size);
+      const column = index % size;
+      for (let offset = 0; offset < size; offset += 1) {
+        if (board[row * size + offset] === value || board[offset * size + column] === value) return false;
+      }
+      board[index] = value;
+      const allowed = calcudokuCageAllows(cages[cageOf[index]], board, size);
+      board[index] = 0;
+      return allowed;
+    }
+
+    function search() {
+      if (count >= limit) return;
+      let bestIndex = -1;
+      let bestOptions = null;
+      for (let index = 0; index < board.length; index += 1) {
+        if (board[index]) continue;
+        const options = [];
+        for (let value = 1; value <= size; value += 1) if (fits(index, value)) options.push(value);
+        if (!options.length) return;
+        if (!bestOptions || options.length < bestOptions.length) {
+          bestIndex = index;
+          bestOptions = options;
+          if (options.length === 1) break;
+        }
+      }
+      if (bestIndex < 0) {
+        count += 1;
+        return;
+      }
+      for (const value of bestOptions) {
+        board[bestIndex] = value;
+        search();
+        board[bestIndex] = 0;
+        if (count >= limit) return;
+      }
+    }
+
+    search();
+    return count;
+  }
+
+  function generateCalcudoku(difficulty) {
+    const size = { easy: 4, medium: 5, hard: 6, expert: 6 }[difficulty];
+    const solution = latinSolution(size);
+    const maximum = { easy: 2, medium: 3, hard: 4, expert: 4 }[difficulty];
+    const cages = createCages(solution, size, maximum, true);
+
+    while (countCalcudokuSolutions(blankArray(size * size), size, cages, 2) !== 1) {
+      const splittable = cages.filter(cage => cage.cells.length > 1).sort((first, second) => second.cells.length - first.cells.length);
+      if (!splittable.length) break;
+      const cage = splittable[0];
+      const removable = shuffle(cage.cells).find(index => connectedCellGroup(cage.cells.filter(cell => cell !== index), size));
+      const separated = removable === undefined ? cage.cells[cage.cells.length - 1] : removable;
+      const remainder = cage.cells.filter(index => index !== separated);
+      const position = cages.indexOf(cage);
+      cages.splice(position, 1, calcudokuCage(remainder, solution), calcudokuCage([separated], solution));
+    }
+
+    return {
+      mode: "calcudoku",
+      size,
+      maxSymbol: size,
+      puzzle: blankArray(size * size),
+      solution,
+      regions: blankArray(size * size, -1),
+      cellTypes: blankArray(size * size, "play"),
+      meta: { cages, cageOf: cageIndexMap(cages, size * size) }
+    };
+  }
+
+  function generateModePuzzle(mode, difficulty) {
+    if (modeIsSudoku(mode)) return generateSudokuMode(mode, difficulty);
+    if (mode === "kakuro") return generateKakuro(difficulty);
+    if (mode === "futoshiki") return generateFutoshiki(difficulty);
+    if (mode === "binary") return generateBinary(difficulty);
+    return generateCalcudoku(difficulty);
+  }
+
+  /* ---------- Multi-mode game overrides ---------- */
+
+  function freshState(difficulty, mode = selectedMode) {
+    const generated = generateModePuzzle(mode, difficulty);
+    const length = generated.size * generated.size;
+    return {
+      ...generated,
+      difficulty,
+      values: generated.puzzle.slice(),
+      notes: Array.from({ length }, () => []),
+      hinted: blankArray(length, false),
+      selected: generated.puzzle.findIndex((value, index) => !value && generated.cellTypes[index] === "play"),
+      mistakes: 0,
+      hints: 0,
+      elapsed: 0,
+      seed: `${mode}-${difficulty}-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+      paused: false,
+      over: false,
+      history: []
+    };
+  }
+
+  function newPuzzle(difficulty = selectedDifficulty, mode = selectedMode) {
+    stopTimer();
+    selectedDifficulty = DIFFICULTIES[difficulty] ? difficulty : "medium";
+    selectedMode = MODES[mode] && save.data.unlockedModes.includes(mode) ? mode : "classic";
+    save.update({ selectedDifficulty, selectedMode });
+    state = freshState(selectedDifficulty, selectedMode);
+    notesMode = false;
+    save.mutate(data => data.stats.started += 1);
+    saveActiveGame();
+    showGame();
+    playSound("start");
+  }
+
+  function resumeSavedGame() {
+    const stored = save.sanitizeGame(save.data.activeGame);
+    if (!stored) {
+      save.update({ activeGame: null });
+      refreshHome();
+      return;
+    }
+    stopTimer();
+    state = {
+      ...stored,
+      puzzle: stored.puzzle.slice(),
+      solution: stored.solution.slice(),
+      values: stored.values.slice(),
+      notes: stored.notes.map(entry => entry.slice()),
+      hinted: stored.hinted.slice(),
+      cellTypes: stored.cellTypes.slice(),
+      regions: stored.regions.slice(),
+      paused: false,
+      over: false,
+      history: []
+    };
+    selectedMode = state.mode;
+    selectedDifficulty = state.difficulty;
+    notesMode = false;
+    showGame();
+  }
+
+  function serializeGame() {
+    if (!state || state.over) return null;
+    return {
+      mode: state.mode,
+      difficulty: state.difficulty,
+      size: state.size,
+      maxSymbol: state.maxSymbol,
+      puzzle: state.puzzle.slice(),
+      solution: state.solution.slice(),
+      values: state.values.slice(),
+      notes: state.notes.map(entry => entry.slice()),
+      hinted: state.hinted.slice(),
+      cellTypes: state.cellTypes.slice(),
+      regions: state.regions.slice(),
+      meta: state.meta,
+      selected: state.selected,
+      mistakes: state.mistakes,
+      hints: state.hints,
+      elapsed: state.elapsed,
+      seed: state.seed
+    };
+  }
+
+  function showGame() {
+    closeModals();
+    showOnlyScreen(null);
+    ui.gameScreen.classList.add("active");
+    applySkin();
+    applyModeLayout();
+    ui.pauseLayer.classList.add("closed");
+    renderNumberPad();
+    renderEverything();
+    startTimer();
+  }
+
+  function applyModeLayout() {
+    if (!state) return;
+    ui.grid.style.setProperty("--grid-size", state.size);
+    ui.boardShell.dataset.mode = state.mode;
+    ui.boardShell.classList.toggle("sandwich-shell", state.mode === "sandwich");
+  }
+
+  function displaySymbol(value) {
+    if (!value) return "";
+    return state?.mode === "binary" ? String(value - 1) : String(value);
+  }
+
+  function selectCell(index) {
+    if (!state || state.paused || state.over || !Number.isInteger(index)) return;
+    if (index < 0 || index >= state.values.length || state.cellTypes[index] !== "play") return;
+    state.selected = index;
+    renderBoard();
+    playSound("select");
+  }
+
+  function renderNumberPad() {
+    if (!state) return;
+    ui.numberPad.replaceChildren();
+    const values = state.mode === "binary" ? [1,2] : Array.from({ length: state.maxSymbol }, (_, index) => index + 1);
+    ui.numberPad.dataset.count = String(values.length);
+    ui.numberPad.style.setProperty("--pad-count", values.length);
+    values.forEach(value => {
+      const button = document.createElement("button");
+      button.className = "number-btn";
+      button.dataset.number = String(value);
+      button.textContent = displaySymbol(value);
+      ui.numberPad.appendChild(button);
+    });
+  }
+
+  function rowOf(index) {
+    return Math.floor(index / (state?.size || 9));
+  }
+
+  function colOf(index) {
+    return index % (state?.size || 9);
+  }
+
+  function boxOf(index) {
+    return Math.floor(rowOf(index) / 3) * 3 + Math.floor(colOf(index) / 3);
+  }
+
+  function knightRelated(first, second, size) {
+    const rowDifference = Math.abs(Math.floor(first / size) - Math.floor(second / size));
+    const columnDifference = Math.abs(first % size - second % size);
+    return (rowDifference === 1 && columnDifference === 2) || (rowDifference === 2 && columnDifference === 1);
+  }
+
+  function gridPeers(first, second) {
+    if (!state || first === second) return false;
+    const sameRow = rowOf(first) === rowOf(second);
+    const sameColumn = colOf(first) === colOf(second);
+    if (state.mode === "kakuro") {
+      return state.meta.cellRuns?.[first]?.some(run => state.meta.cellRuns[second]?.includes(run)) || false;
+    }
+    if (["futoshiki","binary","calcudoku"].includes(state.mode)) return sameRow || sameColumn;
+    if (state.mode === "irregular") return sameRow || sameColumn || state.regions[first] === state.regions[second];
+    let related = sameRow || sameColumn || boxOf(first) === boxOf(second);
+    if (state.mode === "diagonal") {
+      const firstMain = rowOf(first) === colOf(first);
+      const secondMain = rowOf(second) === colOf(second);
+      const firstOther = rowOf(first) + colOf(first) === 8;
+      const secondOther = rowOf(second) + colOf(second) === 8;
+      related ||= (firstMain && secondMain) || (firstOther && secondOther);
+    }
+    if (state.mode === "antiknight") related ||= knightRelated(first, second, 9);
+    if (state.mode === "hyper") {
+      [[1,1],[1,5],[5,1],[5,5]].forEach(([startRow,startColumn]) => {
+        const inFirst = rowOf(first) >= startRow && rowOf(first) < startRow + 3 && colOf(first) >= startColumn && colOf(first) < startColumn + 3;
+        const inSecond = rowOf(second) >= startRow && rowOf(second) < startRow + 3 && colOf(second) >= startColumn && colOf(second) < startColumn + 3;
+        if (inFirst && inSecond) related = true;
+      });
+    }
+    return related;
+  }
+
+  function removePeerNotes(index, number) {
+    for (let cursor = 0; cursor < state.values.length; cursor += 1) {
+      if (gridPeers(index, cursor)) state.notes[cursor] = state.notes[cursor].filter(note => note !== number);
+    }
+  }
+
+  function inputNumber(number) {
+    if (!state || state.paused || state.over || number < 1 || number > state.maxSymbol) return;
+    const index = state.selected;
+    if (!Number.isInteger(index) || index < 0 || state.cellTypes[index] !== "play" || state.puzzle[index]) {
+      showToast("Select an <b>empty cell</b>");
+      return;
+    }
+    if (notesMode) {
+      if (state.values[index]) return;
+      pushHistory();
+      const notes = new Set(state.notes[index]);
+      if (notes.has(number)) notes.delete(number);
+      else notes.add(number);
+      state.notes[index] = [...notes].sort((a,b) => a - b);
+      renderBoard();
+      saveActiveGame();
+      playSound("note");
+      return;
+    }
+    if (state.values[index] === number) return;
+    pushHistory();
+    state.values[index] = number;
+    state.notes[index] = [];
+    state.hinted[index] = false;
+    popIndex = index;
+    if (number !== state.solution[index]) {
+      state.mistakes += 1;
+      shakeIndex = index;
+      renderEverything();
+      saveActiveGame();
+      playSound("error");
+      window.setTimeout(() => {
+        popIndex = -1;
+        shakeIndex = -1;
+        if (state && !state.over) renderBoard();
+      }, 280);
+      if (state.mistakes >= DIFFICULTIES[state.difficulty].mistakes) failPuzzle();
+      return;
+    }
+    removePeerNotes(index, number);
+    renderEverything();
+    saveActiveGame();
+    playSound("place");
+    window.setTimeout(() => {
+      popIndex = -1;
+      if (state && !state.over) renderBoard();
+    }, 230);
+    if (isPuzzleSolved()) completePuzzle();
+  }
+
+  function eraseSelected() {
+    if (!state || state.paused || state.over) return;
+    const index = state.selected;
+    if (!Number.isInteger(index) || index < 0 || index >= state.values.length) return;
+    if (state.cellTypes[index] !== "play" || state.puzzle[index]) return;
+    if (!state.values[index] && !state.notes[index].length) return;
+    pushHistory();
+    state.values[index] = 0;
+    state.notes[index] = [];
+    state.hinted[index] = false;
+    renderEverything();
+    saveActiveGame();
+    playSound("erase");
+  }
+
+  function chooseHintCell() {
+    let bestIndex = -1;
+    let bestScore = -1;
+    for (let index = 0; index < state.values.length; index += 1) {
+      if (state.cellTypes[index] !== "play" || state.values[index] === state.solution[index]) continue;
+      let solvedPeers = 0;
+      for (let cursor = 0; cursor < state.values.length; cursor += 1) {
+        if (gridPeers(index, cursor) && state.values[cursor] === state.solution[cursor]) solvedPeers += 1;
+      }
+      if (solvedPeers > bestScore) {
+        bestScore = solvedPeers;
+        bestIndex = index;
+      }
+    }
+    return bestIndex;
+  }
+
+  function isPuzzleSolved() {
+    return state.cellTypes.every((type, index) => type !== "play" || state.values[index] === state.solution[index]);
+  }
+
+  function moveSelection(deltaRow, deltaColumn) {
+    if (!state || state.paused || state.over) return;
+    const size = state.size;
+    let row = rowOf(Number.isInteger(state.selected) ? state.selected : 0);
+    let column = colOf(Number.isInteger(state.selected) ? state.selected : 0);
+    for (let attempts = 0; attempts < size * size; attempts += 1) {
+      row = (row + deltaRow + size) % size;
+      column = (column + deltaColumn + size) % size;
+      const index = row * size + column;
+      if (state.cellTypes[index] === "play") {
+        state.selected = index;
+        renderBoard();
+        return;
+      }
+    }
+  }
+
+  function renderEverything() {
+    renderBoard();
+    renderConstraintOverlay();
+    refreshGameStatus();
+    refreshTools();
+  }
+
+  function standardBoxClasses(cell, index) {
+    const row = Math.floor(index / state.size);
+    const column = index % state.size;
+    if (modeIsSudoku(state.mode) && state.mode !== "irregular") {
+      if (column === 2 || column === 5) cell.classList.add("box-right");
+      if (row === 2 || row === 5) cell.classList.add("box-bottom");
+    }
+    if (column === state.size - 1) cell.classList.add("edge-right");
+    if (row === state.size - 1) cell.classList.add("edge-bottom");
+  }
+
+  function irregularClasses(cell, index) {
+    if (state.mode !== "irregular") return;
+    const row = rowOf(index);
+    const column = colOf(index);
+    const region = state.regions[index];
+    if (row === 0 || state.regions[index - state.size] !== region) cell.classList.add("region-top");
+    if (column === 0 || state.regions[index - 1] !== region) cell.classList.add("region-left");
+    if (column === state.size - 1 || state.regions[index + 1] !== region) cell.classList.add("region-right");
+    if (row === state.size - 1 || state.regions[index + state.size] !== region) cell.classList.add("region-bottom");
+  }
+
+  function addCageClasses(cell, index) {
+    const cageOf = state.meta.cageOf;
+    if (!Array.isArray(cageOf) || cageOf[index] < 0) return;
+    const size = state.size;
+    const cageIndex = cageOf[index];
+    const row = Math.floor(index / size);
+    const column = index % size;
+    if (row === 0 || cageOf[index - size] !== cageIndex) cell.classList.add("cage-top");
+    if (column === 0 || cageOf[index - 1] !== cageIndex) cell.classList.add("cage-left");
+    if (column === size - 1 || cageOf[index + 1] !== cageIndex) cell.classList.add("cage-right");
+    if (row === size - 1 || cageOf[index + size] !== cageIndex) cell.classList.add("cage-bottom");
+    const cage = state.meta.cages[cageIndex];
+    if (cage.cells[0] === index) {
+      const label = document.createElement("span");
+      label.className = "cage-label";
+      label.textContent = cage.label;
+      cell.appendChild(label);
+    }
+  }
+
+  function addModeMarks(cell, index) {
+    if (state.mode === "diagonal" && (rowOf(index) === colOf(index) || rowOf(index) + colOf(index) === 8)) {
+      cell.classList.add("diagonal-cell");
+    }
+    if (state.mode === "hyper" && [[1,1],[1,5],[5,1],[5,5]].some(([r,c]) => rowOf(index) >= r && rowOf(index) < r + 3 && colOf(index) >= c && colOf(index) < c + 3)) {
+      cell.classList.add("hyper-cell");
+    }
+    if (state.mode === "parity" && state.meta.parity?.[index]) {
+      const mark = document.createElement("span");
+      mark.className = `constraint-mark parity-${state.meta.parity[index]}`;
+      cell.appendChild(mark);
+    }
+    if (state.mode === "consecutive") {
+      state.meta.consecutive?.filter(link => link.index === index).forEach(link => {
+        const mark = document.createElement("span");
+        mark.className = `constraint-mark consecutive-dot ${link.side}`;
+        cell.appendChild(mark);
+      });
+    }
+    if (state.mode === "futoshiki") {
+      state.meta.inequalities?.filter(item => item.a === index).forEach(item => {
+        const mark = document.createElement("span");
+        mark.className = `constraint-mark inequality-mark ${item.side}`;
+        mark.textContent = item.sign;
+        cell.appendChild(mark);
+      });
+    }
+  }
+
+  function renderBoard() {
+    if (!state) return;
+    ui.grid.replaceChildren();
+    const selectedValue = state.values[state.selected] || 0;
+    for (let index = 0; index < state.values.length; index += 1) {
+      const type = state.cellTypes[index];
+      const cell = document.createElement("button");
+      cell.className = "cell";
+      cell.dataset.index = String(index);
+      standardBoxClasses(cell, index);
+
+      if (type !== "play") {
+        cell.disabled = true;
+        cell.classList.add(type === "clue" ? "clue-cell" : "block-cell");
+        const clue = state.meta.clues?.[index];
+        if (clue?.down !== undefined) {
+          const down = document.createElement("span");
+          down.className = "kakuro-down";
+          down.textContent = String(clue.down);
+          cell.appendChild(down);
+        }
+        if (clue?.across !== undefined) {
+          const across = document.createElement("span");
+          across.className = "kakuro-across";
+          across.textContent = String(clue.across);
+          cell.appendChild(across);
+        }
+        ui.grid.appendChild(cell);
+        continue;
+      }
+
+      const value = state.values[index];
+      cell.setAttribute("role", "gridcell");
+      cell.setAttribute("aria-label", cellLabel(index));
+      if (state.puzzle[index]) cell.classList.add("given");
+      else if (value) cell.classList.add("user");
+      if (index === state.selected) cell.classList.add("selected");
+      else if (gridPeers(index, state.selected)) cell.classList.add("peer");
+      if (selectedValue && value === selectedValue && index !== state.selected) cell.classList.add("same");
+      if (value && value !== state.solution[index]) cell.classList.add("wrong");
+      if (state.hinted[index]) cell.classList.add("hinted");
+      if (index === popIndex) cell.classList.add("pop");
+      if (index === shakeIndex) cell.classList.add("shake");
+      irregularClasses(cell, index);
+      addCageClasses(cell, index);
+      addModeMarks(cell, index);
+
+      if (value) {
+        const valueNode = document.createElement("span");
+        valueNode.className = "value";
+        valueNode.textContent = displaySymbol(value);
+        cell.appendChild(valueNode);
+      } else if (state.notes[index].length) {
+        const noteGrid = document.createElement("span");
+        noteGrid.className = "note-grid";
+        const notes = new Set(state.notes[index]);
+        Array.from({ length: state.maxSymbol }, (_, item) => item + 1).forEach(number => {
+          const note = document.createElement("i");
+          note.textContent = notes.has(number) ? displaySymbol(number) : "";
+          noteGrid.appendChild(note);
+        });
+        cell.appendChild(noteGrid);
+      }
+      ui.grid.appendChild(cell);
+    }
+  }
+
+  function cellCenter(index) {
+    const row = Math.floor(index / state.size);
+    const column = index % state.size;
+    return [((column + .5) / state.size) * 100, ((row + .5) / state.size) * 100];
+  }
+
+  function renderConstraintOverlay() {
+    ui.constraintOverlay.innerHTML = "";
+    ui.edgeOverlay.replaceChildren();
+    if (!state) return;
+    const parts = [];
+    if (state.mode === "thermo") {
+      state.meta.thermos?.forEach(path => {
+        const points = path.map(index => cellCenter(index).join(",")).join(" ");
+        const [x,y] = cellCenter(path[0]);
+        parts.push(`<polyline points="${points}" fill="none" stroke="rgba(104,125,151,.48)" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>`);
+        parts.push(`<circle cx="${x}" cy="${y}" r="2.8" fill="rgba(104,125,151,.62)"/>`);
+      });
+    }
+    if (state.mode === "arrow") {
+      state.meta.arrows?.forEach(arrow => {
+        const all = [arrow.circle, ...arrow.path];
+        const points = all.map(index => cellCenter(index).join(",")).join(" ");
+        const [x,y] = cellCenter(arrow.circle);
+        parts.push(`<polyline points="${points}" fill="none" stroke="rgba(109,78,46,.62)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>`);
+        parts.push(`<circle cx="${x}" cy="${y}" r="3.8" fill="none" stroke="rgba(109,78,46,.68)" stroke-width="1.1"/>`);
+      });
+    }
+    ui.constraintOverlay.innerHTML = parts.join("");
+
+    if (state.mode === "sandwich") {
+      state.meta.sandwich.columns.forEach((total, column) => {
+        const label = document.createElement("span");
+        label.className = "edge-clue column";
+        label.style.left = `${column / 9 * 100}%`;
+        label.textContent = String(total);
+        ui.edgeOverlay.appendChild(label);
+      });
+      state.meta.sandwich.rows.forEach((total, row) => {
+        const label = document.createElement("span");
+        label.className = "edge-clue row";
+        label.style.top = `${row / 9 * 100}%`;
+        label.textContent = String(total);
+        ui.edgeOverlay.appendChild(label);
+      });
+    }
+  }
+
+  function cellLabel(index) {
+    const row = rowOf(index) + 1;
+    const column = colOf(index) + 1;
+    const value = state.values[index];
+    if (value) return `Row ${row}, column ${column}, ${displaySymbol(value)}${state.puzzle[index] ? ", given" : ""}`;
+    if (state.notes[index].length) return `Row ${row}, column ${column}, notes ${state.notes[index].map(displaySymbol).join(", ")}`;
+    return `Row ${row}, column ${column}, empty`;
+  }
+
+  function refreshGameStatus() {
+    if (!state) return;
+    const difficulty = DIFFICULTIES[state.difficulty];
+    const mode = MODES[state.mode];
+    ui.gameModeName.textContent = mode.short.toUpperCase();
+    ui.gameDifficulty.textContent = difficulty.name.toUpperCase();
+    ui.sideMode.textContent = mode.short.toUpperCase();
+    ui.sideDifficulty.textContent = difficulty.name.toUpperCase();
+    ui.gameTime.textContent = formatTime(state.elapsed);
+    ui.gameMistakes.textContent = `${state.mistakes} / ${difficulty.mistakes}`;
+    ui.emptyCount.textContent = String(state.values.filter((value, index) => !value && state.cellTypes[index] === "play").length);
+    ui.hintCount.textContent = String(state.hints);
+    const baseReward = Math.round(difficulty.reward * mode.reward);
+    ui.rewardLine.innerHTML = `Complete this puzzle for <strong>C ${baseReward}</strong>. Clean and fast solves earn more.`;
+    ui.numberPad.querySelectorAll("[data-number]").forEach(button => {
+      const number = Number(button.dataset.number);
+      const maximum = state.mode === "kakuro" ? Infinity : state.size;
+      const count = state.values.filter(value => value === number).length;
+      button.classList.toggle("complete", count >= maximum);
+    });
+  }
+
+
+  function completePuzzle() {
+    if (!state || state.over) return;
+    state.over = true;
+    stopTimer();
+    const reward = calculateReward();
+    const difficulty = state.difficulty;
+    const mode = state.mode;
+    save.mutate(data => {
+      data.credits += reward;
+      data.stats.completed += 1;
+      data.stats.totalTime += state.elapsed;
+      data.stats.hintsUsed += state.hints;
+      data.stats.creditsEarned += reward;
+      data.stats.modeCompletions[mode] = (data.stats.modeCompletions[mode] || 0) + 1;
+      if (state.mistakes === 0) data.stats.perfect += 1;
+      const best = data.stats.bestTimes[difficulty];
+      if (!best || state.elapsed < best) data.stats.bestTimes[difficulty] = state.elapsed;
+      data.activeGame = null;
+    });
+    ui.resultSymbol.textContent = "✓";
+    ui.resultTitle.textContent = "Solved";
+    ui.resultCopy.textContent = `${MODES[mode].name} complete. Every constraint is satisfied.`;
+    ui.resultTime.textContent = formatTime(state.elapsed);
+    ui.resultMistakes.textContent = String(state.mistakes);
+    ui.resultCredits.textContent = `+${reward}`;
+    ui.resultModal.classList.remove("closed");
+    refreshAll();
+    playSound("win");
+  }
+
+  function refreshHome() {
+    selectedMode = MODES[selectedMode] && save.data.unlockedModes.includes(selectedMode) ? selectedMode : save.data.selectedMode;
+    selectedDifficulty = DIFFICULTIES[selectedDifficulty] ? selectedDifficulty : save.data.selectedDifficulty;
+    const mode = MODES[selectedMode];
+    ui.selectedModeIcon.textContent = mode.icon;
+    ui.selectedModeIcon.dataset.iconLength = String(mode.icon.length);
+    ui.selectedModeName.textContent = mode.name.toUpperCase();
+    ui.selectedModeCopy.textContent = mode.copy;
+    ui.difficultyGrid.querySelectorAll("[data-difficulty]").forEach(button => {
+      button.classList.toggle("active", button.dataset.difficulty === selectedDifficulty);
+      const reward = button.querySelector("em");
+      if (reward) reward.textContent = `C ${Math.round(DIFFICULTIES[button.dataset.difficulty].reward * mode.reward)}`;
+    });
+    ui.continueButton.classList.toggle("hidden", !save.data.activeGame);
+  }
+
+  function refreshModeShop() {
+    ui.modeGrid.replaceChildren();
+    Object.entries(MODES).forEach(([id, mode]) => {
+      const owned = save.data.unlockedModes.includes(id);
+      const selected = selectedMode === id;
+      const card = document.createElement("article");
+      card.className = `mode-card${selected ? " selected" : ""}`;
+      card.innerHTML = `<div class="mode-card-head"><span class="mode-card-icon">${mode.icon}</span><h3>${mode.name}</h3></div><p>${mode.copy}</p>`;
+      const button = document.createElement("button");
+      button.className = `shop-btn${owned ? " owned" : ""}`;
+      button.dataset.modeId = id;
+      button.disabled = selected || (!owned && save.data.credits < mode.price);
+      button.textContent = selected ? "SELECTED" : owned ? "USE" : `UNLOCK · C ${mode.price}`;
+      card.appendChild(button);
+      ui.modeGrid.appendChild(card);
+    });
+  }
+
+  function useOrBuyMode(id) {
+    const mode = MODES[id];
+    if (!mode) return;
+    const owned = save.data.unlockedModes.includes(id);
+    if (!owned && !save.buyMode(id)) return;
+    selectedMode = id;
+    save.data.selectedMode = id;
+    save.persist();
+    refreshAll();
+    playSound(owned ? "select" : "buy");
+    if (!owned) showToast(`<b>${mode.name}</b> unlocked`);
+  }
+
+  function refreshRules() {
+    const mode = MODES[selectedMode];
+    ui.rulesModeName.textContent = mode.name;
+    ui.rulesModeIntro.textContent = mode.intro;
+    ui.rulesGrid.innerHTML = mode.rules.map(([title, copy]) => {
+      return `<div class="rule-card"><strong>${title}</strong><span>${copy}</span></div>`;
+    }).join("");
+  }
+
+  function refreshAll() {
+    refreshHome();
+    refreshModeShop();
+    refreshSkinShop();
+    refreshStats();
+    refreshRules();
+    refreshCreditLabels(save.data);
+    applySkin();
+  }
+
+  function refreshStats() {
+    const stats = save.data.stats;
+    const average = stats.completed ? Math.round(stats.totalTime / stats.completed) : 0;
+    const favourite = Object.entries(stats.modeCompletions).sort((a,b) => b[1] - a[1])[0];
+    const values = [
+      ["Started", stats.started], ["Completed", stats.completed], ["Failed", stats.failed], ["Perfect", stats.perfect],
+      ["Hints used", stats.hintsUsed], ["Average time", average ? formatTime(average) : "—"],
+      ["Credits earned", stats.creditsEarned], ["Cell skins", `${save.data.ownedSkins.length}/${Object.keys(CELL_SKINS).length}`],
+      ["Modes unlocked", `${save.data.unlockedModes.length}/${Object.keys(MODES).length}`],
+      ["Favourite mode", favourite && favourite[1] ? MODES[favourite[0]].short : "—"],
+      ["Hard best", stats.bestTimes.hard ? formatTime(stats.bestTimes.hard) : "—"],
+      ["Expert best", stats.bestTimes.expert ? formatTime(stats.bestTimes.expert) : "—"]
+    ];
+    ui.statsGrid.innerHTML = values.map(([label, value]) => `<div class="stat-card"><span>${label}</span><strong>${typeof value === "number" ? value.toLocaleString("en-US") : value}</strong></div>`).join("");
+  }
+
+  /* ---------- Events ---------- */
+
+  document.querySelectorAll("[data-open]").forEach(button => {
+    button.addEventListener("click", () => {
+      openScreen(button.dataset.open);
+      playSound("select");
+    });
+  });
+
+  ui.difficultyGrid.addEventListener("click", event => {
+    const button = event.target.closest("[data-difficulty]");
+    if (!button) return;
+    selectedDifficulty = button.dataset.difficulty;
+    save.update({ selectedDifficulty });
+    refreshHome();
+    playSound("select");
+  });
+
+  document.getElementById("mode-select-button").addEventListener("click", () => {
+    openScreen("modes-screen");
+    playSound("select");
+  });
+
+  ui.modeGrid.addEventListener("click", event => {
+    const button = event.target.closest("[data-mode-id]");
+    if (button && !button.disabled) useOrBuyMode(button.dataset.modeId);
+  });
+
+  document.getElementById("play-button").addEventListener("click", () => {
+    if (save.data.activeGame) {
+      askConfirmation("New puzzle?", "Your saved puzzle will be replaced.", () => newPuzzle(selectedDifficulty, selectedMode));
+    } else {
+      newPuzzle(selectedDifficulty, selectedMode);
+    }
+  });
+
+  ui.continueButton.addEventListener("click", resumeSavedGame);
+
+  ui.skinGrid.addEventListener("click", event => {
+    const button = event.target.closest("[data-skin-id]");
+    if (button && !button.disabled) useOrBuySkin(button.dataset.skinId);
+  });
+
+  ui.grid.addEventListener("click", event => {
+    const cell = event.target.closest(".cell");
+    if (cell) selectCell(Number(cell.dataset.index));
+  });
+
+  ui.numberPad.addEventListener("click", event => {
+    const button = event.target.closest("[data-number]");
+    if (button) inputNumber(Number(button.dataset.number));
+  });
+
+  ui.notesButton.addEventListener("click", toggleNotes);
+  document.getElementById("erase-button").addEventListener("click", eraseSelected);
+  ui.undoButton.addEventListener("click", undoMove);
+  ui.hintButton.addEventListener("click", useHint);
+  ui.pauseButton.addEventListener("click", togglePause);
+  document.getElementById("resume-button").addEventListener("click", resumeGame);
+
+  document.getElementById("new-button").addEventListener("click", () => {
+    askConfirmation("New puzzle?", "Your current puzzle will be replaced.", () => newPuzzle(state?.difficulty || selectedDifficulty, state?.mode || selectedMode));
+  });
+
+  document.getElementById("quit-button").addEventListener("click", leaveForMenu);
+  document.getElementById("game-menu-button").addEventListener("click", leaveForMenu);
+
+  document.getElementById("confirm-no").addEventListener("click", cancelConfirmation);
+  document.getElementById("confirm-yes").addEventListener("click", acceptConfirmation);
+
+  document.getElementById("result-menu").addEventListener("click", leaveForMenu);
+  document.getElementById("result-again").addEventListener("click", () => {
+    const difficulty = state?.difficulty || selectedDifficulty;
+    const mode = state?.mode || selectedMode;
+    newPuzzle(difficulty, mode);
+  });
+
+  document.addEventListener("keydown", event => {
+    if (!state || !ui.gameScreen.classList.contains("active")) return;
+    if (!ui.confirmModal.classList.contains("closed") || !ui.resultModal.classList.contains("closed")) return;
+
+    if (state.mode === "binary" && (event.key === "0" || event.key === "1")) {
+      event.preventDefault();
+      inputNumber(Number(event.key) + 1);
+      return;
+    }
+
+    if (state.mode !== "binary" && event.key >= "1" && event.key <= String(state.maxSymbol)) {
+      event.preventDefault();
+      inputNumber(Number(event.key));
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+    if (key === "arrowup") moveSelection(-1, 0);
+    else if (key === "arrowdown") moveSelection(1, 0);
+    else if (key === "arrowleft") moveSelection(0, -1);
+    else if (key === "arrowright") moveSelection(0, 1);
+    else if (key === "backspace" || key === "delete") eraseSelected();
+    else if (key === "n") toggleNotes();
+    else if (key === "h") useHint();
+    else if (key === "p" || key === "escape") togglePause();
+    else return;
+    event.preventDefault();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state && !state.paused && !state.over && ui.gameScreen.classList.contains("active")) {
+      pauseGame();
+    }
+  });
+
+  /* ---------- Startup ---------- */
+
+  function boot() {
+    ui.heroBoard.innerHTML = "<i></i>".repeat(81);
+    applySkin();
+    refreshAll();
+    openScreen("home-screen");
+  }
+
+  boot();
+  </script>
+</body>
+</html>

@@ -1,0 +1,3925 @@
+<!DOCTYPE html>
+<!--
+  Quick Math Arcade
+  Standalone HTML5 mental-math game.
+  All progress is stored inside ARCADE_GAMES["quick-math"].
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  >
+  <meta name="theme-color" content="#0a1020">
+  <title>Quick Math</title>
+
+  <style>
+    /* ---------- Theme ---------- */
+
+    :root {
+      --background: #0a1020;
+      --background-soft: #10182b;
+      --panel: #172239;
+      --panel-light: #202f4a;
+      --panel-hover: #283b5a;
+      --line: rgba(255, 255, 255, 0.11);
+      --line-strong: rgba(255, 255, 255, 0.2);
+      --text: #f7f8ff;
+      --muted: #99a6bd;
+      --mint: #6ee7b7;
+      --mint-dark: #1f9b75;
+      --orange: #ffb85c;
+      --purple: #a78bfa;
+      --blue: #67c9f3;
+      --red: #ff7189;
+      --shadow: 0 25px 75px rgba(0, 0, 0, 0.43);
+      --radius-large: 25px;
+      --radius: 17px;
+      --radius-small: 11px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--background);
+    }
+
+    body {
+      min-width: 300px;
+      min-height: 100dvh;
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 11% 15%, rgba(103, 201, 243, 0.12), transparent 31%),
+        radial-gradient(circle at 89% 83%, rgba(167, 139, 250, 0.12), transparent 30%),
+        linear-gradient(145deg, #0a1020, #0d1527 55%, #090f1c);
+      color: var(--text);
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    button,
+    input {
+      color: inherit;
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--mint);
+      outline-offset: 3px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .app {
+      min-height: 100dvh;
+    }
+
+    /* ---------- Header ---------- */
+
+    .topbar {
+      position: relative;
+      z-index: 30;
+      width: min(1180px, calc(100% - 36px));
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin: auto;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-button {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 43px;
+      height: 43px;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--mint);
+      border-radius: 13px;
+      background: rgba(110, 231, 183, 0.07);
+      box-shadow: 6px 6px 0 rgba(167, 139, 250, 0.18);
+      color: var(--mint);
+      font: 900 24px Georgia, serif;
+    }
+
+    .brand-mark::after {
+      content: "+";
+      position: absolute;
+      right: -7px;
+      bottom: -8px;
+      width: 19px;
+      height: 19px;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--background);
+      border-radius: 50%;
+      background: var(--orange);
+      color: #182033;
+      font: 950 14px system-ui;
+    }
+
+    .brand-copy {
+      display: grid;
+      text-align: left;
+    }
+
+    .brand-copy strong {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .brand-copy span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+
+    .credit-chip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 98px;
+      padding: 9px 14px;
+      border: 1px solid rgba(255, 184, 92, 0.38);
+      border-radius: 999px;
+      background: rgba(255, 184, 92, 0.08);
+      color: var(--orange);
+      font-weight: 950;
+    }
+
+    .credit-symbol {
+      width: 21px;
+      height: 21px;
+      display: grid;
+      place-items: center;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      font: 900 11px Georgia, serif;
+    }
+
+    /* ---------- Shared layout ---------- */
+
+    .screen {
+      display: none;
+      width: min(1180px, calc(100% - 36px));
+      min-height: calc(100dvh - 72px);
+      margin: auto;
+      padding: 38px 0 56px;
+    }
+
+    .screen.active {
+      display: block;
+      animation: screen-in 180ms ease both;
+    }
+
+    @keyframes screen-in {
+      from {
+        transform: translateY(7px);
+        opacity: 0;
+      }
+    }
+
+    .screen-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 25px;
+      margin-bottom: 27px;
+    }
+
+    .eyebrow,
+    .field-label {
+      margin: 0 0 9px;
+      color: var(--orange);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: 2.1px;
+      text-transform: uppercase;
+    }
+
+    .screen-heading h2 {
+      margin: 0;
+      font: 950 clamp(38px, 5vw, 62px) / 0.95 Georgia, "Times New Roman", serif;
+      letter-spacing: -2.4px;
+    }
+
+    .screen-heading p {
+      max-width: 650px;
+      margin: 13px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-large);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 48%),
+        rgba(23, 34, 57, 0.93);
+      box-shadow: var(--shadow);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .button {
+      min-height: 45px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: var(--panel-light);
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition:
+        transform 130ms ease,
+        border-color 130ms ease,
+        background 130ms ease,
+        opacity 130ms ease;
+    }
+
+    .button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      border-color: rgba(110, 231, 183, 0.58);
+      background: var(--panel-hover);
+    }
+
+    .button.primary {
+      border-color: var(--mint);
+      background: var(--mint);
+      color: #10251e;
+      box-shadow: 0 11px 28px rgba(110, 231, 183, 0.15);
+    }
+
+    .button.orange {
+      border-color: var(--orange);
+      background: var(--orange);
+      color: #282034;
+    }
+
+    .button.ghost {
+      background: transparent;
+    }
+
+    .button.danger {
+      border-color: rgba(255, 113, 137, 0.43);
+      color: #ff9bad;
+    }
+
+    .button:disabled {
+      transform: none;
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ---------- Home ---------- */
+
+    .home-layout {
+      min-height: calc(100dvh - 165px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(350px, 0.92fr);
+      align-items: center;
+      gap: 58px;
+    }
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      padding: 43px 0;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font: 950 clamp(76px, 10vw, 132px) / 0.77 Georgia, "Times New Roman", serif;
+      letter-spacing: -8px;
+      text-shadow: 0 18px 50px rgba(0, 0, 0, 0.37);
+    }
+
+    .hero h1 span {
+      color: var(--mint);
+    }
+
+    .hero-text {
+      max-width: 450px;
+      margin: 27px 0 28px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .hero-equations {
+      position: absolute;
+      z-index: -1;
+      top: 2%;
+      right: -2%;
+      width: 420px;
+      height: 430px;
+      transform: rotate(-7deg);
+      color: rgba(110, 231, 183, 0.18);
+      font: 900 54px Georgia, serif;
+      pointer-events: none;
+    }
+
+    .hero-equations span {
+      position: absolute;
+      padding: 9px 15px;
+      border: 2px solid currentColor;
+      border-radius: 13px;
+    }
+
+    .hero-equations span:nth-child(1) {
+      top: 65px;
+      left: 45px;
+    }
+
+    .hero-equations span:nth-child(2) {
+      top: 185px;
+      left: 165px;
+      color: rgba(167, 139, 250, 0.2);
+    }
+
+    .hero-equations span:nth-child(3) {
+      top: 310px;
+      left: 25px;
+      color: rgba(255, 184, 92, 0.17);
+    }
+
+    .home-panel {
+      overflow: hidden;
+    }
+
+    .home-section {
+      padding: 23px 25px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .home-section:last-child {
+      border-bottom: 0;
+    }
+
+    .difficulty-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .difficulty-button {
+      min-width: 0;
+      padding: 12px 5px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.025);
+      color: var(--muted);
+      cursor: pointer;
+      transition: 130ms ease;
+    }
+
+    .difficulty-button strong,
+    .difficulty-button span {
+      display: block;
+    }
+
+    .difficulty-button strong {
+      overflow: hidden;
+      font-size: 9px;
+      letter-spacing: 0.6px;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+    }
+
+    .difficulty-button span {
+      margin-top: 4px;
+      font: 900 16px Georgia, serif;
+    }
+
+    .difficulty-button:hover,
+    .difficulty-button.active {
+      border-color: var(--mint);
+      background: rgba(110, 231, 183, 0.09);
+      color: var(--mint);
+    }
+
+    .operation-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      min-height: 38px;
+      margin: 11px 0 15px;
+    }
+
+    .operation-pill {
+      min-width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(103, 201, 243, 0.35);
+      border-radius: 11px;
+      background: rgba(103, 201, 243, 0.07);
+      color: var(--blue);
+      font: 900 20px Georgia, serif;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 3px 0;
+    }
+
+    .setting-copy strong,
+    .setting-copy span {
+      display: block;
+    }
+
+    .setting-copy strong {
+      font-size: 12px;
+    }
+
+    .setting-copy span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .switch {
+      position: relative;
+      width: 52px;
+      height: 29px;
+      flex: 0 0 auto;
+      padding: 0;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--background-soft);
+      cursor: pointer;
+      transition: 150ms ease;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 19px;
+      height: 19px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: 170ms ease;
+    }
+
+    .switch.active {
+      border-color: var(--mint);
+      background: rgba(110, 231, 183, 0.12);
+    }
+
+    .switch.active::after {
+      left: 27px;
+      background: var(--mint);
+    }
+
+    .home-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .home-actions .button {
+      width: 100%;
+    }
+
+    .home-actions .button.primary,
+    .home-actions .button.continue {
+      grid-column: 1 / -1;
+    }
+
+    .mini-menu {
+      min-height: 72px;
+      display: grid;
+      align-content: center;
+      gap: 5px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.023);
+      text-align: left;
+      cursor: pointer;
+      transition: 130ms ease;
+    }
+
+    .mini-menu:hover {
+      transform: translateY(-2px);
+      border-color: rgba(110, 231, 183, 0.48);
+      background: rgba(110, 231, 183, 0.055);
+    }
+
+    .mini-menu strong {
+      font-size: 11px;
+    }
+
+    .mini-menu span {
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    /* ---------- Operations and upgrades ---------- */
+
+    .operations-note {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 18px;
+      padding: 14px 17px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(23, 34, 57, 0.78);
+    }
+
+    .operations-note span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .operations-note strong {
+      color: var(--orange);
+    }
+
+    .operation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 13px;
+    }
+
+    .operation-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent),
+        var(--panel);
+      transition:
+        transform 140ms ease,
+        border-color 140ms ease;
+    }
+
+    .operation-card.selected {
+      border-color: rgba(110, 231, 183, 0.62);
+      box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.17);
+    }
+
+    .operation-card.locked {
+      border-color: rgba(167, 139, 250, 0.3);
+    }
+
+    .operation-main {
+      min-height: 142px;
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      gap: 15px;
+      align-items: center;
+      padding: 18px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .operation-card:not(.locked) .operation-main:hover {
+      background: rgba(110, 231, 183, 0.035);
+    }
+
+    .operation-symbol {
+      width: 76px;
+      height: 76px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(103, 201, 243, 0.35);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.09), transparent),
+        rgba(103, 201, 243, 0.07);
+      color: var(--blue);
+      font: 900 38px Georgia, serif;
+    }
+
+    .operation-card.advanced .operation-symbol {
+      border-color: rgba(167, 139, 250, 0.38);
+      background: rgba(167, 139, 250, 0.08);
+      color: var(--purple);
+    }
+
+    .operation-info {
+      min-width: 0;
+    }
+
+    .operation-info h3 {
+      margin: 0;
+      font: 900 21px Georgia, serif;
+    }
+
+    .operation-info p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .operation-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .operation-tag {
+      padding: 5px 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+    }
+
+    .selection-check {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      background: var(--background-soft);
+      color: transparent;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .operation-card.selected .selection-check {
+      border-color: var(--mint);
+      background: var(--mint);
+      color: #10261f;
+    }
+
+    .upgrade-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 11px;
+      align-items: center;
+      padding: 13px 16px;
+      border-top: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .upgrade-copy strong,
+    .upgrade-copy span {
+      display: block;
+    }
+
+    .upgrade-copy strong {
+      font-size: 11px;
+    }
+
+    .upgrade-copy span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .upgrade-button {
+      min-width: 94px;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 184, 92, 0.38);
+      border-radius: 10px;
+      background: rgba(255, 184, 92, 0.08);
+      color: var(--orange);
+      font-size: 9px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .upgrade-button:hover:not(:disabled) {
+      border-color: var(--orange);
+      background: rgba(255, 184, 92, 0.14);
+    }
+
+    .upgrade-button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .unlock-row {
+      padding: 13px 16px 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .unlock-row .button {
+      width: 100%;
+    }
+
+    /* ---------- Rules and statistics ---------- */
+
+    .rules-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(290px, 0.85fr);
+      gap: 18px;
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+    }
+
+    .rule {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 14px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.023);
+    }
+
+    .rule-number {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(110, 231, 183, 0.09);
+      color: var(--mint);
+      font: 900 18px Georgia, serif;
+    }
+
+    .rule h3 {
+      margin: 2px 0 6px;
+      font-size: 13px;
+    }
+
+    .rule p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.58;
+    }
+
+    .reward-table {
+      padding: 23px;
+    }
+
+    .reward-table h3 {
+      margin: 0 0 16px;
+      font: 900 22px Georgia, serif;
+    }
+
+    .reward-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .reward-line:last-child {
+      border-bottom: 0;
+    }
+
+    .reward-line strong {
+      color: var(--orange);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat-card {
+      min-height: 145px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 21px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent),
+        var(--panel);
+    }
+
+    .stat-card span {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .stat-card strong {
+      overflow: hidden;
+      color: var(--mint);
+      font: 900 clamp(29px, 5vw, 43px) Georgia, serif;
+      text-overflow: ellipsis;
+    }
+
+    /* ---------- Game ---------- */
+
+    #game-screen {
+      width: min(1050px, calc(100% - 28px));
+      padding-top: 19px;
+    }
+
+    .game-shell {
+      min-height: calc(100dvh - 112px);
+      display: grid;
+      grid-template-columns: 215px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .game-sidebar {
+      align-self: start;
+      overflow: hidden;
+    }
+
+    .game-name {
+      padding: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .game-name h2 {
+      margin: 0;
+      font: 900 26px Georgia, serif;
+    }
+
+    .game-name p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--line);
+    }
+
+    .hud-cell {
+      min-width: 0;
+      padding: 14px;
+      background: var(--panel);
+    }
+
+    .hud-cell span {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+    }
+
+    .hud-cell strong {
+      display: block;
+      overflow: hidden;
+      font: 900 21px Georgia, serif;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hud-cell.earned strong {
+      color: var(--orange);
+    }
+
+    .lives {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .life-row {
+      display: flex;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .life {
+      width: 18px;
+      height: 18px;
+      transform: rotate(45deg);
+      border-radius: 4px 9px 4px 9px;
+      background: var(--red);
+      transition: 150ms ease;
+    }
+
+    .life.lost {
+      background: rgba(255, 255, 255, 0.08);
+      transform: rotate(45deg) scale(0.75);
+    }
+
+    .game-controls {
+      display: grid;
+      gap: 8px;
+      padding: 16px;
+    }
+
+    .game-controls .button {
+      width: 100%;
+    }
+
+    .game-main {
+      position: relative;
+      min-width: 0;
+      min-height: 610px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-large);
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.023) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.023) 1px, transparent 1px),
+        radial-gradient(circle at 50% 35%, rgba(110, 231, 183, 0.08), transparent 48%),
+        rgba(15, 24, 42, 0.92);
+      background-size: 28px 28px, 28px 28px, auto, auto;
+      box-shadow: var(--shadow);
+    }
+
+    .timer-track {
+      position: absolute;
+      z-index: 3;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .timer-bar {
+      width: 100%;
+      height: 100%;
+      transform-origin: left;
+      background: linear-gradient(90deg, var(--mint), var(--blue));
+      transition: background 150ms ease;
+    }
+
+    .timer-bar.warning {
+      background: linear-gradient(90deg, var(--orange), var(--red));
+    }
+
+    .problem-area {
+      min-height: 390px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      padding: 52px 24px 26px;
+      text-align: center;
+    }
+
+    .problem-operation {
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+
+    .equation {
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      font: 900 clamp(50px, 8vw, 91px) / 1 Georgia, "Times New Roman", serif;
+      letter-spacing: -3px;
+    }
+
+    .equation sup {
+      margin-left: 3px;
+      color: var(--purple);
+      font-size: 0.48em;
+    }
+
+    .root-sign {
+      color: var(--purple);
+    }
+
+    .fraction-expression {
+      display: inline-flex;
+      align-items: center;
+      gap: clamp(10px, 2vw, 20px);
+    }
+
+    .fraction {
+      min-width: 52px;
+      display: inline-grid;
+      grid-template-rows: 1fr 2px 1fr;
+      gap: 3px;
+      align-items: center;
+      font-size: 0.65em;
+      line-height: 1;
+    }
+
+    .fraction-bar {
+      width: 100%;
+      height: 2px;
+      background: currentColor;
+    }
+
+    .answer-form {
+      width: min(440px, 100%);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .answer-input {
+      width: 100%;
+      min-width: 0;
+      height: 58px;
+      padding: 8px 17px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: rgba(8, 14, 26, 0.76);
+      color: var(--text);
+      font: 900 25px Georgia, serif;
+      text-align: center;
+      caret-color: var(--mint);
+    }
+
+    .answer-input::placeholder {
+      color: rgba(153, 166, 189, 0.5);
+    }
+
+    .answer-form .button {
+      min-width: 98px;
+    }
+
+    .feedback {
+      min-height: 28px;
+      margin-top: 13px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .feedback.correct {
+      color: var(--mint);
+    }
+
+    .feedback.wrong {
+      color: var(--red);
+    }
+
+    .keyboard-wrap {
+      padding: 0 19px 19px;
+    }
+
+    .number-keyboard {
+      width: min(500px, 100%);
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+      margin: auto;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(8, 14, 26, 0.53);
+    }
+
+    .key {
+      min-height: 45px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-light);
+      color: var(--text);
+      font: 900 17px Georgia, serif;
+      cursor: pointer;
+      transition: 100ms ease;
+    }
+
+    .key:hover,
+    .key:active {
+      border-color: var(--mint);
+      background: var(--panel-hover);
+    }
+
+    .key.utility {
+      color: var(--orange);
+      font-family: system-ui;
+      font-size: 12px;
+    }
+
+    .key.enter {
+      background: var(--mint);
+      color: #10261f;
+      font-family: system-ui;
+      font-size: 10px;
+      letter-spacing: 0.7px;
+    }
+
+    .question-flash {
+      position: absolute;
+      z-index: 8;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(10, 16, 32, 0.78);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+    }
+
+    .question-flash.show {
+      opacity: 1;
+    }
+
+    .flash-symbol {
+      width: 110px;
+      height: 110px;
+      display: grid;
+      place-items: center;
+      border: 3px solid currentColor;
+      border-radius: 30px;
+      color: var(--mint);
+      font: 900 59px Georgia, serif;
+      box-shadow: 0 0 50px rgba(110, 231, 183, 0.15);
+    }
+
+    .question-flash.wrong .flash-symbol {
+      color: var(--red);
+      box-shadow: 0 0 50px rgba(255, 113, 137, 0.16);
+    }
+
+    /* ---------- Overlays ---------- */
+
+    .overlay {
+      position: fixed;
+      z-index: 90;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(4, 8, 17, 0.8);
+      backdrop-filter: blur(9px);
+      transition:
+        opacity 170ms ease,
+        visibility 170ms ease;
+    }
+
+    .overlay.closed {
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .modal {
+      width: min(440px, 100%);
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-large);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.045), transparent),
+        var(--panel);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .modal-body {
+      padding: 29px;
+    }
+
+    .modal-symbol {
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 18px;
+      border: 1px solid rgba(110, 231, 183, 0.36);
+      border-radius: 20px;
+      background: rgba(110, 231, 183, 0.08);
+      color: var(--mint);
+      font: 900 32px Georgia, serif;
+    }
+
+    .modal h2 {
+      margin: 0;
+      font: 900 32px Georgia, serif;
+      letter-spacing: -1px;
+    }
+
+    .modal p {
+      margin: 11px auto 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 21px;
+    }
+
+    .result-stat {
+      min-width: 0;
+      padding: 12px 7px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .result-stat span {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .result-stat strong {
+      color: var(--text);
+      font: 900 19px Georgia, serif;
+    }
+
+    .result-earned {
+      margin-top: 16px;
+      padding: 13px;
+      border: 1px solid rgba(255, 184, 92, 0.3);
+      border-radius: 13px;
+      background: rgba(255, 184, 92, 0.06);
+      color: var(--orange);
+      font-weight: 950;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      padding: 16px;
+      border-top: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.09);
+    }
+
+    .modal-actions.one {
+      grid-template-columns: 1fr;
+    }
+
+    .toast-stack {
+      position: fixed;
+      z-index: 130;
+      right: 18px;
+      bottom: 18px;
+      width: min(340px, calc(100% - 36px));
+      display: grid;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      padding: 13px 15px;
+      border: 1px solid var(--line-strong);
+      border-radius: 13px;
+      background: rgba(23, 34, 57, 0.97);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.39);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+      animation: toast-in 200ms ease both;
+    }
+
+    .toast strong {
+      color: var(--text);
+    }
+
+    @keyframes toast-in {
+      from {
+        transform: translateX(18px);
+        opacity: 0;
+      }
+    }
+
+    /* ---------- Responsive layout ---------- */
+
+    @media (max-width: 850px) {
+      .home-layout {
+        grid-template-columns: 1fr;
+        gap: 22px;
+      }
+
+      .hero {
+        padding-bottom: 15px;
+      }
+
+      .hero-equations {
+        right: 0;
+        opacity: 0.75;
+      }
+
+      .home-panel {
+        width: min(620px, 100%);
+      }
+
+      .rules-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .game-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .game-sidebar {
+        display: grid;
+        grid-template-columns: 1.1fr 1.35fr 0.75fr 1fr;
+      }
+
+      .game-name,
+      .lives {
+        border-right: 1px solid var(--line);
+        border-bottom: 0;
+      }
+
+      .game-controls {
+        align-content: center;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        width: calc(100% - 24px);
+        height: 62px;
+      }
+
+      .brand-copy span {
+        display: none;
+      }
+
+      .credit-chip {
+        min-width: 84px;
+        padding: 8px 11px;
+        font-size: 12px;
+      }
+
+      .screen {
+        width: calc(100% - 24px);
+        min-height: calc(100dvh - 62px);
+        padding: 27px 0 39px;
+      }
+
+      .screen-heading {
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      .screen-heading h2 {
+        font-size: 40px;
+      }
+
+      .screen-heading p {
+        margin-top: 9px;
+        font-size: 11px;
+      }
+
+      .screen-heading .button {
+        min-width: 43px;
+        width: 43px;
+        padding: 0;
+        font-size: 0;
+      }
+
+      .screen-heading .button::before {
+        content: "←";
+        font-size: 18px;
+      }
+
+      .home-layout {
+        min-height: auto;
+      }
+
+      .hero {
+        padding: 29px 0 10px;
+      }
+
+      .hero h1 {
+        font-size: clamp(70px, 25vw, 98px);
+        letter-spacing: -6px;
+      }
+
+      .hero-text {
+        max-width: 340px;
+        margin: 22px 0 24px;
+        font-size: 13px;
+      }
+
+      .hero-equations {
+        right: -150px;
+        transform: rotate(-7deg) scale(0.78);
+        opacity: 0.52;
+      }
+
+      .home-section {
+        padding: 19px;
+      }
+
+      .difficulty-grid {
+        gap: 5px;
+      }
+
+      .difficulty-button span {
+        font-size: 14px;
+      }
+
+      .operation-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #game-screen {
+        width: calc(100% - 12px);
+        padding-top: 8px;
+      }
+
+      .game-shell {
+        min-height: calc(100dvh - 76px);
+        gap: 8px;
+      }
+
+      .game-sidebar {
+        grid-template-columns: 1fr;
+      }
+
+      .game-name {
+        display: none;
+      }
+
+      .hud-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .hud-cell {
+        padding: 10px 6px;
+        text-align: center;
+      }
+
+      .hud-cell strong {
+        font-size: 16px;
+      }
+
+      .lives {
+        display: none;
+      }
+
+      .game-controls {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 8px;
+        border-top: 1px solid var(--line);
+      }
+
+      .game-controls .button {
+        min-height: 37px;
+        padding: 7px 5px;
+        font-size: 8px;
+      }
+
+      .game-main {
+        min-height: 535px;
+        border-radius: 18px;
+      }
+
+      .problem-area {
+        min-height: 310px;
+        padding: 37px 14px 18px;
+      }
+
+      .equation {
+        min-height: 96px;
+        font-size: clamp(47px, 17vw, 72px);
+      }
+
+      .answer-form {
+        max-width: 360px;
+        grid-template-columns: minmax(0, 1fr) 86px;
+      }
+
+      .answer-input {
+        height: 53px;
+      }
+
+      .answer-form .button {
+        min-width: 0;
+        padding: 8px;
+      }
+
+      .keyboard-wrap {
+        padding: 0 10px 10px;
+      }
+
+      .number-keyboard {
+        gap: 5px;
+        padding: 8px;
+      }
+
+      .key {
+        min-height: 42px;
+      }
+
+      .modal-body {
+        padding: 25px 20px;
+      }
+    }
+
+    @media (max-width: 370px) {
+      .home-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .home-actions .button,
+      .home-actions .mini-menu {
+        grid-column: 1;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="brand-button" id="brand-home" aria-label="Open main menu">
+        <span class="brand-mark" aria-hidden="true">×</span>
+        <span class="brand-copy">
+          <strong>Quick Math</strong>
+          <span>Mental arithmetic</span>
+        </span>
+      </button>
+
+      <div class="credit-chip" aria-label="Available credits">
+        <span class="credit-symbol" aria-hidden="true">C</span>
+        <span data-credits>0</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- ---------- Home ---------- -->
+
+      <section class="screen active" id="home-screen">
+        <div class="home-layout">
+          <div class="hero">
+            <p class="eyebrow">Think fast</p>
+            <h1>Quick<br><span>Math</span></h1>
+            <p class="hero-text">
+              Solve each problem before the bar runs out.
+            </p>
+
+            <div class="button-row">
+              <button class="button primary" id="play-button">New run</button>
+              <button class="button continue" id="continue-button">Continue</button>
+            </div>
+
+            <div class="hero-equations" aria-hidden="true">
+              <span>7 × 8</span>
+              <span>√81</span>
+              <span>3/4</span>
+            </div>
+          </div>
+
+          <aside class="panel home-panel">
+            <div class="home-section">
+              <p class="field-label">Difficulty</p>
+              <div class="difficulty-grid" id="difficulty-grid"></div>
+            </div>
+
+            <div class="home-section">
+              <p class="field-label">Active operations</p>
+              <div class="operation-summary" id="operation-summary"></div>
+              <button class="button ghost" id="operations-button">
+                Operations &amp; time upgrades
+              </button>
+            </div>
+
+            <div class="home-section">
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <strong>Show keyboard</strong>
+                  <span>Large buttons for touch screens</span>
+                </div>
+                <button
+                  class="switch active"
+                  id="keyboard-switch"
+                  aria-label="Toggle on-screen keyboard"
+                  aria-pressed="true"
+                ></button>
+              </div>
+            </div>
+
+            <div class="home-section home-actions">
+              <button class="button primary" id="panel-play-button">Start run</button>
+              <button class="mini-menu" data-open="rules-screen">
+                <strong>Rules</strong>
+                <span>Scoring and timing</span>
+              </button>
+              <button class="mini-menu" data-open="stats-screen">
+                <strong>Statistics</strong>
+                <span>Your best streaks</span>
+              </button>
+              <button class="mini-menu" id="sound-button">
+                <strong>Sound</strong>
+                <span id="sound-state">On</span>
+              </button>
+              <button class="mini-menu" id="quick-keyboard-button">
+                <strong>Keyboard</strong>
+                <span id="keyboard-state">Shown</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ---------- Operations ---------- -->
+
+      <section class="screen" id="operations-screen">
+        <div class="screen-heading">
+          <div>
+            <p class="eyebrow">Choose your challenge</p>
+            <h2>Operations</h2>
+            <p>Select at least one. Each time upgrade adds 0.2 seconds only to that operation.</p>
+          </div>
+          <button class="button ghost" data-open="home-screen">Back</button>
+        </div>
+
+        <div class="operations-note">
+          <span><strong id="active-operation-count">4</strong> operations selected</span>
+          <span>Time upgrade: <strong>C 100</strong> per level</span>
+        </div>
+
+        <div class="operation-grid" id="operation-grid"></div>
+      </section>
+
+      <!-- ---------- Rules ---------- -->
+
+      <section class="screen" id="rules-screen">
+        <div class="screen-heading">
+          <div>
+            <p class="eyebrow">How to play</p>
+            <h2>Rules</h2>
+            <p>Three mistakes end the run. Correct answers earn credits immediately.</p>
+          </div>
+          <button class="button ghost" data-open="home-screen">Back</button>
+        </div>
+
+        <div class="rules-layout">
+          <div class="panel rule-list">
+            <article class="rule">
+              <span class="rule-number">1</span>
+              <div>
+                <h3>Choose any owned operations</h3>
+                <p>Play with one sign or mix them. Harder difficulties favor multiplication and division when they are selected.</p>
+              </div>
+            </article>
+
+            <article class="rule">
+              <span class="rule-number">2</span>
+              <div>
+                <h3>Answer before time expires</h3>
+                <p>Easy gives 7 seconds per question. Insane gives only 2. Purchased time applies separately to each operation.</p>
+              </div>
+            </article>
+
+            <article class="rule">
+              <span class="rule-number">3</span>
+              <div>
+                <h3>Division always has a whole answer</h3>
+                <p>Fraction questions accept reduced fractions, equivalent fractions or decimal answers.</p>
+              </div>
+            </article>
+
+            <article class="rule">
+              <span class="rule-number">4</span>
+              <div>
+                <h3>Harder signs pay more</h3>
+                <p>Difficulty, operation value, remaining time and streak all contribute to each reward.</p>
+              </div>
+            </article>
+          </div>
+
+          <aside class="panel reward-table">
+            <p class="field-label">Operation value</p>
+            <h3>Base credits</h3>
+            <div class="reward-line"><span>Addition / Subtraction</span><strong>C 2</strong></div>
+            <div class="reward-line"><span>Multiplication</span><strong>C 4</strong></div>
+            <div class="reward-line"><span>Division</span><strong>C 5</strong></div>
+            <div class="reward-line"><span>Exponentiation</span><strong>C 8</strong></div>
+            <div class="reward-line"><span>Square Root</span><strong>C 10</strong></div>
+            <div class="reward-line"><span>Fractions</span><strong>C 13</strong></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ---------- Statistics ---------- -->
+
+      <section class="screen" id="stats-screen">
+        <div class="screen-heading">
+          <div>
+            <p class="eyebrow">Progress</p>
+            <h2>Statistics</h2>
+            <p>Your runs, answers and collection progress.</p>
+          </div>
+          <button class="button ghost" data-open="home-screen">Back</button>
+        </div>
+
+        <div class="stats-grid" id="stats-grid"></div>
+      </section>
+
+      <!-- ---------- Game ---------- -->
+
+      <section class="screen" id="game-screen">
+        <div class="game-shell">
+          <aside class="panel game-sidebar">
+            <div class="game-name">
+              <p class="field-label">Current run</p>
+              <h2>Quick Math</h2>
+              <p id="game-difficulty">Normal · 5 seconds</p>
+            </div>
+
+            <div class="hud-grid">
+              <div class="hud-cell">
+                <span>Correct</span>
+                <strong id="correct-value">0</strong>
+              </div>
+              <div class="hud-cell">
+                <span>Streak</span>
+                <strong id="streak-value">0</strong>
+              </div>
+              <div class="hud-cell">
+                <span>Best</span>
+                <strong id="best-value">0</strong>
+              </div>
+              <div class="hud-cell earned">
+                <span>Earned</span>
+                <strong id="earned-value">C 0</strong>
+              </div>
+            </div>
+
+            <div class="lives">
+              <p class="field-label">Lives</p>
+              <div class="life-row" id="life-row"></div>
+            </div>
+
+            <div class="game-controls">
+              <button class="button" id="pause-button">Pause</button>
+              <button class="button" id="restart-button">Restart</button>
+              <button class="button danger" id="game-menu-button">Menu</button>
+            </div>
+          </aside>
+
+          <div class="game-main">
+            <div class="timer-track">
+              <div class="timer-bar" id="timer-bar"></div>
+            </div>
+
+            <div class="problem-area">
+              <div class="problem-operation" id="problem-operation">Addition</div>
+              <div class="equation" id="equation">8 + 7</div>
+
+              <form class="answer-form" id="answer-form" autocomplete="off">
+                <input
+                  class="answer-input"
+                  id="answer-input"
+                  type="text"
+                  inputmode="decimal"
+                  maxlength="18"
+                  placeholder="?"
+                  aria-label="Answer"
+                >
+                <button class="button primary" type="submit">Answer</button>
+              </form>
+
+              <div class="feedback" id="feedback">Answer before the bar runs out</div>
+            </div>
+
+            <div class="keyboard-wrap" id="keyboard-wrap">
+              <div class="number-keyboard" id="number-keyboard">
+                <button class="key" data-key="7">7</button>
+                <button class="key" data-key="8">8</button>
+                <button class="key" data-key="9">9</button>
+                <button class="key utility" data-key="backspace">⌫</button>
+                <button class="key" data-key="4">4</button>
+                <button class="key" data-key="5">5</button>
+                <button class="key" data-key="6">6</button>
+                <button class="key utility" data-key="/">/</button>
+                <button class="key" data-key="1">1</button>
+                <button class="key" data-key="2">2</button>
+                <button class="key" data-key="3">3</button>
+                <button class="key utility" data-key="-">−</button>
+                <button class="key utility" data-key="clear">C</button>
+                <button class="key" data-key="0">0</button>
+                <button class="key utility" data-key=".">.</button>
+                <button class="key enter" data-key="enter">Enter</button>
+              </div>
+            </div>
+
+            <div class="question-flash" id="question-flash">
+              <div class="flash-symbol" id="flash-symbol">✓</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ---------- Pause ---------- -->
+
+  <div class="overlay closed" id="pause-overlay">
+    <div class="modal">
+      <div class="modal-body">
+        <div class="modal-symbol">Ⅱ</div>
+        <h2>Run paused</h2>
+        <p>The question timer is stopped and your run is saved.</p>
+      </div>
+      <div class="modal-actions one">
+        <button class="button primary" id="resume-button">Resume</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- Confirmation ---------- -->
+
+  <div class="overlay closed" id="confirm-overlay">
+    <div class="modal">
+      <div class="modal-body">
+        <div class="modal-symbol">?</div>
+        <h2 id="confirm-title">Start a new run?</h2>
+        <p id="confirm-copy">Your saved run will be replaced.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="button ghost" id="confirm-cancel">Cancel</button>
+        <button class="button primary" id="confirm-accept">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- Result ---------- -->
+
+  <div class="overlay closed" id="result-overlay">
+    <div class="modal">
+      <div class="modal-body">
+        <div class="modal-symbol">=</div>
+        <h2>Run complete</h2>
+        <p>Three mistakes used. Your earned credits are already saved.</p>
+
+        <div class="result-grid">
+          <div class="result-stat">
+            <span>Correct</span>
+            <strong id="result-correct">0</strong>
+          </div>
+          <div class="result-stat">
+            <span>Best streak</span>
+            <strong id="result-streak">0</strong>
+          </div>
+          <div class="result-stat">
+            <span>Accuracy</span>
+            <strong id="result-accuracy">0%</strong>
+          </div>
+        </div>
+
+        <div class="result-earned">
+          Credits earned · <span id="result-earned">C 0</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="button ghost" id="result-menu">Menu</button>
+        <button class="button primary" id="result-again">Play again</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+
+    /* ---------- Game configuration ---------- */
+
+    const DIFFICULTIES = {
+      easy: {
+        name: "Easy",
+        time: 7,
+        reward: 1,
+        level: 0,
+        copy: "7 seconds"
+      },
+      normal: {
+        name: "Normal",
+        time: 5,
+        reward: 1.35,
+        level: 1,
+        copy: "5 seconds"
+      },
+      hard: {
+        name: "Hard",
+        time: 3.5,
+        reward: 1.8,
+        level: 2,
+        copy: "3.5 seconds"
+      },
+      insane: {
+        name: "Insane",
+        time: 2,
+        reward: 2.6,
+        level: 3,
+        copy: "2 seconds"
+      }
+    };
+
+    const OPERATIONS = {
+      addition: {
+        name: "Addition",
+        symbol: "+",
+        price: 0,
+        reward: 2,
+        copy: "Add two numbers",
+        weights: [7, 5, 3, 1]
+      },
+      subtraction: {
+        name: "Subtraction",
+        symbol: "−",
+        price: 0,
+        reward: 2,
+        copy: "Positive and negative answers",
+        weights: [7, 5, 3, 1]
+      },
+      multiplication: {
+        name: "Multiplication",
+        symbol: "×",
+        price: 0,
+        reward: 4,
+        copy: "Products grow with difficulty",
+        weights: [2, 4, 6, 8]
+      },
+      division: {
+        name: "Division",
+        symbol: "÷",
+        price: 0,
+        reward: 5,
+        copy: "Every answer is a whole number",
+        weights: [1, 3, 6, 8]
+      },
+      exponentiation: {
+        name: "Exponentiation",
+        symbol: "x²",
+        price: 1200,
+        reward: 8,
+        copy: "Small bases with powerful results",
+        weights: [1, 2, 3, 4]
+      },
+      squareRoot: {
+        name: "Square Root",
+        symbol: "√",
+        price: 2000,
+        reward: 10,
+        copy: "Perfect roots with whole answers",
+        weights: [1, 2, 3, 4]
+      },
+      fractions: {
+        name: "Fractions",
+        symbol: "½",
+        price: 3200,
+        reward: 13,
+        copy: "Add and subtract simple fractions",
+        weights: [1, 2, 3, 4]
+      }
+    };
+
+    const BASIC_OPERATION_IDS = Object.keys(OPERATIONS)
+      .filter(id => OPERATIONS[id].price === 0);
+
+    const TIME_UPGRADE_COST = 100;
+    const TIME_UPGRADE_SECONDS = 0.2;
+    const MAX_TIME_UPGRADES = 10;
+    const MAX_LIVES = 3;
+
+    /* ---------- General helpers ---------- */
+
+    const byId = id => document.getElementById(id);
+
+    function integer(value, minimum = 0, maximum = Number.MAX_SAFE_INTEGER) {
+      const number = Number(value);
+
+      if (!Number.isFinite(number)) {
+        return minimum;
+      }
+
+      return Math.max(minimum, Math.min(maximum, Math.floor(number)));
+    }
+
+    function randomInteger(minimum, maximum) {
+      return Math.floor(
+        Math.random() * (maximum - minimum + 1)
+      ) + minimum;
+    }
+
+    function pickRandom(values) {
+      return values[randomInteger(0, values.length - 1)];
+    }
+
+    function formatCredits(value) {
+      return integer(value).toLocaleString("en-US");
+    }
+
+    function validOperationIds(value) {
+      if (!Array.isArray(value)) {
+        return [];
+      }
+
+      return [
+        ...new Set(
+          value.filter(id => typeof id === "string" && OPERATIONS[id])
+        )
+      ];
+    }
+
+    function greatestCommonDivisor(first, second) {
+      let a = Math.abs(Math.trunc(Number(first) || 0));
+      let b = Math.abs(Math.trunc(Number(second) || 0));
+
+      while (b) {
+        [a, b] = [b, a % b];
+      }
+
+      return a || 1;
+    }
+
+    function reducedFraction(numerator, denominator) {
+      if (denominator < 0) {
+        numerator *= -1;
+        denominator *= -1;
+      }
+
+      const divisor = greatestCommonDivisor(numerator, denominator);
+
+      return {
+        numerator: numerator / divisor,
+        denominator: denominator / divisor
+      };
+    }
+
+    function formatSeconds(seconds) {
+      const rounded = Math.round(seconds * 10) / 10;
+      return Number.isInteger(rounded)
+        ? rounded.toFixed(0)
+        : rounded.toFixed(1);
+    }
+
+    /* ---------- Question generation ---------- */
+
+    function additionQuestion(level) {
+      const maximums = [20, 60, 150, 500];
+      const maximum = maximums[level];
+      const first = randomInteger(1, maximum);
+      const second = randomInteger(1, maximum);
+
+      return {
+        operation: "addition",
+        values: [first, second]
+      };
+    }
+
+    function subtractionQuestion(level) {
+      const maximums = [20, 60, 150, 500];
+      const maximum = maximums[level];
+      let first = randomInteger(1, maximum);
+      let second = randomInteger(1, maximum);
+
+      const allowNegative = level >= 2 && Math.random() < 0.36;
+
+      if (!allowNegative && second > first) {
+        [first, second] = [second, first];
+      }
+
+      return {
+        operation: "subtraction",
+        values: [first, second]
+      };
+    }
+
+    function multiplicationQuestion(level) {
+      const minimums = [2, 2, 3, 4];
+      const maximums = [9, 12, 18, 25];
+
+      return {
+        operation: "multiplication",
+        values: [
+          randomInteger(minimums[level], maximums[level]),
+          randomInteger(minimums[level], maximums[level])
+        ]
+      };
+    }
+
+    function divisionQuestion(level) {
+      const minimums = [2, 2, 3, 4];
+      const maximums = [9, 12, 18, 25];
+      const divisor = randomInteger(minimums[level], maximums[level]);
+      const answer = randomInteger(minimums[level], maximums[level]);
+
+      return {
+        operation: "division",
+        values: [divisor * answer, divisor]
+      };
+    }
+
+    function exponentiationQuestion(level) {
+      const maximumBases = [6, 8, 10, 12];
+      const maximumExponents = [2, 3, 3, 4];
+      let base;
+      let exponent;
+
+      do {
+        base = randomInteger(2, maximumBases[level]);
+        exponent = randomInteger(2, maximumExponents[level]);
+      } while (base ** exponent > 25000);
+
+      return {
+        operation: "exponentiation",
+        values: [base, exponent]
+      };
+    }
+
+    function squareRootQuestion(level) {
+      const maximumRoots = [10, 15, 25, 40];
+      const root = randomInteger(2, maximumRoots[level]);
+
+      return {
+        operation: "squareRoot",
+        values: [root * root]
+      };
+    }
+
+    function fractionQuestion(level) {
+      const maximumDenominators = [6, 8, 12, 16];
+      const maximumDenominator = maximumDenominators[level];
+      const firstDenominator = randomInteger(2, maximumDenominator);
+      const secondDenominator = randomInteger(2, maximumDenominator);
+      const numeratorMultiplier = level >= 2 ? 2 : 1;
+      let firstNumerator = randomInteger(
+        1,
+        firstDenominator * numeratorMultiplier - 1
+      );
+      let secondNumerator = randomInteger(
+        1,
+        secondDenominator * numeratorMultiplier - 1
+      );
+
+      const subtract = Math.random() < (level >= 2 ? 0.5 : 0.3);
+
+      if (
+        subtract &&
+        firstNumerator / firstDenominator <
+          secondNumerator / secondDenominator
+      ) {
+        [firstNumerator, secondNumerator] = [
+          secondNumerator,
+          firstNumerator
+        ];
+        return {
+          operation: "fractions",
+          values: [
+            firstNumerator,
+            secondDenominator,
+            secondNumerator,
+            firstDenominator,
+            -1
+          ]
+        };
+      }
+
+      return {
+        operation: "fractions",
+        values: [
+          firstNumerator,
+          firstDenominator,
+          secondNumerator,
+          secondDenominator,
+          subtract ? -1 : 1
+        ]
+      };
+    }
+
+    const QUESTION_FACTORIES = {
+      addition: additionQuestion,
+      subtraction: subtractionQuestion,
+      multiplication: multiplicationQuestion,
+      division: divisionQuestion,
+      exponentiation: exponentiationQuestion,
+      squareRoot: squareRootQuestion,
+      fractions: fractionQuestion
+    };
+
+    function operationWeight(operationId, difficultyId) {
+      const difficulty = DIFFICULTIES[difficultyId];
+      return OPERATIONS[operationId].weights[difficulty.level];
+    }
+
+    function chooseOperation(operationIds, difficultyId) {
+      const entries = operationIds.map(id => ({
+        id,
+        weight: operationWeight(id, difficultyId)
+      }));
+
+      const totalWeight = entries.reduce(
+        (total, entry) => total + entry.weight,
+        0
+      );
+
+      let roll = Math.random() * totalWeight;
+
+      for (const entry of entries) {
+        roll -= entry.weight;
+
+        if (roll <= 0) {
+          return entry.id;
+        }
+      }
+
+      return entries[entries.length - 1].id;
+    }
+
+    function generateQuestion(operationIds, difficultyId) {
+      const operation = chooseOperation(operationIds, difficultyId);
+      const level = DIFFICULTIES[difficultyId].level;
+      return QUESTION_FACTORIES[operation](level);
+    }
+
+    function hydrateQuestion(specification) {
+      if (
+        !specification ||
+        typeof specification !== "object" ||
+        !OPERATIONS[specification.operation] ||
+        !Array.isArray(specification.values) ||
+        specification.values.length > 5 ||
+        specification.values.some(value => {
+          return !Number.isInteger(value) || Math.abs(value) > 100000;
+        })
+      ) {
+        return null;
+      }
+
+      const operation = specification.operation;
+      const values = [...specification.values];
+      let expectedValue;
+      let expectedText;
+
+      if (operation === "addition" && values.length === 2) {
+        expectedValue = values[0] + values[1];
+      } else if (operation === "subtraction" && values.length === 2) {
+        expectedValue = values[0] - values[1];
+      } else if (operation === "multiplication" && values.length === 2) {
+        expectedValue = values[0] * values[1];
+      } else if (
+        operation === "division" &&
+        values.length === 2 &&
+        values[1] !== 0 &&
+        values[0] % values[1] === 0
+      ) {
+        expectedValue = values[0] / values[1];
+      } else if (
+        operation === "exponentiation" &&
+        values.length === 2 &&
+        values[1] >= 2 &&
+        values[1] <= 6
+      ) {
+        expectedValue = values[0] ** values[1];
+      } else if (
+        operation === "squareRoot" &&
+        values.length === 1 &&
+        values[0] >= 0 &&
+        Number.isInteger(Math.sqrt(values[0]))
+      ) {
+        expectedValue = Math.sqrt(values[0]);
+      } else if (
+        operation === "fractions" &&
+        values.length === 5 &&
+        values[1] !== 0 &&
+        values[3] !== 0 &&
+        (values[4] === 1 || values[4] === -1)
+      ) {
+        const numerator =
+          values[0] * values[3] +
+          values[4] * values[2] * values[1];
+
+        const denominator = values[1] * values[3];
+        const reduced = reducedFraction(numerator, denominator);
+        expectedValue = reduced.numerator / reduced.denominator;
+        expectedText = reduced.denominator === 1
+          ? String(reduced.numerator)
+          : reduced.numerator + "/" + reduced.denominator;
+      } else {
+        return null;
+      }
+
+      if (!Number.isFinite(expectedValue)) {
+        return null;
+      }
+
+      return {
+        specification: {
+          operation,
+          values
+        },
+        operation,
+        values,
+        expectedValue,
+        expectedText: expectedText || String(expectedValue)
+      };
+    }
+
+    function fractionMarkup(numerator, denominator) {
+      return `
+        <span class="fraction">
+          <span>${numerator}</span>
+          <span class="fraction-bar"></span>
+          <span>${denominator}</span>
+        </span>
+      `;
+    }
+
+    function questionMarkup(question) {
+      const values = question.values;
+
+      if (question.operation === "addition") {
+        return values[0] + " + " + values[1];
+      }
+
+      if (question.operation === "subtraction") {
+        return values[0] + " − " + values[1];
+      }
+
+      if (question.operation === "multiplication") {
+        return values[0] + " × " + values[1];
+      }
+
+      if (question.operation === "division") {
+        return values[0] + " ÷ " + values[1];
+      }
+
+      if (question.operation === "exponentiation") {
+        return `${values[0]}<sup>${values[1]}</sup>`;
+      }
+
+      if (question.operation === "squareRoot") {
+        return `<span class="root-sign">√</span>${values[0]}`;
+      }
+
+      const sign = values[4] === 1 ? "+" : "−";
+
+      return `
+        <span class="fraction-expression">
+          ${fractionMarkup(values[0], values[1])}
+          <span>${sign}</span>
+          ${fractionMarkup(values[2], values[3])}
+        </span>
+      `;
+    }
+
+    function parseAnswer(rawValue) {
+      const value = String(rawValue)
+        .trim()
+        .replace(",", ".")
+        .replace("−", "-");
+
+      if (!value) {
+        return null;
+      }
+
+      if (value.includes("/")) {
+        const parts = value.split("/");
+
+        if (parts.length !== 2) {
+          return null;
+        }
+
+        const numerator = Number(parts[0]);
+        const denominator = Number(parts[1]);
+
+        if (
+          !Number.isFinite(numerator) ||
+          !Number.isFinite(denominator) ||
+          denominator === 0
+        ) {
+          return null;
+        }
+
+        return numerator / denominator;
+      }
+
+      const number = Number(value);
+      return Number.isFinite(number) ? number : null;
+    }
+
+    function answerIsCorrect(rawValue, question) {
+      const answer = parseAnswer(rawValue);
+      return (
+        answer !== null &&
+        Math.abs(answer - question.expectedValue) < 0.000000001
+      );
+    }
+
+    /* ---------- Rewards and timing ---------- */
+
+    function durationFor(operationId, difficultyId, upgrades) {
+      const level = integer(
+        upgrades[operationId],
+        0,
+        MAX_TIME_UPGRADES
+      );
+
+      return (
+        DIFFICULTIES[difficultyId].time +
+        level * TIME_UPGRADE_SECONDS
+      );
+    }
+
+    function rewardForAnswer(
+      operationId,
+      difficultyId,
+      remaining,
+      duration,
+      streak
+    ) {
+      const operationValue = OPERATIONS[operationId].reward;
+      const difficultyValue = DIFFICULTIES[difficultyId].reward;
+      const base = operationValue * difficultyValue;
+      const speedRatio = duration > 0
+        ? Math.max(0, Math.min(1, remaining / duration))
+        : 0;
+
+      const speedBonus = base * speedRatio * 0.2;
+      const streakBonus = Math.min(6, Math.floor(streak / 3));
+
+      return Math.max(1, Math.ceil(base + speedBonus + streakBonus));
+    }
+
+    /* ---------- Persistent save data ---------- */
+
+    class SaveManager {
+      static ROOT_KEY = "ARCADE_GAMES";
+      static STORAGE_KEY = "quick-math";
+      static VERSION = 1;
+
+      constructor() {
+        this.defaults = {
+          version: SaveManager.VERSION,
+          credits: 0,
+          difficulty: "normal",
+          ownedOperations: [...BASIC_OPERATION_IDS],
+          selectedOperations: [...BASIC_OPERATION_IDS],
+          timeUpgrades: Object.fromEntries(
+            Object.keys(OPERATIONS).map(id => [id, 0])
+          ),
+          showKeyboard: true,
+          sound: true,
+          activeRun: null,
+          stats: {
+            runs: 0,
+            completedRuns: 0,
+            correct: 0,
+            wrong: 0,
+            timeouts: 0,
+            creditsEarned: 0,
+            bestStreak: 0,
+            bestRun: 0,
+            answersByOperation: Object.fromEntries(
+              Object.keys(OPERATIONS).map(id => [id, 0])
+            )
+          }
+        };
+
+        this.root = this.readRoot();
+        this.data = this.clean(this.root[SaveManager.STORAGE_KEY]);
+        this.persist();
+      }
+
+      readRoot() {
+        try {
+          const parsed = JSON.parse(
+            localStorage.getItem(SaveManager.ROOT_KEY) || "{}"
+          );
+
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            return parsed;
+          }
+        } catch (error) {
+          // Invalid saved JSON should never prevent the game from loading.
+        }
+
+        return {};
+      }
+
+      clean(value) {
+        const source =
+          value && typeof value === "object" && !Array.isArray(value)
+            ? value
+            : {};
+
+        const ownedOperations = validOperationIds(source.ownedOperations);
+
+        for (const id of BASIC_OPERATION_IDS) {
+          if (!ownedOperations.includes(id)) {
+            ownedOperations.push(id);
+          }
+        }
+
+        let selectedOperations = Array.isArray(source.selectedOperations)
+          ? validOperationIds(source.selectedOperations)
+              .filter(id => ownedOperations.includes(id))
+          : [...BASIC_OPERATION_IDS];
+
+        if (!selectedOperations.length) {
+          selectedOperations = ["addition"];
+        }
+
+        const timeSource =
+          source.timeUpgrades &&
+          typeof source.timeUpgrades === "object" &&
+          !Array.isArray(source.timeUpgrades)
+            ? source.timeUpgrades
+            : {};
+
+        const timeUpgrades = Object.fromEntries(
+          Object.keys(OPERATIONS).map(id => [
+            id,
+            integer(timeSource[id], 0, MAX_TIME_UPGRADES)
+          ])
+        );
+
+        const statsSource =
+          source.stats &&
+          typeof source.stats === "object" &&
+          !Array.isArray(source.stats)
+            ? source.stats
+            : {};
+
+        const answersSource =
+          statsSource.answersByOperation &&
+          typeof statsSource.answersByOperation === "object" &&
+          !Array.isArray(statsSource.answersByOperation)
+            ? statsSource.answersByOperation
+            : {};
+
+        const answersByOperation = Object.fromEntries(
+          Object.keys(OPERATIONS).map(id => [
+            id,
+            integer(answersSource[id])
+          ])
+        );
+
+        const stats = {
+          runs: integer(statsSource.runs),
+          completedRuns: integer(statsSource.completedRuns),
+          correct: integer(statsSource.correct),
+          wrong: integer(statsSource.wrong),
+          timeouts: integer(statsSource.timeouts),
+          creditsEarned: integer(statsSource.creditsEarned),
+          bestStreak: integer(statsSource.bestStreak),
+          bestRun: integer(statsSource.bestRun),
+          answersByOperation
+        };
+
+        const difficulty = DIFFICULTIES[source.difficulty]
+          ? source.difficulty
+          : "normal";
+
+        const data = {
+          ...this.defaults,
+          ...source,
+          version: SaveManager.VERSION,
+          credits: integer(source.credits),
+          difficulty,
+          ownedOperations,
+          selectedOperations,
+          timeUpgrades,
+          showKeyboard: source.showKeyboard !== false,
+          sound: source.sound !== false,
+          stats
+        };
+
+        data.activeRun = this.cleanRun(
+          source.activeRun,
+          ownedOperations,
+          timeUpgrades
+        );
+
+        return data;
+      }
+
+      cleanRun(value, ownedOperations, timeUpgrades) {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+          return null;
+        }
+
+        const difficulty = DIFFICULTIES[value.difficulty]
+          ? value.difficulty
+          : null;
+
+        const operations = validOperationIds(value.operations)
+          .filter(id => ownedOperations.includes(id));
+
+        const question = hydrateQuestion(value.question);
+
+        if (
+          !difficulty ||
+          !operations.length ||
+          !question ||
+          !operations.includes(question.operation)
+        ) {
+          return null;
+        }
+
+        const questionDuration = durationFor(
+          question.operation,
+          difficulty,
+          timeUpgrades
+        );
+
+        return {
+          difficulty,
+          operations,
+          lives: integer(value.lives, 1, MAX_LIVES),
+          correct: integer(value.correct),
+          mistakes: integer(value.mistakes, 0, MAX_LIVES - 1),
+          streak: integer(value.streak),
+          bestStreak: integer(value.bestStreak),
+          earned: integer(value.earned),
+          question: question.specification,
+          remaining: Math.max(
+            0.05,
+            Math.min(questionDuration, Number(value.remaining) || questionDuration)
+          ),
+          pendingNext: value.pendingNext === true
+        };
+      }
+
+      persist() {
+        this.root[SaveManager.STORAGE_KEY] = this.data;
+
+        try {
+          localStorage.setItem(
+            SaveManager.ROOT_KEY,
+            JSON.stringify(this.root)
+          );
+        } catch (error) {
+          // Storage can fail in private mode; gameplay should continue.
+        }
+
+        refreshCredits(this.data);
+      }
+
+      mutate(callback) {
+        callback(this.data);
+        this.persist();
+      }
+
+      unlockOperation(id) {
+        const operation = OPERATIONS[id];
+
+        if (
+          !operation ||
+          operation.price <= 0 ||
+          this.data.ownedOperations.includes(id) ||
+          this.data.credits < operation.price
+        ) {
+          return false;
+        }
+
+        this.data.credits -= operation.price;
+        this.data.ownedOperations.push(id);
+        this.persist();
+        return true;
+      }
+
+      upgradeTime(id) {
+        if (
+          !OPERATIONS[id] ||
+          !this.data.ownedOperations.includes(id) ||
+          this.data.timeUpgrades[id] >= MAX_TIME_UPGRADES ||
+          this.data.credits < TIME_UPGRADE_COST
+        ) {
+          return false;
+        }
+
+        this.data.credits -= TIME_UPGRADE_COST;
+        this.data.timeUpgrades[id] += 1;
+        this.persist();
+        return true;
+      }
+    }
+
+    /* ---------- Interface state ---------- */
+
+    const ui = {
+      screens: [...document.querySelectorAll(".screen")],
+      creditLabels: [...document.querySelectorAll("[data-credits]")],
+      playButton: byId("play-button"),
+      panelPlayButton: byId("panel-play-button"),
+      continueButton: byId("continue-button"),
+      difficultyGrid: byId("difficulty-grid"),
+      operationSummary: byId("operation-summary"),
+      operationsButton: byId("operations-button"),
+      keyboardSwitch: byId("keyboard-switch"),
+      quickKeyboardButton: byId("quick-keyboard-button"),
+      keyboardState: byId("keyboard-state"),
+      soundButton: byId("sound-button"),
+      soundState: byId("sound-state"),
+      operationGrid: byId("operation-grid"),
+      activeOperationCount: byId("active-operation-count"),
+      statsGrid: byId("stats-grid"),
+      gameDifficulty: byId("game-difficulty"),
+      correctValue: byId("correct-value"),
+      streakValue: byId("streak-value"),
+      bestValue: byId("best-value"),
+      earnedValue: byId("earned-value"),
+      lifeRow: byId("life-row"),
+      pauseButton: byId("pause-button"),
+      restartButton: byId("restart-button"),
+      gameMenuButton: byId("game-menu-button"),
+      timerBar: byId("timer-bar"),
+      problemOperation: byId("problem-operation"),
+      equation: byId("equation"),
+      answerForm: byId("answer-form"),
+      answerInput: byId("answer-input"),
+      feedback: byId("feedback"),
+      keyboardWrap: byId("keyboard-wrap"),
+      numberKeyboard: byId("number-keyboard"),
+      questionFlash: byId("question-flash"),
+      flashSymbol: byId("flash-symbol"),
+      pauseOverlay: byId("pause-overlay"),
+      resumeButton: byId("resume-button"),
+      confirmOverlay: byId("confirm-overlay"),
+      confirmTitle: byId("confirm-title"),
+      confirmCopy: byId("confirm-copy"),
+      confirmCancel: byId("confirm-cancel"),
+      confirmAccept: byId("confirm-accept"),
+      resultOverlay: byId("result-overlay"),
+      resultCorrect: byId("result-correct"),
+      resultStreak: byId("result-streak"),
+      resultAccuracy: byId("result-accuracy"),
+      resultEarned: byId("result-earned"),
+      resultMenu: byId("result-menu"),
+      resultAgain: byId("result-again"),
+      toastStack: byId("toast-stack")
+    };
+
+    const save = new SaveManager();
+
+    let activeScreen = "home-screen";
+    let gameState = null;
+    let timerFrame = 0;
+    let transitionTimer = 0;
+    let confirmationAction = null;
+    let runSerial = 0;
+    let audioContext = null;
+
+    /* ---------- Sound and notifications ---------- */
+
+    function playSound(type) {
+      if (!save.data.sound) {
+        return;
+      }
+
+      try {
+        audioContext ||= new (
+          window.AudioContext ||
+          window.webkitAudioContext
+        )();
+
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const settings = {
+          key: [260, 0.035, "sine"],
+          correct: [650, 0.12, "triangle"],
+          wrong: [110, 0.13, "square"],
+          buy: [790, 0.17, "triangle"],
+          complete: [420, 0.24, "sine"],
+          click: [330, 0.05, "sine"],
+          error: [85, 0.12, "square"]
+        }[type] || [260, 0.05, "sine"];
+
+        oscillator.type = settings[2];
+        oscillator.frequency.setValueAtTime(
+          settings[0],
+          audioContext.currentTime
+        );
+
+        if (type === "correct" || type === "buy") {
+          oscillator.frequency.exponentialRampToValueAtTime(
+            settings[0] * 1.55,
+            audioContext.currentTime + settings[1]
+          );
+        }
+
+        gain.gain.setValueAtTime(0.032, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          audioContext.currentTime + settings[1]
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + settings[1]);
+      } catch (error) {
+        // Audio support is optional.
+      }
+    }
+
+    function toast(message) {
+      const element = document.createElement("div");
+      element.className = "toast";
+      element.innerHTML = message;
+      ui.toastStack.appendChild(element);
+
+      window.setTimeout(() => element.remove(), 2600);
+    }
+
+    /* ---------- Menus ---------- */
+
+    function refreshCredits(data = save.data) {
+      const text = formatCredits(data?.credits || 0);
+
+      for (const label of ui?.creditLabels || []) {
+        label.textContent = text;
+      }
+    }
+
+    function showScreen(id) {
+      activeScreen = id;
+
+      for (const screen of ui.screens) {
+        screen.classList.toggle("active", screen.id === id);
+      }
+
+      if (id === "home-screen") {
+        renderHome();
+      } else if (id === "operations-screen") {
+        renderOperations();
+      } else if (id === "stats-screen") {
+        renderStats();
+      }
+
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+
+    function renderHome() {
+      ui.difficultyGrid.innerHTML = Object.entries(DIFFICULTIES)
+        .map(([id, difficulty]) => `
+          <button
+            class="difficulty-button${save.data.difficulty === id ? " active" : ""}"
+            data-difficulty="${id}"
+          >
+            <strong>${difficulty.name}</strong>
+            <span>${formatSeconds(difficulty.time)}s</span>
+          </button>
+        `)
+        .join("");
+
+      ui.operationSummary.innerHTML = save.data.selectedOperations
+        .map(id => `
+          <span
+            class="operation-pill"
+            title="${OPERATIONS[id].name}"
+          >
+            ${OPERATIONS[id].symbol}
+          </span>
+        `)
+        .join("");
+
+      ui.keyboardSwitch.classList.toggle(
+        "active",
+        save.data.showKeyboard
+      );
+      ui.keyboardSwitch.setAttribute(
+        "aria-pressed",
+        String(save.data.showKeyboard)
+      );
+      ui.keyboardState.textContent = save.data.showKeyboard
+        ? "Shown"
+        : "Hidden";
+      ui.soundState.textContent = save.data.sound ? "On" : "Off";
+      ui.continueButton.classList.toggle("hidden", !save.data.activeRun);
+      refreshCredits();
+    }
+
+    function renderOperations() {
+      const selected = new Set(save.data.selectedOperations);
+
+      ui.activeOperationCount.textContent =
+        save.data.selectedOperations.length;
+
+      ui.operationGrid.innerHTML = Object.entries(OPERATIONS)
+        .map(([id, operation]) => {
+          const owned = save.data.ownedOperations.includes(id);
+          const active = selected.has(id);
+          const level = save.data.timeUpgrades[id];
+          const bonus = level * TIME_UPGRADE_SECONDS;
+          const maximum = level >= MAX_TIME_UPGRADES;
+          const advancedClass = operation.price > 0 ? " advanced" : "";
+
+          let lowerSection;
+
+          if (!owned) {
+            lowerSection = `
+              <div class="unlock-row">
+                <button
+                  class="button orange"
+                  data-unlock-operation="${id}"
+                  ${save.data.credits < operation.price ? "disabled" : ""}
+                >
+                  Unlock · C ${formatCredits(operation.price)}
+                </button>
+              </div>
+            `;
+          } else {
+            lowerSection = `
+              <div class="upgrade-row">
+                <div class="upgrade-copy">
+                  <strong>Time bonus · +${bonus.toFixed(1)}s</strong>
+                  <span>Level ${level} / ${MAX_TIME_UPGRADES}</span>
+                </div>
+                <button
+                  class="upgrade-button"
+                  data-upgrade-time="${id}"
+                  ${maximum || save.data.credits < TIME_UPGRADE_COST ? "disabled" : ""}
+                >
+                  ${maximum ? "Maximum" : "+0.2s · C 100"}
+                </button>
+              </div>
+            `;
+          }
+
+          return `
+            <article
+              class="operation-card${advancedClass}${active ? " selected" : ""}${owned ? "" : " locked"}"
+            >
+              <button
+                class="operation-main"
+                data-toggle-operation="${id}"
+                ${owned ? "" : "disabled"}
+              >
+                <span class="operation-symbol">${operation.symbol}</span>
+                <span class="operation-info">
+                  <h3>${operation.name}</h3>
+                  <p>${operation.copy}</p>
+                  <span class="operation-tags">
+                    <span class="operation-tag">Base C ${operation.reward}</span>
+                    <span class="operation-tag">
+                      ${owned ? (active ? "Selected" : "Available") : "Locked"}
+                    </span>
+                  </span>
+                </span>
+                <span class="selection-check">✓</span>
+              </button>
+              ${lowerSection}
+            </article>
+          `;
+        })
+        .join("");
+
+      refreshCredits();
+    }
+
+    function toggleOperation(id) {
+      if (!save.data.ownedOperations.includes(id)) {
+        return;
+      }
+
+      const selected = [...save.data.selectedOperations];
+      const index = selected.indexOf(id);
+
+      if (index >= 0) {
+        if (selected.length === 1) {
+          toast("<strong>Choose at least one operation.</strong>");
+          playSound("error");
+          return;
+        }
+
+        selected.splice(index, 1);
+      } else {
+        selected.push(id);
+      }
+
+      save.data.selectedOperations = Object.keys(OPERATIONS)
+        .filter(operationId => selected.includes(operationId));
+      save.persist();
+      renderOperations();
+      playSound("click");
+    }
+
+    function unlockOperation(id) {
+      const operation = OPERATIONS[id];
+
+      if (!operation || !save.unlockOperation(id)) {
+        playSound("error");
+        return;
+      }
+
+      renderOperations();
+      renderHome();
+      playSound("buy");
+      toast(
+        "<strong>" +
+        operation.name +
+        " unlocked.</strong> Select it whenever you want."
+      );
+    }
+
+    function upgradeOperationTime(id) {
+      if (!save.upgradeTime(id)) {
+        playSound("error");
+        return;
+      }
+
+      renderOperations();
+      playSound("buy");
+      toast(
+        "<strong>" +
+        OPERATIONS[id].name +
+        ":</strong> +0.2 seconds per question."
+      );
+    }
+
+    function toggleKeyboardSetting() {
+      save.data.showKeyboard = !save.data.showKeyboard;
+      save.persist();
+      renderHome();
+      playSound("click");
+    }
+
+    function renderStats() {
+      const stats = save.data.stats;
+      const attempts = stats.correct + stats.wrong;
+      const accuracy = attempts
+        ? Math.round(stats.correct / attempts * 100)
+        : 0;
+
+      const selectedAnswers = Object.entries(stats.answersByOperation)
+        .sort((first, second) => second[1] - first[1]);
+
+      const favorite = selectedAnswers[0][1] > 0
+        ? OPERATIONS[selectedAnswers[0][0]].name
+        : "—";
+
+      const rows = [
+        ["Runs", stats.runs],
+        ["Completed runs", stats.completedRuns],
+        ["Correct answers", stats.correct],
+        ["Accuracy", accuracy + "%"],
+        ["Best streak", stats.bestStreak],
+        ["Best run", stats.bestRun],
+        ["Credits earned", "C " + formatCredits(stats.creditsEarned)],
+        ["Timeouts", stats.timeouts],
+        ["Favorite operation", favorite]
+      ];
+
+      ui.statsGrid.innerHTML = rows
+        .map(([label, value]) => `
+          <article class="stat-card">
+            <span>${label}</span>
+            <strong>${value}</strong>
+          </article>
+        `)
+        .join("");
+    }
+
+    /* ---------- Run state and checkpoints ---------- */
+
+    function makeFreshRun() {
+      const specification = generateQuestion(
+        save.data.selectedOperations,
+        save.data.difficulty
+      );
+
+      const question = hydrateQuestion(specification);
+      const duration = durationFor(
+        question.operation,
+        save.data.difficulty,
+        save.data.timeUpgrades
+      );
+
+      return {
+        token: ++runSerial,
+        difficulty: save.data.difficulty,
+        operations: [...save.data.selectedOperations],
+        lives: MAX_LIVES,
+        correct: 0,
+        mistakes: 0,
+        streak: 0,
+        bestStreak: 0,
+        earned: 0,
+        question,
+        duration,
+        remaining: duration,
+        pendingNext: false,
+        paused: false,
+        resolving: false,
+        completed: false,
+        lastTick: performance.now()
+      };
+    }
+
+    function restoreRun(run) {
+      const question = hydrateQuestion(run.question);
+      const duration = durationFor(
+        question.operation,
+        run.difficulty,
+        save.data.timeUpgrades
+      );
+
+      return {
+        token: ++runSerial,
+        difficulty: run.difficulty,
+        operations: [...run.operations],
+        lives: run.lives,
+        correct: run.correct,
+        mistakes: run.mistakes,
+        streak: run.streak,
+        bestStreak: run.bestStreak,
+        earned: run.earned,
+        question,
+        duration,
+        remaining: Math.min(duration, run.remaining),
+        pendingNext: run.pendingNext,
+        paused: false,
+        resolving: false,
+        completed: false,
+        lastTick: performance.now()
+      };
+    }
+
+    function serializeRun() {
+      if (!gameState || gameState.completed) {
+        return null;
+      }
+
+      return {
+        difficulty: gameState.difficulty,
+        operations: [...gameState.operations],
+        lives: gameState.lives,
+        correct: gameState.correct,
+        mistakes: gameState.mistakes,
+        streak: gameState.streak,
+        bestStreak: gameState.bestStreak,
+        earned: gameState.earned,
+        question: gameState.question.specification,
+        remaining: gameState.remaining,
+        pendingNext: gameState.pendingNext
+      };
+    }
+
+    function checkpoint() {
+      const snapshot = serializeRun();
+
+      if (!snapshot) {
+        return;
+      }
+
+      save.data.activeRun = snapshot;
+      save.persist();
+    }
+
+    function startNewRun() {
+      clearRunTimers();
+      closeOverlays();
+      gameState = makeFreshRun();
+
+      save.mutate(data => {
+        data.stats.runs += 1;
+      });
+
+      checkpoint();
+      enterRun();
+    }
+
+    function continueRun() {
+      if (!save.data.activeRun) {
+        startNewRun();
+        return;
+      }
+
+      clearRunTimers();
+      closeOverlays();
+      gameState = restoreRun(save.data.activeRun);
+
+      if (gameState.pendingNext) {
+        prepareNextQuestion(false);
+      }
+
+      enterRun();
+    }
+
+    function enterRun() {
+      showScreen("game-screen");
+      applyKeyboardSetting();
+      renderQuestion();
+      refreshGameHud();
+      startTimer();
+      focusAnswer();
+    }
+
+    function requestNewRun() {
+      if (save.data.activeRun) {
+        askForConfirmation(
+          "Start a new run?",
+          "Your saved run will be replaced.",
+          startNewRun
+        );
+      } else {
+        startNewRun();
+      }
+    }
+
+    function requestRestart() {
+      if (!gameState) {
+        return;
+      }
+
+      pauseRun(false);
+      askForConfirmation(
+        "Restart this run?",
+        "Your current score and streak will be lost.",
+        startNewRun
+      );
+    }
+
+    function leaveRunToMenu() {
+      if (gameState && !gameState.completed) {
+        checkpoint();
+      }
+
+      clearRunTimers();
+      gameState = null;
+      closeOverlays();
+      showScreen("home-screen");
+    }
+
+    /* ---------- Gameplay ---------- */
+
+    function renderQuestion() {
+      if (!gameState) {
+        return;
+      }
+
+      const operation = OPERATIONS[gameState.question.operation];
+      ui.problemOperation.textContent = operation.name;
+      ui.equation.innerHTML = questionMarkup(gameState.question);
+      ui.answerInput.value = "";
+      ui.feedback.className = "feedback";
+      ui.feedback.textContent =
+        formatSeconds(gameState.duration) + " seconds · base C " +
+        operation.reward;
+      ui.questionFlash.className = "question-flash";
+    }
+
+    function refreshGameHud() {
+      if (!gameState) {
+        return;
+      }
+
+      const difficulty = DIFFICULTIES[gameState.difficulty];
+      const ratio = gameState.duration > 0
+        ? Math.max(0, Math.min(1, gameState.remaining / gameState.duration))
+        : 0;
+
+      ui.gameDifficulty.textContent =
+        difficulty.name + " · " +
+        formatSeconds(difficulty.time) + " base seconds";
+      ui.correctValue.textContent = gameState.correct;
+      ui.streakValue.textContent = gameState.streak;
+      ui.bestValue.textContent = gameState.bestStreak;
+      ui.earnedValue.textContent = "C " + formatCredits(gameState.earned);
+      ui.timerBar.style.width = ratio * 100 + "%";
+      ui.timerBar.classList.toggle("warning", ratio <= 0.3);
+      ui.pauseButton.textContent = gameState.paused ? "Resume" : "Pause";
+
+      ui.lifeRow.innerHTML = Array.from(
+        { length: MAX_LIVES },
+        (_, index) => `
+          <span class="life${index >= gameState.lives ? " lost" : ""}"></span>
+        `
+      ).join("");
+    }
+
+    function submitAnswer() {
+      if (
+        !gameState ||
+        gameState.paused ||
+        gameState.resolving ||
+        gameState.completed
+      ) {
+        return;
+      }
+
+      const rawAnswer = ui.answerInput.value;
+
+      if (parseAnswer(rawAnswer) === null) {
+        ui.feedback.className = "feedback wrong";
+        ui.feedback.textContent = "Enter a valid answer";
+        playSound("error");
+        return;
+      }
+
+      if (answerIsCorrect(rawAnswer, gameState.question)) {
+        handleCorrectAnswer();
+      } else {
+        handleIncorrectAnswer(false);
+      }
+    }
+
+    function handleCorrectAnswer() {
+      gameState.resolving = true;
+      gameState.pendingNext = true;
+      gameState.correct += 1;
+      gameState.streak += 1;
+      gameState.bestStreak = Math.max(
+        gameState.bestStreak,
+        gameState.streak
+      );
+
+      const reward = rewardForAnswer(
+        gameState.question.operation,
+        gameState.difficulty,
+        gameState.remaining,
+        gameState.duration,
+        gameState.streak
+      );
+
+      gameState.earned += reward;
+
+      save.mutate(data => {
+        data.credits += reward;
+        data.stats.correct += 1;
+        data.stats.creditsEarned += reward;
+        data.stats.bestStreak = Math.max(
+          data.stats.bestStreak,
+          gameState.bestStreak
+        );
+        data.stats.answersByOperation[gameState.question.operation] += 1;
+        data.activeRun = serializeRun();
+      });
+
+      ui.feedback.className = "feedback correct";
+      ui.feedback.textContent = "Correct · +C " + reward;
+      showQuestionFlash(true);
+      playSound("correct");
+      scheduleNextQuestion(560);
+    }
+
+    function handleIncorrectAnswer(timedOut) {
+      if (!gameState || gameState.resolving || gameState.completed) {
+        return;
+      }
+
+      gameState.resolving = true;
+      gameState.pendingNext = true;
+      gameState.lives -= 1;
+      gameState.mistakes += 1;
+      gameState.streak = 0;
+
+      save.mutate(data => {
+        data.stats.wrong += 1;
+
+        if (timedOut) {
+          data.stats.timeouts += 1;
+        }
+      });
+
+      ui.feedback.className = "feedback wrong";
+      ui.feedback.textContent =
+        (timedOut ? "Time expired" : "Incorrect") +
+        " · answer: " +
+        gameState.question.expectedText;
+
+      showQuestionFlash(false);
+      playSound("wrong");
+      refreshGameHud();
+
+      if (gameState.lives <= 0) {
+        finishRunAfterDelay();
+      } else {
+        checkpoint();
+        scheduleNextQuestion(850);
+      }
+    }
+
+    function scheduleNextQuestion(delay) {
+      const token = gameState.token;
+      window.clearTimeout(transitionTimer);
+
+      transitionTimer = window.setTimeout(() => {
+        if (!gameState || gameState.token !== token || gameState.completed) {
+          return;
+        }
+
+        prepareNextQuestion(true);
+      }, delay);
+    }
+
+    function prepareNextQuestion(render = true) {
+      const specification = generateQuestion(
+        gameState.operations,
+        gameState.difficulty
+      );
+
+      gameState.question = hydrateQuestion(specification);
+      gameState.duration = durationFor(
+        gameState.question.operation,
+        gameState.difficulty,
+        save.data.timeUpgrades
+      );
+      gameState.remaining = gameState.duration;
+      gameState.pendingNext = false;
+      gameState.resolving = false;
+      gameState.lastTick = performance.now();
+      checkpoint();
+
+      if (render) {
+        renderQuestion();
+        refreshGameHud();
+        focusAnswer();
+      }
+    }
+
+    function showQuestionFlash(correct) {
+      ui.questionFlash.className =
+        "question-flash show" + (correct ? "" : " wrong");
+      ui.flashSymbol.textContent = correct ? "✓" : "×";
+    }
+
+    function finishRunAfterDelay() {
+      const token = gameState.token;
+      gameState.completed = true;
+      window.cancelAnimationFrame(timerFrame);
+
+      save.mutate(data => {
+        data.activeRun = null;
+        data.stats.completedRuns += 1;
+        data.stats.bestRun = Math.max(
+          data.stats.bestRun,
+          gameState.correct
+        );
+      });
+
+      transitionTimer = window.setTimeout(() => {
+        if (!gameState || gameState.token !== token) {
+          return;
+        }
+
+        showResults();
+      }, 850);
+    }
+
+    function showResults() {
+      const attempts = gameState.correct + gameState.mistakes;
+      const accuracy = attempts
+        ? Math.round(gameState.correct / attempts * 100)
+        : 0;
+
+      ui.resultCorrect.textContent = gameState.correct;
+      ui.resultStreak.textContent = gameState.bestStreak;
+      ui.resultAccuracy.textContent = accuracy + "%";
+      ui.resultEarned.textContent =
+        "C " + formatCredits(gameState.earned);
+      ui.resultOverlay.classList.remove("closed");
+      renderHome();
+      playSound("complete");
+    }
+
+    /* ---------- Timer and pause ---------- */
+
+    function startTimer() {
+      window.cancelAnimationFrame(timerFrame);
+
+      if (!gameState) {
+        return;
+      }
+
+      gameState.lastTick = performance.now();
+
+      const tick = now => {
+        if (!gameState || activeScreen !== "game-screen") {
+          return;
+        }
+
+        const delta = Math.min(
+          0.25,
+          Math.max(0, (now - gameState.lastTick) / 1000)
+        );
+
+        gameState.lastTick = now;
+
+        if (
+          !gameState.paused &&
+          !gameState.resolving &&
+          !gameState.completed
+        ) {
+          gameState.remaining = Math.max(
+            0,
+            gameState.remaining - delta
+          );
+          refreshGameHud();
+
+          if (gameState.remaining <= 0) {
+            handleIncorrectAnswer(true);
+          }
+        }
+
+        timerFrame = window.requestAnimationFrame(tick);
+      };
+
+      timerFrame = window.requestAnimationFrame(tick);
+    }
+
+    function pauseRun(showOverlay = true) {
+      if (!gameState || gameState.completed) {
+        return;
+      }
+
+      gameState.paused = true;
+      checkpoint();
+      refreshGameHud();
+
+      if (showOverlay) {
+        ui.pauseOverlay.classList.remove("closed");
+      }
+    }
+
+    function resumeRun() {
+      if (!gameState || gameState.completed) {
+        return;
+      }
+
+      gameState.paused = false;
+      gameState.lastTick = performance.now();
+      ui.pauseOverlay.classList.add("closed");
+      refreshGameHud();
+      focusAnswer();
+    }
+
+    function togglePause() {
+      if (!gameState) {
+        return;
+      }
+
+      if (gameState.paused) {
+        resumeRun();
+      } else {
+        pauseRun(true);
+      }
+    }
+
+    /* ---------- On-screen keyboard ---------- */
+
+    function applyKeyboardSetting() {
+      const shown = save.data.showKeyboard;
+      ui.keyboardWrap.classList.toggle("hidden", !shown);
+      ui.answerInput.readOnly = shown;
+      ui.answerInput.setAttribute(
+        "inputmode",
+        shown ? "none" : "decimal"
+      );
+    }
+
+    function focusAnswer() {
+      if (!save.data.showKeyboard && gameState && !gameState.paused) {
+        window.setTimeout(() => ui.answerInput.focus(), 30);
+      }
+    }
+
+    function appendAnswerCharacter(character) {
+      if (
+        !gameState ||
+        gameState.paused ||
+        gameState.resolving ||
+        gameState.completed
+      ) {
+        return;
+      }
+
+      const current = ui.answerInput.value;
+
+      if (current.length >= 18) {
+        return;
+      }
+
+      if (character === "-" && current.length > 0) {
+        return;
+      }
+
+      if (character === "/" && current.includes("/")) {
+        return;
+      }
+
+      if (character === "." && current.includes(".")) {
+        return;
+      }
+
+      ui.answerInput.value += character;
+      playSound("key");
+    }
+
+    function handleKeyboardKey(key) {
+      if (key === "backspace") {
+        ui.answerInput.value = ui.answerInput.value.slice(0, -1);
+        playSound("key");
+      } else if (key === "clear") {
+        ui.answerInput.value = "";
+        playSound("key");
+      } else if (key === "enter") {
+        submitAnswer();
+      } else {
+        appendAnswerCharacter(key);
+      }
+    }
+
+    /* ---------- Confirmation and cleanup ---------- */
+
+    function askForConfirmation(title, copy, action) {
+      confirmationAction = action;
+      ui.confirmTitle.textContent = title;
+      ui.confirmCopy.textContent = copy;
+      ui.confirmOverlay.classList.remove("closed");
+    }
+
+    function cancelConfirmation() {
+      confirmationAction = null;
+      ui.confirmOverlay.classList.add("closed");
+
+      if (gameState && gameState.paused && activeScreen === "game-screen") {
+        resumeRun();
+      }
+    }
+
+    function acceptConfirmation() {
+      const action = confirmationAction;
+      confirmationAction = null;
+      ui.confirmOverlay.classList.add("closed");
+
+      if (typeof action === "function") {
+        action();
+      }
+    }
+
+    function closeOverlays() {
+      ui.pauseOverlay.classList.add("closed");
+      ui.confirmOverlay.classList.add("closed");
+      ui.resultOverlay.classList.add("closed");
+      confirmationAction = null;
+    }
+
+    function clearRunTimers() {
+      window.cancelAnimationFrame(timerFrame);
+      window.clearTimeout(transitionTimer);
+      timerFrame = 0;
+      transitionTimer = 0;
+    }
+
+    /* ---------- Events ---------- */
+
+    document.querySelectorAll("[data-open]").forEach(button => {
+      button.addEventListener("click", () => {
+        showScreen(button.dataset.open);
+        playSound("click");
+      });
+    });
+
+    byId("brand-home").addEventListener("click", () => {
+      if (activeScreen === "game-screen") {
+        leaveRunToMenu();
+      } else {
+        showScreen("home-screen");
+      }
+    });
+
+    ui.playButton.addEventListener("click", requestNewRun);
+    ui.panelPlayButton.addEventListener("click", requestNewRun);
+    ui.continueButton.addEventListener("click", continueRun);
+
+    ui.operationsButton.addEventListener("click", () => {
+      showScreen("operations-screen");
+      playSound("click");
+    });
+
+    ui.difficultyGrid.addEventListener("click", event => {
+      const button = event.target.closest("[data-difficulty]");
+
+      if (!button) {
+        return;
+      }
+
+      save.data.difficulty = button.dataset.difficulty;
+      save.persist();
+      renderHome();
+      playSound("click");
+    });
+
+    ui.operationGrid.addEventListener("click", event => {
+      const toggleButton = event.target.closest("[data-toggle-operation]");
+      const unlockButton = event.target.closest("[data-unlock-operation]");
+      const upgradeButton = event.target.closest("[data-upgrade-time]");
+
+      if (toggleButton && !toggleButton.disabled) {
+        toggleOperation(toggleButton.dataset.toggleOperation);
+      } else if (unlockButton && !unlockButton.disabled) {
+        unlockOperation(unlockButton.dataset.unlockOperation);
+      } else if (upgradeButton && !upgradeButton.disabled) {
+        upgradeOperationTime(upgradeButton.dataset.upgradeTime);
+      }
+    });
+
+    ui.keyboardSwitch.addEventListener("click", toggleKeyboardSetting);
+    ui.quickKeyboardButton.addEventListener(
+      "click",
+      toggleKeyboardSetting
+    );
+
+    ui.soundButton.addEventListener("click", () => {
+      save.data.sound = !save.data.sound;
+      save.persist();
+      renderHome();
+
+      if (save.data.sound) {
+        playSound("click");
+      }
+    });
+
+    ui.answerForm.addEventListener("submit", event => {
+      event.preventDefault();
+      submitAnswer();
+    });
+
+    ui.answerInput.addEventListener("input", () => {
+      ui.answerInput.value = ui.answerInput.value
+        .replace(/[^0-9.,/−-]/g, "")
+        .slice(0, 18);
+    });
+
+    ui.numberKeyboard.addEventListener("click", event => {
+      const button = event.target.closest("[data-key]");
+
+      if (button) {
+        handleKeyboardKey(button.dataset.key);
+      }
+    });
+
+    ui.pauseButton.addEventListener("click", togglePause);
+    ui.resumeButton.addEventListener("click", resumeRun);
+    ui.restartButton.addEventListener("click", requestRestart);
+    ui.gameMenuButton.addEventListener("click", leaveRunToMenu);
+    ui.confirmCancel.addEventListener("click", cancelConfirmation);
+    ui.confirmAccept.addEventListener("click", acceptConfirmation);
+
+    ui.resultMenu.addEventListener("click", () => {
+      clearRunTimers();
+      gameState = null;
+      closeOverlays();
+      showScreen("home-screen");
+    });
+
+    ui.resultAgain.addEventListener("click", startNewRun);
+
+    window.addEventListener("keydown", event => {
+      if (activeScreen !== "game-screen" || !gameState) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        togglePause();
+        return;
+      }
+
+      if (!save.data.showKeyboard || gameState.paused) {
+        return;
+      }
+
+      if (/^[0-9./-]$/.test(event.key)) {
+        event.preventDefault();
+        appendAnswerCharacter(event.key);
+      } else if (event.key === "Backspace") {
+        event.preventDefault();
+        handleKeyboardKey("backspace");
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        handleKeyboardKey("enter");
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (
+        document.hidden &&
+        activeScreen === "game-screen" &&
+        gameState &&
+        !gameState.paused &&
+        !gameState.completed
+      ) {
+        pauseRun(true);
+      }
+    });
+
+    window.addEventListener("pagehide", () => {
+      if (gameState && !gameState.completed) {
+        checkpoint();
+      }
+    });
+
+    /* ---------- Startup ---------- */
+
+    function boot() {
+      renderHome();
+      renderOperations();
+      renderStats();
+      showScreen("home-screen");
+    }
+
+    boot();
+  </script>
+</body>
+</html>

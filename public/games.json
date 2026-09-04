@@ -118,5 +118,85 @@
 		"cost": 650,
 		"icon": "Images/checkers.png",
 		"path": "/.netlify/functions/proxy?game=checkers"
+	},
+	{
+		"id": "asteroid-drift",
+		"name": "Asteroid Drift",
+		"description": "Dodge Asteroids in Space",
+		"cost": 900,
+		"icon": "Images/asteroid-drift.png",
+		"path": "/.netlify/functions/proxy?game=asteroid-drift"
+	},
+	{
+		"id": "breakout",
+		"name": "Breakout",
+		"description": "Classic Brick Breaking Action",
+		"cost": 450,
+		"icon": "Images/breakout.png",
+		"path": "/.netlify/functions/proxy?game=breakout"
+	},
+	{
+		"id": "conway-game",
+		"name": "Conway's Game of Life",
+		"description": "Explore Cellular Automata",
+		"cost": 600,
+		"icon": "Images/conway-game.png",
+		"path": "/.netlify/functions/proxy?game=conway-game"
+	},
+	{
+		"id": "memory-match",
+		"name": "Memory Match",
+		"description": "Find All Matching Pairs",
+		"cost": 700,
+		"icon": "Images/memory-match.png",
+		"path": "/.netlify/functions/proxy?game=memory-match"
+	},
+	{
+		"id": "mini-golf",
+		"name": "Mini Golf",
+		"description": "Aim for the Perfect Putts",
+		"cost": 950,
+		"icon": "Images/mini-golf.png",
+		"path": "/.netlify/functions/proxy?game=mini-golf"
+	},
+	{
+		"id": "quick-math",
+		"name": "Quick Math",
+		"description": "Solve Math Challenges Fast",
+		"cost": 300,
+		"icon": "Images/quick-math.png",
+		"path": "/.netlify/functions/proxy?game=quick-math"
+	},
+	{
+		"id": "stack",
+		"name": "Stack",
+		"description": "Build the Highest Stack",
+		"cost": 650,
+		"icon": "Images/stack.png",
+		"path": "/.netlify/functions/proxy?game=stack"
+	},
+	{
+		"id": "sudoku",
+		"name": "Sudoku",
+		"description": "Classic Number Logic Puzzle",
+		"cost": 750,
+		"icon": "Images/sudoku.png",
+		"path": "/.netlify/functions/proxy?game=sudoku"
+	},
+	{
+		"id": "tower-defense",
+		"name": "Tower Defense",
+		"description": "Defend Your Base from Waves",
+		"cost": 1300,
+		"icon": "Images/tower-defense.png",
+		"path": "/.netlify/functions/proxy?game=tower-defense"
+	},
+	{
+		"id": "train-space",
+		"name": "Train Space",
+		"description": "Guide Your Train Through Space",
+		"cost": 850,
+		"icon": "Images/train-space.png",
+		"path": "/.netlify/functions/proxy?game=train-space"
 	}
 ]
