@@ -36,7 +36,8 @@ const DEFAULT_STATE = {
     coins: 0,
     lastDailyClaim: "",
     dailyStreak: 0,
-    unlocked: []
+    unlocked: [],
+    codeUnlocked: []
 };
 
 let defaultGames = [];
@@ -83,6 +84,7 @@ document.addEventListener("keydown", (event) => {
 
     if (event.key === "Escape") {
         closePurchaseModal();
+        closeCodeModal();
         closePackModal();
         closeCoinModal();
         closeRewardModal();
@@ -98,7 +100,8 @@ document.addEventListener("keydown", (event) => {
 function cloneDefaultState() {
     return {
         ...DEFAULT_STATE,
-        unlocked: []
+        unlocked: [],
+        codeUnlocked: []
     };
 }
 
@@ -123,11 +126,23 @@ function normalizeState(data) {
         ]
         : [];
 
+    const codeUnlocked = Array.isArray(data?.codeUnlocked)
+        ? [
+            ...new Set(
+                data.codeUnlocked
+                    .map(String)
+                    .map((id) => id.trim())
+                    .filter(Boolean)
+            )
+        ]
+        : [];
+
     return {
         coins: 0,
         lastDailyClaim,
         dailyStreak,
-        unlocked
+        unlocked,
+        codeUnlocked
     };
 }
 
@@ -135,7 +150,8 @@ function getCachedStateSnapshot() {
     return JSON.stringify({
         lastDailyClaim: appState.lastDailyClaim,
         dailyStreak: appState.dailyStreak,
-        unlocked: appState.unlocked
+        unlocked: appState.unlocked,
+        codeUnlocked: appState.codeUnlocked
     });
 }
 
@@ -876,6 +892,16 @@ function getGameIdentifier(game) {
     return "game";
 }
 
+function getGameCost(game) {
+    return Number(game?.cost) > 0
+        ? Math.floor(Number(game.cost))
+        : 100;
+}
+
+function getCodeCost(game) {
+    return Math.max(1, Math.ceil(getGameCost(game) * 0.1));
+}
+
 function getGameById(gameId) {
     return defaultGames.find(
         (game) =>
@@ -938,7 +964,22 @@ function renderCreditStore() {
         return;
     }
 
-    store.innerHTML = defaultGames.map((game) => `
+    const purchasedGames = defaultGames.filter((game) =>
+        isGameUnlocked(getGameIdentifier(game))
+    );
+
+    if (!purchasedGames.length) {
+        store.innerHTML = `
+            <div class="empty-state">
+                <span>🎮</span>
+                <h3>No purchased games yet</h3>
+                <p>Buy a game first to get credits for it.</p>
+            </div>
+        `;
+        return;
+    }
+
+    store.innerHTML = purchasedGames.map((game) => `
         <article class="store-card">
             <div class="store-card__icon">${renderGameIcon(game.icon, String(game.name))}</div>
             <div class="store-card__content">
@@ -1294,16 +1335,18 @@ function isGameUnlocked(gameId) {
     );
 }
 
+function isCodeUnlocked(gameId) {
+    return appState.codeUnlocked.includes(
+        String(gameId)
+    );
+}
+
 function createGameCard(game) {
     const gameId =
         getGameIdentifier(game);
 
-    const cost =
-        Number(game.cost) > 0
-            ? Math.floor(
-                Number(game.cost)
-            )
-            : 100;
+    const cost = getGameCost(game);
+    const codeCost = getCodeCost(game);
 
     const unlocked =
         isGameUnlocked(
@@ -1676,6 +1719,13 @@ function openPurchaseModal(
             "confirm-purchase"
         );
 
+    const codeButton = document.getElementById("get-code");
+
+    codeButton.textContent = isCodeUnlocked(gameId)
+        ? "Code"
+        : `Get code for ${codeCost} 🪙`;
+    codeButton.disabled = false;
+
     if (
         appState.coins <
         cost
@@ -1704,6 +1754,94 @@ function openPurchaseModal(
             "purchase-modal"
         )
     );
+}
+
+async function unlockGameCode(game) {
+    if (purchaseBusy || !game) {
+        return;
+    }
+
+    const gameId = getGameIdentifier(game);
+
+    if (isCodeUnlocked(gameId)) {
+        await openCodeModal(game);
+        return;
+    }
+
+    if (!isOnline()) {
+        showToast("Go online to unlock the game code.", "info");
+        return;
+    }
+
+    const cost = getCodeCost(game);
+
+    if (appState.coins < cost) {
+        showToast(`You need ${(cost - appState.coins).toLocaleString("en-US")} more coins.`, "error");
+        return;
+    }
+
+    const button = document.getElementById("get-code");
+    purchaseBusy = true;
+    button.disabled = true;
+    button.textContent = "Preparing code...";
+
+    try {
+        const html = await fetchLatestGameHtml(game);
+
+        if (!html) {
+            throw new Error("No game code available.");
+        }
+
+        appState.coins -= cost;
+        appState.codeUnlocked = [...new Set([
+            ...appState.codeUnlocked,
+            gameId
+        ])];
+        renderCoins();
+        await saveState();
+        button.disabled = false;
+        button.textContent = "Code";
+        showToast(`${game.name} code unlocked.`, "success");
+        await openCodeModal(game, html);
+    } catch (error) {
+        console.error("Code unlock cancelled:", error);
+        button.disabled = false;
+        button.textContent = `Get code for ${cost} 🪙`;
+        showToast("The game code could not be unlocked.", "error");
+    } finally {
+        purchaseBusy = false;
+    }
+}
+
+async function openCodeModal(game, html = "") {
+    if (!game) {
+        return;
+    }
+
+    const code = html || await fetchLatestGameHtml(game);
+
+    if (!code) {
+        showToast("The game code could not be loaded.", "error");
+        return;
+    }
+
+    closeModal(document.getElementById("purchase-modal"));
+    document.getElementById("code-title").textContent = `${game.name} code`;
+    document.getElementById("code-display").textContent = code;
+    document.getElementById("download-code").onclick = () => {
+        const filename = `${getGameIdentifier(game)}.html`;
+        const url = URL.createObjectURL(new Blob([code], { type: "text/html" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+    openModal(document.getElementById("code-modal"));
+}
+
+function closeCodeModal() {
+    closeModal(document.getElementById("code-modal"));
 }
 
 function closePurchaseModal() {
@@ -2045,12 +2183,7 @@ async function purchaseGame(
             gameData
         );
 
-    const cost =
-        Number(gameData.cost) > 0
-            ? Math.floor(
-                Number(gameData.cost)
-            )
-            : 100;
+    const cost = getGameCost(gameData);
 
     if (
         isGameUnlocked(
@@ -2332,6 +2465,12 @@ function handleCreditPurchase(event) {
         return;
     }
 
+    if (!isGameUnlocked(getGameIdentifier(game))) {
+        renderCreditStore();
+        showToast("Buy this game first to get credits.", "error");
+        return;
+    }
+
     if (appState.coins < cost) {
         showToast(`You need ${(cost - appState.coins).toLocaleString("en-US")} more coins.`, "error");
         return;
@@ -2444,6 +2583,18 @@ async function initializeApp() {
         );
 
     document
+        .getElementById("get-code")
+        ?.addEventListener("click", () => {
+            if (purchaseTarget) {
+                unlockGameCode(purchaseTarget);
+            }
+        });
+
+    document
+        .getElementById("close-code")
+        ?.addEventListener("click", closeCodeModal);
+
+    document
         .getElementById("close-pack")
         ?.addEventListener("click", closePackModal);
 
@@ -2463,7 +2614,6 @@ async function initializeApp() {
         .getElementById("cancel-coin")
         ?.addEventListener("click", closeCoinModal);
 
-    document
     document
         .getElementById("coin-store")
         ?.addEventListener("click", (event) => {
@@ -2543,6 +2693,10 @@ async function initializeApp() {
                             "purchase-modal"
                         ) {
                             closePurchaseModal();
+                        }
+
+                        if (modal.id === "code-modal") {
+                            closeCodeModal();
                         }
 
                         if (

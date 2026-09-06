@@ -941,9 +941,32 @@ button:disabled {
 
 .modal-actions {
     display: grid;
-    grid-template-columns: 1fr 1.35fr;
+    grid-template-columns: 1.2fr 1fr 1fr;
     gap: 10px;
     margin-top: 16px;
+}
+
+.code-panel {
+    width: min(980px, 100%);
+}
+
+.code-panel__body {
+    padding: 20px;
+}
+
+.code-display {
+    max-height: 60vh;
+    margin: 0;
+    padding: 16px;
+    overflow: auto;
+    color: #d8f8e8;
+    background: #06100e;
+    border: 1px solid rgba(85, 230, 165, 0.18);
+    border-radius: 12px;
+    font: 0.78rem/1.5 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    user-select: text;
+    -webkit-user-select: text;
+    white-space: pre;
 }
 
 .primary-button,

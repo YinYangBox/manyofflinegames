@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#080b10">
 <title>Pong</title>
 
@@ -617,6 +617,79 @@ button:active {
     flex-wrap: wrap;
   }
 }
+/* The interface uses the viewport; only the court keeps the 12:7 ratio. */
+body {
+  touch-action: auto;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+#game-container {
+  width: min(1200px, 96vw);
+  height: min(820px, 96dvh);
+  border-width: 2px;
+}
+#gameCanvas {
+  inset: auto;
+  image-rendering: auto;
+  border: 0;
+  outline: 1px solid #ffffff40;
+  border-radius: 8px;
+  touch-action: none;
+}
+.screen {
+  min-height: 0;
+  padding: 14px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+.card {
+  width: min(520px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  flex-shrink: 0;
+  padding: clamp(16px, 3vw, 32px);
+  touch-action: pan-y;
+}
+.skin-shop-card { width: min(760px, 100%); max-height: 100%; }
+.logo { font-size: clamp(28px, 6vw, 68px); letter-spacing: clamp(2px, 1vw, 10px); margin-bottom: 20px; }
+#hud { top: 10px; gap: 20px; }
+.hud-box { padding: 7px 12px; }
+.hud-value { font-size: 20px; }
+#mobile-controls { display: none; }
+#game-container.touch-controls #mobile-controls { display: block; }
+.slider-container { width: 44px; bottom: auto; }
+.paddle-slider {
+  writing-mode: vertical-lr;
+  direction: ltr;
+  transform: none;
+  width: 24px;
+  height: 100%;
+  min-height: 0;
+  touch-action: none;
+}
+.paddle-slider::-webkit-slider-thumb { width: 34px; height: 34px; }
+.paddle-slider::-moz-range-thumb {
+  width: 32px; height: 32px; border: 0; border-radius: 50%; background: white;
+}
+#controls-toggle {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  z-index: 8; min-height: 36px; padding: 7px 14px; margin: 0;
+  font-size: 11px; letter-spacing: 1px; white-space: nowrap; touch-action: manipulation;
+}
+@media (max-width: 650px) {
+  #game-container { width: 100%; height: 100dvh; height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); border: 0; border-radius: 0; }
+  .card { padding: 20px 16px; }
+  .results { gap: 28px; }
+}
+@media (max-height: 480px) {
+  #game-container { height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .screen { padding: 8px; }
+  .card { padding: 14px 18px; }
+  .logo { font-size: 32px; margin-bottom: 12px; }
+  .hud-box { padding: 4px 10px; gap: 3px; }
+  .hud-value { font-size: 17px; }
+}
 </style>
 </head>
 
@@ -684,8 +757,8 @@ button:active {
       </div>
       
       <div class="shop-tabs">
-        <button id="ballTabBtn" class="active">BOLAS</button>
-        <button id="paddleTabBtn">PALAS</button>
+        <button id="ballTabBtn" class="active">BALLS</button>
+        <button id="paddleTabBtn">PADDLES</button>
       </div>
 
       <div id="ballGrid" class="skin-grid"></div>
@@ -719,12 +792,13 @@ button:active {
 
   <div id="mobile-controls">
     <div id="p1-container" class="slider-container">
-      <input type="range" id="p1-slider" class="paddle-slider" min="0" max="1000" value="500">
+      <input type="range" id="p1-slider" class="paddle-slider" min="0" max="1000" value="500" aria-label="Player 1 paddle">
     </div>
     <div id="p2-container" class="slider-container">
-      <input type="range" id="p2-slider" class="paddle-slider" min="0" max="1000" value="500">
+      <input type="range" id="p2-slider" class="paddle-slider" min="0" max="1000" value="500" aria-label="Player 2 paddle">
     </div>
   </div>
+  <button id="controls-toggle" aria-pressed="false">SHOW CONTROLS</button>
 </div>
 
 <script>
@@ -732,10 +806,11 @@ button:active {
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-ctx.imageSmoothingEnabled = false;
+ctx.imageSmoothingEnabled = true;
 
-const W = canvas.width;
-const H = canvas.height;
+// Physics stays in fixed world units when the screen rotates or resizes.
+const W = 1200;
+const H = 700;
 
 const menu = document.getElementById("menu");
 const skinShopScreen = document.getElementById("skinShopScreen");
@@ -1326,8 +1401,67 @@ document.getElementById("menuButton").onclick = () => {
   hud.classList.add("hidden");
 };
 
+const gameContainer = document.getElementById("game-container");
+const controlsToggle = document.getElementById("controls-toggle");
+let showTouchControls = window.matchMedia("(any-pointer: coarse)").matches;
+
+function courtLayout(width, height, controls) {
+  const side = controls ? 48 : 12;
+  const top = height < 480 ? 60 : 78;
+  const bottom = 52;
+  const scale = Math.max(0.01, Math.min((width - side * 2) / W, (height - top - bottom) / H));
+  const courtWidth = W * scale, courtHeight = H * scale;
+  return {
+    width: courtWidth, height: courtHeight,
+    left: (width - courtWidth) / 2,
+    top: top + (height - top - bottom - courtHeight) / 2
+  };
+}
+
+function resizeCourt() {
+  const width = gameContainer.clientWidth, height = gameContainer.clientHeight;
+  const court = courtLayout(width, height, showTouchControls);
+  canvas.style.width = court.width + "px";
+  canvas.style.height = court.height + "px";
+  canvas.style.left = court.left + "px";
+  canvas.style.top = court.top + "px";
+
+  // Match the backing buffer to the display density without changing physics.
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.max(1, Math.round(court.width * ratio));
+  canvas.height = Math.max(1, Math.round(court.height * ratio));
+  ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  for (const id of ["p1-container", "p2-container"]) {
+    const control = document.getElementById(id);
+    control.style.top = court.top + "px";
+    control.style.height = court.height + "px";
+  }
+  document.getElementById("p1-container").style.left = Math.max(0, court.left - 46) + "px";
+  document.getElementById("p2-container").style.right = Math.max(0, court.left - 46) + "px";
+  gameContainer.classList.toggle("touch-controls", showTouchControls);
+  controlsToggle.textContent = showTouchControls ? "HIDE CONTROLS" : "SHOW CONTROLS";
+  controlsToggle.setAttribute("aria-pressed", String(showTouchControls));
+  p1Dragging = false;
+  p2Dragging = false;
+  draw();
+}
+
+controlsToggle.onclick = () => {
+  showTouchControls = !showTouchControls;
+  resizeCourt();
+};
+window.addEventListener("resize", resizeCourt);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", resizeCourt);
+if (typeof ResizeObserver !== "undefined") new ResizeObserver(resizeCourt).observe(gameContainer);
+window.addEventListener("blur", () => {
+  Object.keys(keys).forEach(key => keys[key] = false);
+  p1Dragging = false;
+  p2Dragging = false;
+});
+
 resetRound();
-draw();
+resizeCourt();
 </script>
 </body>
 </html>
