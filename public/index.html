@@ -3531,15 +3531,7 @@ async function openCodeModal(game, html = "") {
         return;
     }
 
-    let code = html;
-    if (!code) {
-        try {
-            const cache = await caches.open(APP_CACHE);
-            const cached = await cache.match(codeCacheKey(game));
-            if (cached) code = await cached.text();
-        } catch (error) { console.warn("Could not read saved source:", error); }
-    }
-    if (!code) code = await fetchLatestGameHtml(game);
+    const code = html || await fetchLatestGameHtml(game);
 
     if (!code) {
         showToast("The game code could not be loaded.", "error");
@@ -3703,83 +3695,59 @@ function prepareGameHtml(
     `;
 }
 
-async function fetchLatestGameHtml(
-    gameData
-) {
-    const gameUrl =
-        String(
-            gameData?.path || ""
-        ).trim();
+// Online means network only. A failed online request must not silently
+// replace the deployed version with an older copy.
+async function fetchLatestGameHtml(gameData) {
+    const gameUrl = String(gameData?.path || "").trim();
+    if (!gameUrl) return "";
 
-    if (!gameUrl) {
-        return "";
+    if (!isOnline()) {
+        try {
+            const cache = await caches.open(APP_CACHE);
+            const saved = await cache.match(codeCacheKey(gameData));
+            if (saved) return await saved.text();
+            const legacy = await caches.match(gameUrl);
+            return legacy ? await legacy.text() : "";
+        } catch (error) {
+            console.warn("Could not read offline game:", error);
+            return "";
+        }
     }
 
     try {
-        /*
-         * ONLINE:
-         * Service Worker contacts Netlify,
-         * receives the newest HTML and stores it.
-         *
-         * OFFLINE:
-         * Service Worker returns the last cached copy.
-         */
-        const response =
-            await fetch(
-                gameUrl,
-                {
-                    cache: "no-store",
-                    headers: {
-                        "Accept":
-                            "text/html, */*"
-                    }
-                }
-            );
-
-        if (!response.ok) {
-            throw new Error(
-                `HTTP ${response.status}`
-            );
-        }
-
-        const html =
-            await response.text();
-
-        if (!html.trim()) {
-            throw new Error(
-                "Empty game response"
-            );
-        }
-
+        const url = new URL(gameUrl, window.location.href);
+        url.searchParams.set("_arcadeFresh", Date.now().toString(36) + Math.random().toString(36).slice(2));
+        const response = await fetch(url.href, {
+            cache: "no-store",
+            headers: { "Accept": "text/html, */*" },
+            signal: AbortSignal.timeout(25000)
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const html = await response.text();
+        if (!html.trim()) throw new Error("Empty game response");
+        try { await cacheGameCode(gameData, html); }
+        catch (error) { console.warn("Latest game loaded, but offline saving failed:", error); }
         return html;
     } catch (error) {
-        console.warn(
-            "Game fetch failed:",
-            error
-        );
-
-        /*
-         * Extra fallback in case the Service Worker
-         * is not currently controlling the page.
-         */
-        try {
-            const cached =
-                await caches.match(
-                    gameUrl
-                );
-
-            if (cached) {
-                return await cached.text();
-            }
-        } catch (cacheError) {
-            console.warn(
-                "Could not read cached game:",
-                cacheError
-            );
-        }
-
+        console.warn("Latest online game is unavailable:", error);
         return "";
     }
+}
+
+let refreshScriptsBusy = false;
+async function refreshOwnedScripts() {
+    if (!isOnline() || document.hidden || refreshScriptsBusy) return;
+    refreshScriptsBusy = true;
+    try {
+        const games = defaultGames.filter(game => {
+            const id = getGameIdentifier(game);
+            return isGameUnlocked(id) || isCodeUnlocked(id);
+        });
+        // Small batches avoid flooding the proxy when the library grows.
+        for (let i = 0; i < games.length && isOnline(); i += 3) {
+            await Promise.allSettled(games.slice(i, i + 3).map(fetchLatestGameHtml));
+        }
+    } finally { refreshScriptsBusy = false; }
 }
 
 async function openGameModal(
@@ -4250,11 +4218,11 @@ async function initializeApp() {
             updateConnectionStatus();
 
             showToast(
-                "Back online. Updating to the latest code.",
+                "Back online. Checking for game updates.",
                 "success"
             );
 
-            loadGamesList();
+            loadGamesList().then(refreshOwnedScripts);
         }
     );
 
@@ -4521,6 +4489,8 @@ async function initializeApp() {
     }
 
     await loadGamesList();
+    refreshOwnedScripts();
+    setInterval(refreshOwnedScripts, 5 * 60 * 1000);
 }
 
 document.addEventListener(

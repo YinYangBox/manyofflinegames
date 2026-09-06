@@ -1,141 +1,141 @@
-const SW_VERSION = "many-offline-games-sw-v6";
+/* Many Offline Games
+ * Online: network only.
+ * Offline: saved files.
+ * Existing game and progress caches are preserved.
+ */
 
-const APP_SHELL_CACHE = "many-offline-games-v6";
-const GAME_CACHE = "many-offline-games-content-v6";
+const SHELL_CACHE = "many-offline-games-shell-v7";
 
-const APP_SHELL = [
-    "./",
-    "./index.html",
-    "./script.js",
-    "./style.css",
-    "./games.json"
-];
+self.addEventListener("install", event => {
+    event.waitUntil((async () => {
+        const cache = await caches.open(SHELL_CACHE);
 
-self.addEventListener("install", (event) => {
-    event.waitUntil(
-        caches.open(APP_SHELL_CACHE)
-            .then((cache) => cache.addAll(APP_SHELL))
-            .then(() => self.skipWaiting())
-    );
+        await Promise.allSettled(
+            ["./", "./games.json"].map(async path => {
+                const url = new URL(
+                    path,
+                    self.registration.scope
+                ).href;
+
+                const response = await fetch(url, {
+                    cache: "no-store"
+                });
+
+                if (response.ok) {
+                    await cache.put(url, response);
+                }
+            })
+        );
+
+        await self.skipWaiting();
+    })());
 });
 
-self.addEventListener("activate", (event) => {
-    event.waitUntil(
-        caches.keys()
-            .then((keys) =>
-                Promise.all(
-                    keys
-                        .filter(
-                            (key) =>
-                                key.startsWith("many-offline-games-") &&
-                                key !== APP_SHELL_CACHE &&
-                                key !== GAME_CACHE &&
-                                key !== "many-offline-games-v5"
-                        )
-                        .map((key) => caches.delete(key))
-                )
-            )
-            .then(() => self.clients.claim())
-    );
+self.addEventListener("activate", event => {
+    event.waitUntil(self.clients.claim());
 });
 
-function isGamesApiRequest(url) {
-    return url.pathname.endsWith("/games.json");
-}
+self.addEventListener("fetch", event => {
+    const request = event.request;
+    const url = new URL(request.url);
 
-function isGameProxyRequest(url) {
-    return url.pathname.includes("/.netlify/functions/proxy");
-}
+    if (
+        request.method !== "GET" ||
+        url.origin !== self.location.origin
+    ) {
+        return;
+    }
 
-async function networkFirst(request, cacheName) {
-    try {
-        const response = await fetch(request, {
-            cache: "no-store"
-        });
+    // Fresh game requests never fall back to an old copy.
+    // The store saves successful responses separately.
+    if (url.searchParams.has("_arcadeFresh")) {
+        event.respondWith(
+            fetch(new Request(request, {
+                cache: "no-store"
+            }))
+        );
+        return;
+    }
 
-        if (response && response.ok) {
-            const cache = await caches.open(cacheName);
-            await cache.put(request, response.clone());
+    const isProxy = url.pathname.endsWith(
+        "/.netlify/functions/proxy"
+    );
+
+    // Do not cache payments or other server functions.
+    if (
+        url.pathname.includes("/.netlify/functions/") &&
+        !isProxy
+    ) {
+        return;
+    }
+
+    const isAsset =
+        /\.(?:html?|js|css|json|png|jpe?g|svg|webp|ico|woff2?)$/i
+            .test(url.pathname);
+
+    if (
+        request.mode !== "navigate" &&
+        !isAsset &&
+        !isProxy
+    ) {
+        return;
+    }
+
+    event.respondWith((async () => {
+        const cache = await caches.open(SHELL_CACHE);
+
+        if (!self.navigator.onLine) {
+            const cached =
+                await cache.match(request) ||
+                await caches.match(request);
+
+            if (cached) {
+                return cached;
+            }
+
+            if (request.mode === "navigate") {
+                const homeUrl = new URL(
+                    "./",
+                    self.registration.scope
+                ).href;
+
+                const home = await cache.match(homeUrl);
+
+                if (home) {
+                    return home;
+                }
+            }
+
+            return new Response(
+                "This file is not available offline yet.",
+                {
+                    status: 503,
+                    headers: {
+                        "Content-Type": "text/plain; charset=utf-8"
+                    }
+                }
+            );
+        }
+
+        // An online error stays an error.
+        // It must not silently return an outdated script.
+        const response = await fetch(
+            new Request(request, {
+                cache: "no-store"
+            })
+        );
+
+        if (response.ok) {
+            try {
+                await cache.put(request, response.clone());
+            } catch (error) {
+                console.warn(
+                    "Offline copy could not be updated:",
+                    error
+                );
+            }
         }
 
         return response;
-    } catch (error) {
-        const cached = await caches.match(request);
-
-        if (cached) {
-            return cached;
-        }
-
-        throw error;
-    }
-}
-
-self.addEventListener("fetch", (event) => {
-    const request = event.request;
-
-    if (request.method !== "GET") {
-        return;
-    }
-
-    const url = new URL(request.url);
-
-    // ==========================================
-    // JUEGOS
-    // ==========================================
-    //
-    // ONLINE:
-    //   Netlify Function -> versión más reciente
-    //   -> se guarda en GAME_CACHE
-    //
-    // OFFLINE:
-    //   usa la última versión guardada
-    //
-    if (isGameProxyRequest(url)) {
-        event.respondWith(
-            networkFirst(request, GAME_CACHE)
-        );
-        return;
-    }
-
-    // ==========================================
-    // NAVEGACIÓN / HUB
-    // ==========================================
-
-    if (request.mode === "navigate") {
-        event.respondWith(
-            networkFirst(request, APP_SHELL_CACHE)
-                .catch(() => caches.match("./index.html"))
-        );
-        return;
-    }
-
-    // ==========================================
-    // GAMES.JSON
-    // ==========================================
-
-    if (isGamesApiRequest(url)) {
-        event.respondWith(
-            networkFirst(request, APP_SHELL_CACHE)
-                .catch(() => caches.match("./games.json"))
-        );
-        return;
-    }
-
-    // ==========================================
-    // ARCHIVOS DEL HUB
-    // ==========================================
-
-    if (
-        url.origin === self.location.origin &&
-        (
-            url.pathname.endsWith("/index.html") ||
-            url.pathname.endsWith("/script.js") ||
-            url.pathname.endsWith("/style.css")
-        )
-    ) {
-        event.respondWith(
-            networkFirst(request, APP_SHELL_CACHE)
-                .catch(() => caches.match(request))
-        );
-    }
+    })());
 });
