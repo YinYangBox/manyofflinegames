@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102c32">
+  <title>Pipe Connect</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0c242b;
+      --panel: #15343c;
+      --line: #355660;
+      --text: #edf4ef;
+      --muted: #a4bec2;
+      --mint: #a6e1c9;
+      --gold: #f5cd84;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+    button, input { font: inherit; }
+    button {
+      min-height: 44px; border: 1px solid var(--line); border-radius: 10px;
+      background: #22454e; color: var(--text); padding: 10px 15px;
+      font-weight: 750; cursor: pointer; touch-action: manipulation;
+    }
+    button:hover:not(:disabled) { background: #315b63; }
+    button:disabled { opacity: .45; cursor: default; }
+    button:focus-visible, canvas:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    button.primary { color: #163e35; background: var(--mint); border-color: var(--mint); }
+    button.primary:hover { background: #ccf2df; }
+    .app { max-width: 1200px; margin: auto; min-height: 100dvh; display: flex; flex-direction: column; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; gap: 15px; }
+    .brand { display: flex; gap: 11px; align-items: center; font-size: 20px; font-weight: 850; }
+    .brand svg { width: 30px; height: 30px; }
+    .wallet { display: inline-flex; gap: 7px; align-items: center; color: var(--gold); font-weight: 850; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .coin { border: 1px solid currentColor; border-radius: 50%; width: 23px; height: 23px; display: inline-grid; place-items: center; font-size: 12px; }
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .small { font-size: 12px; min-height: 36px; padding: 6px 12px; }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 25px; padding: 0 24px 24px; align-items: start; flex: 1; }
+    .workbench { min-width: 0; background: #173b44; border: 1px solid var(--line); border-radius: 20px; padding: 16px; box-shadow: 0 20px 50px #0003; }
+    .board-top { display: flex; justify-content: space-between; gap: 12px; padding: 0 4px 12px; font-size: 11px; letter-spacing: 2px; font-weight: 800; color: var(--muted); }
+    #board-wrap { position: relative; width: min(100%, calc(100dvh - 200px)); margin: auto; }
+    #board { display: block; width: 100%; aspect-ratio: 1; touch-action: manipulation; border-radius: 10px; }
+    .board-bottom { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; min-height: 32px; }
+    #status { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    #flow-label { color: var(--mint); font-size: 12px; font-weight: 850; white-space: nowrap; }
+    aside { padding: 16px 0; }
+    .eyebrow { color: var(--mint); font-size: 11px; font-weight: 850; letter-spacing: 2px; margin-bottom: 12px; }
+    h1 { font-size: 44px; line-height: 1; margin: 0 0 12px; letter-spacing: -2px; }
+    h2 { font-size: 25px; margin: 0; }
+    h3 { font-size: 16px; margin: 0; }
+    p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .label { font-size: 11px; color: var(--muted); display: block; margin: 25px 0 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .difficulty { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .difficulty button { text-align: left; padding: 12px; }
+    .difficulty small { display: block; color: var(--muted); font-weight: 500; margin-top: 5px; font-size: 11px; }
+    .selected { border-color: var(--mint); box-shadow: inset 0 0 0 1px var(--mint); }
+    .wide { width: 100%; }
+    .start { margin-top: 18px; min-height: 48px; }
+    .row { display: flex; gap: 8px; margin-top: 9px; }
+    .row > button { flex: 1; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 18px 0; margin: 10px 0; border-block: 1px solid var(--line); }
+    .stats span { display: block; color: var(--muted); font-size: 10px; margin-bottom: 5px; }
+    .stats strong { font-size: 21px; font-variant-numeric: tabular-nums; }
+    .help { font-size: 12px; }
+    .records { display: flex; justify-content: space-between; padding-top: 20px; margin-top: 25px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .records strong { color: var(--text); }
+    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 18px; padding: 24px; width: min(460px, calc(100vw - 24px)); max-height: calc(100dvh - 30px); overflow: auto; }
+    dialog::backdrop { background: #04171de0; }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    #shop { width: min(790px, calc(100vw - 24px)); }
+    #shop-items { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .skin { min-width: 0; background: #102b33; border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+    .skin canvas { width: 100%; aspect-ratio: 1.5; display: block; margin-bottom: 12px; border-radius: 8px; }
+    .skin p { font-size: 11px; min-height: 36px; margin: 6px 0 12px; }
+    .skin button { width: 100%; font-size: 12px; }
+    .result-icon { width: 66px; height: 66px; border: 2px solid var(--mint); color: var(--mint); border-radius: 50%; display: grid; place-items: center; font-size: 35px; margin-bottom: 18px; }
+    #reward { font-size: 44px; color: var(--gold); margin: 15px 0; font-weight: 850; }
+    .setting { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+    input { width: 22px; height: 22px; accent-color: var(--mint); }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #27372e; padding: 12px 18px; border-radius: 10px; z-index: 10; max-width: 90vw; font-size: 13px; }
+    #save-warning { background: #7e4936; text-align: center; font-size: 12px; padding: 6px; }
+    @media (max-width: 760px) {
+      header { padding: 12px 15px; } .brand { font-size: 17px; }
+      main { display: flex; flex-direction: column; gap: 10px; padding: 0 12px 15px; }
+      .workbench { width: 100%; padding: 10px; border-radius: 14px; }
+      #board-wrap { width: min(100%, calc(100dvh - 325px)); min-width: 225px; }
+      aside { width: 100%; padding: 5px 2px; }
+      h1 { font-size: 27px; letter-spacing: -1px; } .eyebrow { margin-bottom: 7px; }
+      #home > p, .records, #home .eyebrow { display: none; }
+      #home h1 { display: none; } .label { margin: 5px 0 8px; }
+      .difficulty { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+      .difficulty button { padding: 9px 6px; font-size: 12px; }
+      .difficulty small { font-size: 10px; } .start { margin-top: 10px; }
+      .stats { padding: 8px 0; margin: 6px 0; text-align: center; }
+      .stats strong { font-size: 18px; } #match .eyebrow, #match .help { display: none; }
+      #match .start { margin-top: 0; } .board-top { padding-bottom: 8px; font-size: 9px; }
+      .board-bottom { margin-top: 5px; min-height: 30px; } #status { font-size: 11px; }
+      #shop-items { grid-template-columns: repeat(2, 1fr); } dialog { padding: 18px; }
+    }
+    @media (max-height: 520px) and (min-width: 600px) {
+      main { display: grid; grid-template-columns: minmax(0, 1fr) 270px; }
+      #board-wrap { width: min(100%, calc(100dvh - 170px)); min-width: 180px; }
+      .difficulty { grid-template-columns: 1fr 1fr; } h1 { font-size: 26px; }
+      aside { padding: 0; } .records, #home > p, .eyebrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 25h12V8h12" fill="none" stroke="#a6e1c9" stroke-width="8" stroke-linejoin="round"/><path d="M4 25h12V8h12" fill="none" stroke="#173b44" stroke-width="3"/><path d="M3 19v12M27 2v12" stroke="#f5cd84" stroke-width="3"/></svg>Pipe Connect</div>
+      <div class="top-actions"><span class="wallet"><span class="coin">C</span><span data-wallet>0</span></span><button id="settings-open" class="small">Settings</button></div>
+    </header>
+    <div id="save-warning" hidden>Saving is unavailable. Progress is temporary.</div>
+    <main>
+      <section class="workbench">
+        <div class="board-top"><span id="board-label">WATERWORKS / 01</span><span>IN → OUT</span></div>
+        <div id="board-wrap"><canvas id="board" tabindex="0" aria-label="Pipe puzzle. Use arrow keys to select a cell and Space to rotate it."></canvas></div>
+        <div class="board-bottom"><span id="status" role="status">Turn the pipes. Make a connection.</span><span id="flow-label">READY</span></div>
+      </section>
+      <aside>
+        <section id="home">
+          <div class="eyebrow">A LITTLE LOGIC. A LOT OF FLOW.</div>
+          <h1>Make it<br>flow.</h1>
+          <p>A broken network. One clear route.<br>Connect the inlet to the outlet.</p>
+          <span class="label">Difficulty</span><div id="difficulties" class="difficulty"></div>
+          <button id="play" class="primary wide start">New puzzle</button>
+          <button id="continue" class="wide" hidden style="margin-top:8px">Continue puzzle</button>
+          <div class="row"><button id="shop-open">Skins</button><button id="rules-open">Rules</button></div>
+          <div class="records"><span>Solved <strong id="solved">0</strong></span><span>Perfect <strong id="perfect">0</strong></span></div>
+        </section>
+        <section id="match" hidden>
+          <div class="eyebrow" id="mode-label">NORMAL / 6 × 6</div>
+          <h2>Find your flow.</h2>
+          <div class="stats"><div><span>TIME</span><strong id="time">0:00</strong></div><div><span>TURNS</span><strong id="turns">0</strong></div><div><span>BASE REWARD</span><strong id="base">35 C</strong></div></div>
+          <button id="test" class="primary wide start">Run water</button>
+          <div class="row"><button id="hint">Hint</button><button id="undo">Undo</button><button id="menu">Menu</button></div>
+          <p class="help">Tap to turn clockwise. Right-click to turn back. Only the route between IN and OUT needs to connect.</p>
+        </section>
+      </aside>
+    </main>
+  </div>
+  <dialog id="shop"><div class="dialog-head"><h2>Skins</h2><span class="wallet"><span class="coin">C</span><span data-wallet>0</span></span><button data-close="shop" class="small">Close</button></div><div id="shop-items"></div></dialog>
+  <dialog id="rules"><div class="dialog-head"><h2>Rules</h2><button data-close="rules" class="small">Close</button></div>
+    <p>Rotate the pipes to make a continuous route from the blue IN port on the left to the golden OUT port on the right. Tap or click a tile to rotate it clockwise. Right-click to rotate counterclockwise. On a keyboard, move the selection with the arrow keys and press Space to turn it; hold Shift to turn back.</p>
+    <p>Press Run water to test your route. Water can move between two neighbouring pipes only when their openings face each other. An open end, a mismatched connection or the wrong edge stops the flow. The stopping point is marked in red. Turn the pieces and try again: failed tests do not end the puzzle.</p>
+    <p>You do not need to use every pipe. Unused pieces may have open ends. Every generated puzzle has a solution, and any valid route to OUT is accepted.</p>
+    <p>Easy uses a 4 × 4 board, Normal 6 × 6, Hard 8 × 8 and Expert 10 × 10. Larger boards have longer routes and more distracting pipes. There is no time limit and taking your time does not reduce your reward.</p>
+    <p>Completing a puzzle gives 20 / 40 / 70 / 110 credits by difficulty. Earn up to 50% extra for efficient rotation. A clean solve without hints or failed water tests adds another 25%. Undo restores a rotation but does not remove its cost from your turn count.</p>
+    <p>A hint highlights and correctly turns one piece on a known solution route. Hints are free; each reduces the efficiency bonus by 10 percentage points and removes the clean-solve bonus. You always keep the full base reward.</p>
+    <p>Use credits in Skins to unlock complete pipe themes. They change the pipes, fittings and details, never the rules. Your current puzzle and purchases save automatically. Time pauses while you are in a menu or another tab.</p>
+  </dialog>
+  <dialog id="settings"><div class="dialog-head"><h2>Settings</h2><button data-close="settings" class="small">Close</button></div><label class="setting">Sound<input type="checkbox" id="sound" checked></label><label class="setting">Flow animation<input type="checkbox" id="animation" checked></label></dialog>
+  <dialog id="result"><div class="result-icon">✓</div><h2>Connection complete.</h2><p id="result-detail"></p><div id="reward">+40 C</div><p id="reward-detail"></p><div class="row"><button id="result-menu">Menu</button><button id="next" class="primary">Next puzzle</button></div></dialog>
+  <dialog id="replace"><h2>Start a new puzzle?</h2><p>Your unfinished puzzle will be replaced.</p><div class="row"><button data-close="replace">Keep playing</button><button id="replace-confirm" class="primary">New puzzle</button></div></dialog>
+  <div id="toast" hidden role="status"></div>
+  <script>
+    'use strict';
+
+    // Direction bits rotate clockwise: north, east, south, west.
+    const $ = id => document.getElementById(id);
+    const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+    const MODES = {
+      easy: { name: 'Easy', size: 4, reward: 20 },
+      normal: { name: 'Normal', size: 6, reward: 40 },
+      hard: { name: 'Hard', size: 8, reward: 70 },
+      expert: { name: 'Expert', size: 10, reward: 110 }
+    };
+    const SKINS = [
+      { id: 'steel', name: 'Workshop', price: 0, text: 'Steel tubes, bolted flanges and enamel tiles.', dark: '#526975', light: '#bacbd0', bed: '#243e49' },
+      { id: 'copper', name: 'Boiler Room', price: 1950, text: 'Copper elbows, brass collars and valve wheels.', dark: '#9a4b31', light: '#efbb79', bed: '#3e302b' },
+      { id: 'glass', name: 'Laboratory', price: 3250, text: 'Transparent chambers, glass ribs and clamp bands.', dark: '#467987', light: '#c7f6f2', bed: '#173d47' },
+      { id: 'garden', name: 'Greenhouse', price: 4850, text: 'Bamboo joints, twine bindings and fresh leaves.', dark: '#526c2d', light: '#bfd285', bed: '#283c31' },
+      { id: 'reactor', name: 'Reactor', price: 5900, text: 'Armoured conduits, hazard stripes and energy cores.', dark: '#414963', light: '#aaa6da', bed: '#252a42' },
+      { id: 'royal', name: 'Aqueduct', price: 7250, text: 'Carved stone channels with gold mosaic inlays.', dark: '#857861', light: '#e3d7b7', bed: '#343c41' }
+    ];
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const rotate = mask => ((mask << 1) & 15) | (mask >> 3);
+    function turn(mask, count = 1) {
+      for (let i = 0; i < (count + 4) % 4; i++) mask = rotate(mask);
+      return mask;
+    }
+    function shuffle(items) {
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      return items;
+    }
+    function direction(a, b, n) {
+      const dx = b % n - a % n, dy = Math.floor(b / n) - Math.floor(a / n);
+      return DIRS.findIndex(([x, y]) => x === dx && y === dy);
+    }
+
+    // A randomized spanning tree supplies a guaranteed simple solution path.
+    function generate(mode) {
+      const n = MODES[mode].size;
+      let route = [], start = 0, end = 0;
+      for (let attempt = 0; attempt < 40; attempt++) {
+        start = Math.floor(Math.random() * n) * n;
+        end = Math.floor(Math.random() * n) * n + n - 1;
+        const parent = Array(n * n).fill(-1), stack = [start];
+        parent[start] = start;
+        while (stack.length) {
+          const cell = stack[stack.length - 1];
+          if (cell === end) break;
+          const options = shuffle(DIRS.map(([dx, dy]) => {
+            const x = cell % n + dx, y = Math.floor(cell / n) + dy;
+            return x >= 0 && x < n && y >= 0 && y < n ? y * n + x : -1;
+          }).filter(next => next >= 0 && parent[next] < 0));
+          if (!options.length) stack.pop();
+          else { parent[options[0]] = cell; stack.push(options[0]); }
+        }
+        route = [end];
+        while (route[route.length - 1] !== start) route.push(parent[route[route.length - 1]]);
+        route.reverse();
+        if (route.length >= n * 2) break;
+      }
+      const solution = Array.from({ length: n * n }, () => turn(Math.random() < .65 ? 3 : 5, Math.floor(Math.random() * 4)));
+      route.forEach((cell, index) => {
+        const incoming = index ? direction(cell, route[index - 1], n) : 3;
+        const outgoing = index < route.length - 1 ? direction(cell, route[index + 1], n) : 1;
+        solution[cell] = (1 << incoming) | (1 << outgoing);
+      });
+      const masks = solution.map(mask => turn(mask, Math.floor(Math.random() * 4)));
+      const puzzle = {
+        id: Date.now().toString(36) + '-' + Math.random().toString(36).slice(2),
+        mode, n, start, end, route, solution, masks,
+        turns: 0, hints: 0, failures: 0, elapsed: 0, par: 0
+      };
+      if (trace(puzzle).success) masks[start] = rotate(masks[start]);
+      puzzle.par = route.reduce((sum, cell) => {
+        let rotations = 0, mask = masks[cell];
+        while (mask !== solution[cell] && rotations < 4) { mask = rotate(mask); rotations++; }
+        return sum + rotations;
+      }, 0);
+      return puzzle;
+    }
+
+    // Pipes have exactly two openings, so following the inlet is unambiguous.
+    function trace(puzzle) {
+      const { n, masks, start, end } = puzzle;
+      const path = [], visited = new Set();
+      let cell = start, incoming = 3;
+      while (!visited.has(cell)) {
+        visited.add(cell);
+        const mask = masks[cell];
+        if (!(mask & (1 << incoming))) return { path, success: false, leak: cell };
+        const outgoing = [0, 1, 2, 3].find(d => d !== incoming && (mask & (1 << d)));
+        path.push({ cell, incoming, outgoing });
+        if (cell === end && outgoing === 1) return { path, success: true, leak: -1 };
+        const [dx, dy] = DIRS[outgoing];
+        const x = cell % n + dx, y = Math.floor(cell / n) + dy;
+        if (x < 0 || x >= n || y < 0 || y >= n) return { path, success: false, leak: cell };
+        const next = y * n + x;
+        if (!(masks[next] & (1 << ((outgoing + 2) % 4)))) return { path, success: false, leak: next };
+        cell = next; incoming = (outgoing + 2) % 4;
+      }
+      return { path, success: false, leak: cell };
+    }
+    function validPuzzle(p) {
+      if (!p || !Object.hasOwn(MODES, p.mode) || p.n !== MODES[p.mode].size || typeof p.id !== 'string') return false;
+      const count = p.n * p.n, legal = [3, 5, 6, 9, 10, 12];
+      if (![p.masks, p.solution].every(a => Array.isArray(a) && a.length === count && a.every(v => legal.includes(v)))) return false;
+      if (!Number.isInteger(p.start) || p.start < 0 || p.start >= count || p.start % p.n !== 0) return false;
+      if (!Number.isInteger(p.end) || p.end < 0 || p.end >= count || p.end % p.n !== p.n - 1) return false;
+      if (!Array.isArray(p.route) || p.route.length < p.n || p.route.length > count || new Set(p.route).size !== p.route.length) return false;
+      if (p.route[0] !== p.start || p.route.at(-1) !== p.end) return false;
+      if (!p.route.every((c, i) => Number.isInteger(c) && c >= 0 && c < count && (!i || direction(p.route[i - 1], c, p.n) >= 0))) return false;
+      if (!['turns', 'hints', 'failures', 'elapsed', 'par'].every(k => Number.isFinite(p[k]) && p[k] >= 0 && p[k] < 1e9)) return false;
+      return trace({ ...p, masks: p.solution }).success;
+    }
+
+    class SaveManager {
+      static STORAGE_KEY = 'ARCADE_GAMES';
+      static GAME_KEY = 'pipe-connect';
+      static data;
+      static failed = false;
+      static sanitize(raw) {
+        const d = raw && typeof raw === 'object' ? raw : {};
+        const number = v => Number.isFinite(v) ? clamp(Math.floor(v), 0, 1e9) : 0;
+        const owned = [...new Set(['steel', ...(Array.isArray(d.owned) ? d.owned : [])])].filter(id => SKINS.some(s => s.id === id));
+        return {
+          version: 1, credits: number(d.credits), solved: number(d.solved), perfect: number(d.perfect),
+          owned, equipped: owned.includes(d.equipped) ? d.equipped : 'steel',
+          mode: Object.hasOwn(MODES, d.mode) ? d.mode : 'normal',
+          settings: { sound: d.settings?.sound !== false, animation: d.settings?.animation !== false },
+          current: validPuzzle(d.current) ? d.current : null,
+          completed: typeof d.completed === 'string' ? d.completed : ''
+        };
+      }
+      static root() {
+        const root = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
+        if (!root || typeof root !== 'object' || Array.isArray(root)) throw Error('Invalid save');
+        return root;
+      }
+      static load() {
+        try { this.data = this.sanitize(this.root()[this.GAME_KEY]); }
+        catch { this.failed = true; this.data = this.sanitize(); }
+      }
+      static update(change) {
+        let root;
+        try {
+          root = this.root();
+          if (!this.failed && Object.hasOwn(root, this.GAME_KEY)) this.data = this.sanitize(root[this.GAME_KEY]);
+        } catch { this.failed = true; }
+        const result = change(this.data);
+        this.data = this.sanitize(this.data);
+        if (root) {
+          root[this.GAME_KEY] = this.data;
+          try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(root)); this.failed = false; }
+          catch { this.failed = true; }
+        }
+        UI.wallet();
+        return result;
+      }
+      static buy(id) {
+        const skin = SKINS.find(s => s.id === id);
+        if (!skin) return false;
+        return this.update(d => {
+          if (!d.owned.includes(id)) {
+            if (d.credits < skin.price) return false;
+            d.credits -= skin.price; d.owned.push(id);
+          }
+          d.equipped = id;
+          return true;
+        });
+      }
+    }
+
+    const Sound = {
+      context: null,
+      play(frequency = 350, length = .06) {
+        if (!SaveManager.data.settings.sound) return;
+        try {
+          const Audio = window.AudioContext || window.webkitAudioContext;
+          if (!Audio) return;
+          this.context ||= new Audio();
+          const ctx = this.context;
+          if (ctx.state === 'suspended') ctx.resume();
+          const oscillator = ctx.createOscillator(), gain = ctx.createGain(), t = ctx.currentTime;
+          oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(frequency, t);
+          oscillator.frequency.exponentialRampToValueAtTime(frequency * .65, t + length);
+          gain.gain.setValueAtTime(.045, t); gain.gain.exponentialRampToValueAtTime(.001, t + length);
+          oscillator.connect(gain); gain.connect(ctx.destination); oscillator.start(t); oscillator.stop(t + length);
+          oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+        } catch { /* Audio is optional; puzzle input must remain available. */ }
+      }
+    };
+
+    function rewardFor(p) {
+      const base = MODES[p.mode].reward;
+      const efficiency = Math.max(0, .5 * Math.min(1, Math.max(1, p.par) / Math.max(1, p.turns)) - p.hints * .1);
+      const clean = p.hints === 0 && p.failures === 0;
+      return { base, bonus: Math.floor(base * (efficiency + (clean ? .25 : 0))), clean };
+    }
+
+    const Game = {
+      puzzle: null, state: 'menu', selection: -1, history: [], flow: null, flowTime: 0, highlight: -1,
+      begin(resume = false) {
+        UI.closeAll();
+        this.puzzle = resume && SaveManager.data.current ? structuredClone(SaveManager.data.current) : generate(SaveManager.data.mode);
+        this.state = 'play'; this.history = []; this.flow = null; this.flowTime = 0; this.highlight = -1; this.selection = -1;
+        SaveManager.update(d => { d.current = structuredClone(this.puzzle); });
+        $('home').hidden = true; $('match').hidden = false;
+        $('status').textContent = 'Tap a pipe to turn it.'; $('flow-label').textContent = 'READY';
+        UI.hud(); Renderer.draw();
+      },
+      persist() {
+        if (!this.puzzle || !['play', 'flow'].includes(this.state)) return;
+        SaveManager.update(d => {
+          if (d.current?.id === this.puzzle.id && d.completed !== this.puzzle.id) d.current = structuredClone(this.puzzle);
+        });
+      },
+      rotate(cell, backwards = false) {
+        if (this.state !== 'play' || cell < 0 || cell >= this.puzzle.n ** 2) return;
+        this.history.push({ cell, mask: this.puzzle.masks[cell] });
+        if (this.history.length > 250) this.history.shift();
+        this.puzzle.masks[cell] = turn(this.puzzle.masks[cell], backwards ? 3 : 1);
+        this.puzzle.turns++; this.flow = null; this.highlight = -1; this.selection = cell;
+        $('status').textContent = 'Route ready? Run the water.'; $('flow-label').textContent = 'READY';
+        Sound.play(backwards ? 260 : 330); this.persist(); UI.hud(); Renderer.draw();
+      },
+      undo() {
+        if (this.state !== 'play' || !this.history.length) return;
+        const last = this.history.pop(); this.puzzle.masks[last.cell] = last.mask;
+        this.flow = null; this.highlight = last.cell;
+        this.persist(); UI.hud(); Renderer.draw(); Sound.play(250);
+      },
+      hint() {
+        if (this.state !== 'play') return;
+        const p = this.puzzle, cell = p.route.find(c => p.masks[c] !== p.solution[c]);
+        if (cell === undefined || trace(p).success) { UI.toast('The route is connected. Run water!'); return; }
+        this.history.push({ cell, mask: p.masks[cell] });
+        p.masks[cell] = p.solution[cell]; p.hints++; this.highlight = cell; this.flow = null;
+        $('status').textContent = 'Highlighted pipe aligned. Base reward stays the same.';
+        this.persist(); UI.hud(); Renderer.draw(); Sound.play(550);
+      },
+      test() {
+        if (this.state !== 'play') return;
+        this.flow = trace(this.puzzle); this.flowTime = 0; this.state = 'flow'; this.highlight = -1;
+        if (!this.flow.success) { this.puzzle.failures++; this.persist(); }
+        $('status').textContent = 'Checking the connection…'; $('flow-label').textContent = 'FLOWING';
+        Sound.play(190, .2); UI.hud();
+        if (!SaveManager.data.settings.animation) this.finishFlow();
+      },
+      finishFlow() {
+        if (this.state !== 'flow') return;
+        if (this.flow.success) this.complete();
+        else {
+          this.state = 'play'; this.highlight = this.flow.leak; this.flowTime = 1e6;
+          $('status').textContent = 'Connection stops at the red tile. Turn and try again.';
+          $('flow-label').textContent = 'LEAK'; Sound.play(130, .12); UI.hud(); Renderer.draw();
+        }
+      },
+      complete() {
+        if (this.state !== 'flow' || !this.flow.success) return;
+        this.state = 'won'; this.flowTime = 1e6;
+        const p = this.puzzle, reward = rewardFor(p);
+        const paid = SaveManager.update(d => {
+          if (d.current?.id !== p.id || d.completed === p.id) return false;
+          d.credits += reward.base + reward.bonus; d.solved++; if (reward.clean) d.perfect++;
+          d.completed = p.id; d.current = null; return true;
+        });
+        $('result-detail').textContent = `${MODES[p.mode].name} · ${formatTime(p.elapsed)} · ${p.turns} turns`;
+        $('reward').textContent = paid ? `+${reward.base + reward.bonus} C` : 'Already settled';
+        $('reward-detail').textContent = paid ? `${reward.base} base + ${reward.bonus} bonus${reward.clean ? ' · Clean solve' : ''}` : 'This puzzle was completed or replaced in another tab.';
+        $('status').textContent = 'A clear route from inlet to outlet.'; $('flow-label').textContent = 'CONNECTED';
+        Sound.play(700, .25); UI.hud(); Renderer.draw(); $('result').showModal();
+      },
+      menu() {
+        this.persist(); UI.closeAll(); this.state = 'menu'; this.flow = null;
+        $('home').hidden = false; $('match').hidden = true; $('flow-label').textContent = 'READY';
+        $('status').textContent = 'Turn the pipes. Make a connection.'; UI.home(); Renderer.draw();
+      }
+    };
+
+    function formatTime(seconds) {
+      const time = Math.floor(seconds);
+      return Math.floor(time / 60) + ':' + String(time % 60).padStart(2, '0');
+    }
+    function rounded(ctx, x, y, w, h, radius, fill, stroke) {
+      ctx.beginPath(); ctx.roundRect(x, y, w, h, radius);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+    }
+    function circle(ctx, x, y, r, fill, stroke) {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+    }
+
+    const Renderer = {
+      canvas: null, ctx: null, size: 600, padding: 35, cell: 80,
+      pipe(ctx, mask, skin, water = false, progress = 1, incoming = 3) {
+        const ports = [0, 1, 2, 3].filter(d => mask & (1 << d));
+        const points = ports.map(d => [50 + DIRS[d][0] * 51, 50 + DIRS[d][1] * 51]);
+        const path = () => {
+          ctx.beginPath(); ctx.moveTo(...points[0]);
+          if ((ports[0] + 2) % 4 === ports[1]) ctx.lineTo(...points[1]);
+          else { ctx.lineTo(50 + DIRS[ports[0]][0] * 14, 50 + DIRS[ports[0]][1] * 14); ctx.quadraticCurveTo(50, 50, 50 + DIRS[ports[1]][0] * 14, 50 + DIRS[ports[1]][1] * 14); ctx.lineTo(...points[1]); }
+        };
+        ctx.save(); ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+        ctx.translate(0, 3); path(); ctx.strokeStyle = '#0005'; ctx.lineWidth = 34; ctx.stroke(); ctx.translate(0, -3);
+        path(); ctx.strokeStyle = skin.dark; ctx.lineWidth = skin.id === 'royal' ? 34 : 29; ctx.stroke();
+        path(); ctx.strokeStyle = skin.light; ctx.lineWidth = 22; ctx.stroke();
+        path(); ctx.strokeStyle = skin.id === 'glass' ? '#214756' : skin.dark; ctx.lineWidth = 13; ctx.stroke();
+        path(); ctx.strokeStyle = '#ffffff24'; ctx.lineWidth = 5; ctx.stroke();
+        if (skin.id === 'reactor') {
+          ports.forEach(d => {
+            ctx.save(); ctx.translate(50, 50); ctx.rotate(d * Math.PI / 2);
+            rounded(ctx, -20, -36, 40, 18, 3, '#252c3e', '#8c8da9');
+            ctx.fillStyle = '#f4ce6b';
+            for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(-14 + k * 11, -34); ctx.lineTo(-8 + k * 11, -34); ctx.lineTo(-13 + k * 11, -23); ctx.lineTo(-19 + k * 11, -23); ctx.fill(); }
+            ctx.restore();
+          });
+          circle(ctx, 50, 50, 11, '#182c3d', '#b6b2e2'); circle(ctx, 50, 50, 5, '#b5f5e0');
+        } else if (skin.id === 'copper') {
+          circle(ctx, 50, 50, 14, '#5d4330', '#f7cc7f');
+          circle(ctx, 50, 50, 10, null, '#e5a761');
+          ctx.strokeStyle = '#e5a761'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(39, 50); ctx.lineTo(61, 50); ctx.moveTo(50, 39); ctx.lineTo(50, 61); ctx.stroke();
+          circle(ctx, 50, 50, 4, '#ecce8b');
+        } else if (skin.id === 'garden') {
+          ctx.fillStyle = '#8ec16a';
+          ctx.beginPath(); ctx.moveTo(62, 42); ctx.quadraticCurveTo(91, 17, 84, 47); ctx.quadraticCurveTo(74, 57, 62, 42); ctx.fill();
+          ctx.strokeStyle = '#405f36'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(64, 44); ctx.lineTo(83, 32); ctx.stroke();
+        } else if (skin.id === 'royal') {
+          for (let k = 0; k < 4; k++) {
+            ctx.save(); ctx.translate(50, 50); ctx.rotate(k * Math.PI / 2);
+            rounded(ctx, 21, 21, 9, 9, 1, '#ccac62', '#eee1ae'); ctx.restore();
+          }
+        } else if (skin.id === 'glass') {
+          circle(ctx, 50, 50, 16, '#83d8e02b', '#d7ffed');
+          ctx.beginPath(); ctx.arc(50, 50, 12, 3.5, 5); ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2; ctx.stroke();
+        }
+        ports.forEach(d => {
+          ctx.save(); ctx.translate(50, 50); ctx.rotate(d * Math.PI / 2);
+          const collar = skin.id === 'garden' ? '#b9a77a' : skin.id === 'copper' ? '#e7b96c' : skin.light;
+          rounded(ctx, -18, -45, 36, 9, 2, skin.dark, collar);
+          if (skin.id === 'garden') {
+            ctx.strokeStyle = '#e7d9a2'; ctx.lineWidth = 1;
+            for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(-16 + k * 7, -45); ctx.lineTo(-12 + k * 7, -36); ctx.stroke(); }
+          } else {
+            circle(ctx, -13, -40.5, 2, '#213641'); circle(ctx, 13, -40.5, 2, '#213641');
+          }
+          ctx.restore();
+        });
+        if (water) {
+          const outgoing = ports.find(d => d !== incoming);
+          ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = '#53dcf5'; ctx.lineWidth = 7;
+          ctx.setLineDash([Math.max(.1, progress * 102), 200]);
+          ctx.beginPath(); ctx.moveTo(50 + DIRS[incoming][0] * 50, 50 + DIRS[incoming][1] * 50);
+          ctx.lineTo(50, 50); ctx.lineTo(50 + DIRS[outgoing][0] * 50, 50 + DIRS[outgoing][1] * 50); ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+      },
+      draw() {
+        const p = Game.puzzle || preview, ctx = this.ctx;
+        const rect = this.canvas.getBoundingClientRect();
+        const size = Math.max(220, Math.round(rect.width || 600)), ratio = Math.min(window.devicePixelRatio || 1, 2);
+        if (this.canvas.width !== Math.round(size * ratio)) { this.canvas.width = Math.round(size * ratio); this.canvas.height = Math.round(size * ratio); }
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0); this.size = size;
+        this.padding = Math.max(21, size * .055); this.cell = (size - this.padding * 2) / p.n;
+        const skin = SKINS.find(s => s.id === SaveManager.data.equipped) || SKINS[0];
+        rounded(ctx, 0, 0, size, size, 12, '#0c252e');
+        const reached = new Map();
+        if (Game.flow) Game.flow.path.forEach((part, index) => {
+          const progress = clamp(Game.flowTime / .09 - index, 0, 1);
+          if (progress > 0) reached.set(part.cell, { ...part, progress });
+        });
+        for (let index = 0; index < p.n * p.n; index++) {
+          const x = this.padding + index % p.n * this.cell, y = this.padding + Math.floor(index / p.n) * this.cell;
+          ctx.save(); ctx.translate(x, y); ctx.scale(this.cell / 100, this.cell / 100);
+          rounded(ctx, 1.5, 1.5, 97, 97, 7, skin.bed, '#ffffff17');
+          circle(ctx, 9, 9, 1.5, '#ffffff29'); circle(ctx, 91, 91, 1.5, '#ffffff29');
+          ctx.save(); ctx.beginPath(); ctx.rect(2, 2, 96, 96); ctx.clip();
+          const flow = reached.get(index);
+          this.pipe(ctx, p.masks[index], skin, !!flow, flow?.progress || 0, flow?.incoming ?? 3);
+          ctx.restore();
+          if (Game.highlight === index || Game.selection === index && Game.state !== 'menu') {
+            ctx.strokeStyle = Game.flow && !Game.flow.success && Game.highlight === index ? '#ff8e79' : '#f3d98d';
+            ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(4, 4, 92, 92, 7); ctx.stroke();
+          }
+          ctx.restore();
+        }
+        const startY = this.padding + (Math.floor(p.start / p.n) + .5) * this.cell;
+        const endY = this.padding + (Math.floor(p.end / p.n) + .5) * this.cell;
+        rounded(ctx, 0, startY - 13, this.padding, 26, 5, '#75d9ed');
+        rounded(ctx, size - this.padding, endY - 13, this.padding, 26, 5, '#f2d291');
+        ctx.font = 'bold ' + Math.max(8, this.padding * .28) + 'px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#123441';
+        ctx.fillText('IN', this.padding / 2, startY); ctx.fillText('OUT', size - this.padding / 2, endY);
+      },
+      hit(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = (event.clientX - rect.left) * this.size / rect.width - this.padding;
+        const y = (event.clientY - rect.top) * this.size / rect.height - this.padding;
+        const n = Game.puzzle?.n || 0;
+        if (x < 0 || y < 0 || x >= n * this.cell || y >= n * this.cell) return -1;
+        return Math.floor(y / this.cell) * n + Math.floor(x / this.cell);
+      }
+    };
+
+    let toastTimer;
+    const UI = {
+      wallet() {
+        document.querySelectorAll('[data-wallet]').forEach(el => el.textContent = SaveManager.data.credits.toLocaleString('en-US'));
+        $('save-warning').hidden = !SaveManager.failed;
+      },
+      closeAll() { document.querySelectorAll('dialog[open]').forEach(d => d.close()); },
+      toast(message) {
+        $('toast').textContent = message; $('toast').hidden = false;
+        clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 2400);
+      },
+      home() {
+        $('difficulties').replaceChildren();
+        for (const [id, mode] of Object.entries(MODES)) {
+          const button = document.createElement('button');
+          button.innerHTML = `${mode.name}<small>${mode.size} × ${mode.size} · ${mode.reward} C</small>`;
+          button.className = SaveManager.data.mode === id ? 'selected' : '';
+          button.onclick = () => { SaveManager.update(d => d.mode = id); this.home(); };
+          $('difficulties').appendChild(button);
+        }
+        $('continue').hidden = !SaveManager.data.current;
+        $('solved').textContent = SaveManager.data.solved; $('perfect').textContent = SaveManager.data.perfect;
+        this.wallet();
+      },
+      hud() {
+        const p = Game.puzzle, mode = MODES[p.mode];
+        $('time').textContent = formatTime(p.elapsed); $('turns').textContent = p.turns; $('base').textContent = mode.reward + ' C';
+        $('mode-label').textContent = `${mode.name.toUpperCase()} / ${p.n} × ${p.n}`;
+        $('board-label').textContent = `${mode.name.toUpperCase()} / ${p.n} × ${p.n}`;
+        for (const id of ['test', 'hint', 'undo']) $(id).disabled = Game.state !== 'play' || id === 'undo' && !Game.history.length;
+      },
+      shop() {
+        $('shop-items').replaceChildren();
+        for (const skin of SKINS) {
+          const card = document.createElement('article'); card.className = 'skin';
+          const canvas = document.createElement('canvas'); canvas.width = 240; canvas.height = 160;
+          const ctx = canvas.getContext('2d'); ctx.fillStyle = skin.bed; ctx.fillRect(0, 0, 240, 160);
+          ctx.save(); ctx.translate(40, 0); ctx.scale(1.6, 1.6); Renderer.pipe(ctx, 3, skin); ctx.restore();
+          const name = document.createElement('h3'); name.textContent = skin.name;
+          const description = document.createElement('p'); description.textContent = skin.text;
+          const button = document.createElement('button');
+          const owned = SaveManager.data.owned.includes(skin.id), equipped = SaveManager.data.equipped === skin.id;
+          button.textContent = equipped ? 'Equipped' : owned ? 'Equip' : skin.price + ' C';
+          button.disabled = equipped || !owned && SaveManager.data.credits < skin.price;
+          button.onclick = () => { if (SaveManager.buy(skin.id)) { this.shop(); Renderer.draw(); Sound.play(600); } };
+          card.append(canvas, name, description, button); $('shop-items').appendChild(card);
+        }
+        this.wallet();
+      }
+    };
+
+    function requestNew() {
+      if (SaveManager.data.current) $('replace').showModal();
+      else Game.begin();
+    }
+    function bind() {
+      $('play').onclick = requestNew; $('replace-confirm').onclick = () => Game.begin();
+      $('continue').onclick = () => Game.begin(true); $('test').onclick = () => Game.test();
+      $('hint').onclick = () => Game.hint(); $('undo').onclick = () => Game.undo(); $('menu').onclick = () => Game.menu();
+      $('result-menu').onclick = () => Game.menu(); $('next').onclick = () => Game.begin();
+      $('shop-open').onclick = () => { UI.shop(); $('shop').showModal(); };
+      $('rules-open').onclick = () => $('rules').showModal();
+      $('settings-open').onclick = () => {
+        for (const key of ['sound', 'animation']) $(key).checked = SaveManager.data.settings[key];
+        $('settings').showModal();
+      };
+      for (const key of ['sound', 'animation']) $(key).onchange = () => SaveManager.update(d => d.settings[key] = $(key).checked);
+      document.querySelectorAll('[data-close]').forEach(button => button.onclick = () => $(button.dataset.close).close());
+      $('result').addEventListener('cancel', event => { event.preventDefault(); Game.menu(); });
+      Renderer.canvas.addEventListener('click', event => Game.rotate(Renderer.hit(event)));
+      Renderer.canvas.addEventListener('contextmenu', event => { event.preventDefault(); Game.rotate(Renderer.hit(event), true); });
+      Renderer.canvas.addEventListener('keydown', event => {
+        if (Game.state !== 'play' || document.querySelector('dialog[open]')) return;
+        const n = Game.puzzle.n;
+        if (['ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowLeft'].includes(event.code)) {
+          event.preventDefault();
+          const dir = ['ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowLeft'].indexOf(event.code);
+          const current = Game.selection < 0 ? Game.puzzle.start : Game.selection;
+          Game.selection = clamp(Math.floor(current / n) + DIRS[dir][1], 0, n - 1) * n + clamp(current % n + DIRS[dir][0], 0, n - 1);
+          Renderer.draw();
+        } else if (event.code === 'Space' || event.code === 'Enter') {
+          event.preventDefault(); Game.rotate(Game.selection < 0 ? Game.puzzle.start : Game.selection, event.shiftKey);
+        }
+      });
+      window.addEventListener('resize', () => Renderer.draw());
+      window.addEventListener('pagehide', () => Game.persist());
+      document.addEventListener('visibilitychange', () => { if (document.hidden) Game.persist(); });
+    }
+    let previous = 0, saveClock = 0, hudClock = 0;
+    function tick(now) {
+      const dt = Math.min(.1, Math.max(0, (now - previous) / 1000)); previous = now;
+      if (!document.hidden && !document.querySelector('dialog[open]')) {
+        if (['play', 'flow'].includes(Game.state)) {
+          Game.puzzle.elapsed += dt; saveClock += dt; hudClock += dt;
+          if (hudClock >= .5) { hudClock = 0; UI.hud(); }
+          if (saveClock >= 5) { saveClock = 0; Game.persist(); }
+        }
+        if (Game.state === 'flow') {
+          Game.flowTime += dt; Renderer.draw();
+          if (Game.flowTime >= Game.flow.path.length * .09 + .2) Game.finishFlow();
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    SaveManager.load();
+    const preview = generate('easy');
+    Renderer.canvas = $('board'); Renderer.ctx = Renderer.canvas.getContext('2d');
+    bind(); UI.home(); Renderer.draw(); requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

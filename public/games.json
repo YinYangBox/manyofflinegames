@@ -198,5 +198,53 @@
 		"cost": 850,
 		"icon": "Images/train-space.png",
 		"path": "/.netlify/functions/proxy?game=train-space"
+	},
+	{
+		"id": "air-hockey",
+		"name": "Air Hockey",
+		"description": "Classic Air Hockey Match",
+		"cost": 600,
+		"icon": "Images/air-hockey.png",
+		"path": "/.netlify/functions/proxy?game=air-hockey"
+	},
+	{
+		"id": "bowling-3d",
+		"name": "3D Bowling",
+		"description": "Knock Down Every Pin",
+		"cost": 800,
+		"icon": "Images/bowling-3d.png",
+		"path": "/.netlify/functions/proxy?game=bowling-3d"
+	},
+	{
+		"id": "dungeons",
+		"name": "Dungeons",
+		"description": "Explore Dangerous Dungeons",
+		"cost": 1100,
+		"icon": "Images/dungeons.png",
+		"path": "/.netlify/functions/proxy?game=dungeons"
+	},
+	{
+		"id": "idle-factory",
+		"name": "Idle Factory",
+		"description": "Build and Grow Your Factory",
+		"cost": 700,
+		"icon": "Images/idle-factory.png",
+		"path": "/.netlify/functions/proxy?game=idle-factory"
+	},
+	{
+		"id": "obstacle-run",
+		"name": "Obstacle Run",
+		"description": "Run Through Every Obstacle",
+		"cost": 650,
+		"icon": "Images/obstacle-run.png",
+		"path": "/.netlify/functions/proxy?game=obstacle-run"
+	},
+	{
+		"id": "pipe-connect",
+		"name": "Pipe Connect",
+		"description": "Connect the Pipes and Solve the Puzzle",
+		"cost": 550,
+		"icon": "Images/pipe-connect.png",
+		"path": "/.netlify/functions/proxy?game=pipe-connect"
 	}
 ]
