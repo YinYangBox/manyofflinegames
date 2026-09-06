@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0b1020">
-  <title>Train-Space Arcade</title>
+  <meta name="theme-color" content="#151818">
+  <title>Train Space</title>
   <style>
     :root {
       --bg: #080c18;
@@ -270,6 +270,111 @@
     @keyframes toast-out { to { transform: translateY(10px); opacity: 0; } }
 
     .hidden { display: none !important; }
+
+    /* Shared arcade shell. Boards use the remaining viewport, not content size. */
+    :root {
+      --bg: #151818;
+      --panel: #202525;
+      --panel-2: #292f2e;
+      --line: #3a4340;
+      --text: #f1f5ed;
+      --muted: #a5b2a9;
+      --cyan: #a9ed91;
+      --gold: #f2ce79;
+      --gold-2: #f2ce79;
+      --blue: #29433c;
+      --green: #8be09a;
+      --red: #bc4755;
+    }
+    body { background: var(--bg); }
+    button, input, .reaction-area { touch-action: manipulation; }
+    button { letter-spacing: 0 !important; }
+    .screen-bar { height: 64px; padding: 0 24px; background: #1c2120; backdrop-filter: none; gap: 12px; }
+    .brand { letter-spacing: 0; text-transform: none; font-size: 17px; min-width: 0; }
+    .brand-mark { flex-shrink: 0; box-shadow: none; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .credit-chip { border-radius: 6px; flex-shrink: 0; }
+    .home-content { padding: 28px 24px; gap: 24px; align-items: stretch; }
+    .hero-text { width: 100%; max-width: 1100px; margin: 0 auto; text-align: left; }
+    .hero-text h1 { font: 850 32px/1.1 system-ui, sans-serif; letter-spacing: 0; }
+    .hero-text p { margin-top: 8px; }
+    .modes-grid { margin: 0 auto; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .mode-card { border-radius: 8px; background: var(--panel); backdrop-filter: none; }
+    .mode-card:hover { border-color: var(--cyan); transform: translateY(-2px); }
+    .mode-header { padding: 18px 16px; gap: 12px; align-items: flex-start; }
+    .mode-icon { flex-shrink: 0; width: 48px; height: 48px; border-radius: 6px; background: #303e31; }
+    .mode-icon svg { width: 32px; height: 32px; }
+    .mode-title { letter-spacing: 0; }
+    .mode-desc { font-size: 12px; line-height: 1.5; }
+    .mode-body { padding: 16px; gap: 18px; }
+    .mode-stats { gap: 16px; }
+    .stat-box { background: none; border: 0; padding: 0; text-align: left; }
+    .stat-box span { letter-spacing: 0; font-size: 11px; }
+    .stat-box strong { font: 750 20px system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+    .mode-card.locked .stat-box { opacity: .65; filter: none; }
+    .card-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .btn { border-radius: 6px; font-size: 13px; font-weight: 750; min-height: 44px; }
+    .btn-primary { background: var(--cyan); box-shadow: none; }
+    .btn-buy { background: var(--gold); box-shadow: none; }
+    .game-inner { min-height: 0; }
+    .game-bottom-bar { position: relative; padding: 10px 16px max(10px, env(safe-area-inset-bottom)); flex-shrink: 0; border-top: 1px solid var(--line); background: var(--panel); gap: 10px; }
+    .game-module { align-items: center; justify-content: center; padding: 72px 16px 16px; }
+    .game-overlay-text { top: 14px; font: 750 20px system-ui, sans-serif; }
+    .grid-container { width: min(440px, calc(100vw - 40px), calc(100dvh - 235px)); height: auto; max-height: none; margin: 0; padding: 8px; gap: 6px; flex-shrink: 0; grid-auto-rows: 1fr; border-radius: 8px; }
+    .grid-cell { min-width: 0; min-height: 0; padding: 0; aspect-ratio: 1; border-radius: 4px; background: #35433e; }
+    .grid-cell.active { background: var(--cyan); box-shadow: none; }
+    #g-chimp .chimp-grid { width: min(720px, calc(100vw - 32px), calc((100dvh - 230px) * 1.6)); padding: 6px; gap: 5px; grid-auto-rows: 1fr; border-radius: 8px; }
+    .chimp-cell { padding: 0; min-width: 0; min-height: 0; font: 750 20px system-ui, sans-serif; }
+    .chimp-cell.empty { visibility: hidden; }
+    #g-number .num-display { font: 750 40px/1.25 ui-monospace, monospace; letter-spacing: 2px; max-width: 680px; overflow-wrap: anywhere; }
+    .num-input-area { gap: 12px; width: 100%; }
+    .num-input-area input, .time-bar-bg { width: min(300px, 80vw); }
+    #g-aim .aim-area { top: 64px; bottom: 12px; left: 12px; right: 12px; }
+    .aim-target { padding: 0; border: 0; background: radial-gradient(circle, #f1f5ed 0 12%, #394e42 13% 29%, #a9ed91 30% 47%, transparent 48%); width: 60px; height: 60px; }
+    .aim-target::after { inset: 0; }
+    #g-reaction h2 { font: 800 34px system-ui, sans-serif; }
+    #g-reaction .r-icon { font-size: 48px; }
+    .modal { max-height: 90dvh; overflow-y: auto; border-radius: 8px; background: var(--panel); }
+    .modal h2 { font-family: system-ui, sans-serif; }
+    .modal-icon { border-radius: 8px; }
+    .modal-icon svg { width: 42px; height: 42px; }
+    .result-box { border-radius: 6px; }
+    .result-box span { letter-spacing: 0; }
+    .result-box strong { font-family: system-ui, sans-serif; }
+    .toast { border-radius: 6px; background: var(--panel); }
+    .save-warning { position: fixed; bottom: 8px; left: 8px; z-index: 80; margin: 0; padding: 8px 12px; max-width: calc(100vw - 16px); background: #562c32; border-radius: 4px; font-size: 12px; }
+    dialog { color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; width: min(480px, calc(100vw - 24px)); padding: 24px; max-height: 85dvh; overflow: auto; }
+    dialog::backdrop { background: #000b; }
+    dialog h2 { margin: 0 0 18px; font-size: 23px; }
+    dialog p { color: var(--muted); line-height: 1.65; }
+    dialog .btn { margin-top: 16px; width: 100%; }
+    .setting-row { display: flex; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--line); }
+    .setting-row input { width: 22px; height: 22px; accent-color: var(--cyan); }
+    .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after { animation: none !important; transition: none !important; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+    @media (max-width: 900px) { .modes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 540px) {
+      .screen-bar { padding: 0 12px; }
+      .brand { font-size: 15px; gap: 7px; }
+      .brand-mark { width: 24px; height: 24px; }
+      .header-actions { gap: 6px; }
+      .header-actions .btn { padding: 0 10px; }
+      .home-content { padding: 22px 14px; }
+      .modes-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .hero-text h1 { font-size: 28px; }
+      #g-chimp .chimp-grid { grid-template-columns: repeat(5, 1fr); aspect-ratio: 5 / 8; width: min(calc(100vw - 32px), calc((100dvh - 235px) * .625)); }
+      .modal { padding: 22px 16px; }
+    }
+    @media (max-height: 500px) {
+      .screen-bar { height: 48px; }
+      .game-module { padding-top: 40px; }
+      .game-overlay-text { top: 6px; font-size: 16px; }
+      .grid-container { width: min(360px, calc(100dvh - 165px)); }
+      #g-chimp .chimp-grid { width: min(600px, calc((100dvh - 165px) * 1.6)); }
+      .tries-dots { top: 12px; }
+      #g-reaction .r-icon { margin-bottom: 8px; font-size: 32px; }
+      #g-reaction h2 { font-size: 26px; }
+    }
   </style>
 </head>
 <body>
@@ -280,15 +385,18 @@
       <header class="screen-bar">
         <div class="brand">
           <span class="brand-mark"><i></i><i></i><i></i><i></i></span>
-          <span>Train-Space</span>
+          <span>Train Space</span>
         </div>
-        <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="settings-button">Settings</button>
+          <div class="credit-chip" aria-label="Credits"><span class="credit-icon">C</span><span data-credits>0</span></div>
+        </div>
       </header>
 
       <main class="home-content">
         <div class="hero-text">
-          <h1>Cognitive Arcade</h1>
-          <p>Mide y mejora tu rendimiento cognitivo. Juega para ganar créditos, supera tus récords y desbloquea nuevas pruebas.</p>
+          <h1>Train Space</h1>
+          <p>Six challenges. Beat your best.</p>
         </div>
 
         <div class="modes-grid" id="modes-grid">
@@ -312,11 +420,11 @@
           
           <!-- 1. Reaction Speed -->
           <div class="game-module" id="g-reaction">
-            <div class="reaction-area r-state-start" id="r-area">
+            <div class="reaction-area r-state-start" id="r-area" tabindex="0" role="button" aria-label="Reaction test">
               <div class="tries-dots" id="r-dots"><span></span><span></span><span></span><span></span><span></span></div>
               <div id="r-icon" class="r-icon">⚡</div>
-              <h2 id="r-title">Click to Start</h2>
-              <p id="r-desc">Cuando la pantalla se ponga verde, haz click lo más rápido posible.</p>
+              <h2 id="r-title">Tap to start</h2>
+              <p id="r-desc">Tap as soon as the screen turns green.</p>
             </div>
           </div>
 
@@ -330,9 +438,9 @@
 
           <!-- 3. Aim Trainer -->
           <div class="game-module" id="g-aim">
-            <div class="game-overlay-text">Faltan: <span id="aim-left">30</span></div>
+            <div class="game-overlay-text">Targets left: <span id="aim-left">30</span></div>
             <div class="aim-area" id="aim-area">
-              <div class="aim-target hidden" id="aim-target"></div>
+              <button class="aim-target hidden" id="aim-target" aria-label="Hit target"></button>
             </div>
           </div>
 
@@ -344,9 +452,9 @@
               <div class="time-bar-bg"><div class="time-bar-fill" id="num-bar"></div></div>
             </div>
             <div id="num-input-phase" class="num-input-area hidden">
-              <p>¿Qué número era?</p>
-              <input type="number" id="num-input" autocomplete="off" />
-              <button class="btn btn-primary" id="num-submit">ENVIAR</button>
+              <p>What was the number?</p>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" id="num-input" aria-label="Remembered number" autocomplete="off" maxlength="40" />
+              <button class="btn btn-primary" id="num-submit">Submit</button>
             </div>
           </div>
 
@@ -372,34 +480,40 @@
         </div>
 
         <div class="game-bottom-bar">
-          <button class="btn btn-secondary" id="btn-quit">ABANDONAR</button>
+          <button class="btn btn-secondary" id="btn-quit">Menu</button>
         </div>
       </div>
     </section>
 
     <!-- RESULT MODAL -->
-    <div class="modal-layer" id="result-layer">
+    <div class="modal-layer" id="result-layer" role="dialog" aria-modal="true" aria-label="Results" inert>
       <div class="modal">
         <div class="modal-icon" id="res-icon">★</div>
-        <h2 id="res-title">Resultados</h2>
-        <p id="res-desc">Prueba completada</p>
+        <h2 id="res-title">Results</h2>
+        <p id="res-desc">Challenge complete</p>
         
         <div class="result-grid">
-          <div class="result-box"><span>PUNTUACIÓN</span><strong id="res-score">0</strong></div>
-          <div class="result-box reward"><span>RECOMPENSA</span><strong id="res-credits">+0 C</strong></div>
-          <div class="result-box"><span>TU MEDIA</span><strong id="res-avg">0</strong></div>
-          <div class="result-box"><span>MEJOR RÉCORD</span><strong id="res-best">0</strong></div>
+          <div class="result-box"><span>Score</span><strong id="res-score">0</strong></div>
+          <div class="result-box reward"><span>Credits earned</span><strong id="res-credits">+0 C</strong></div>
+          <div class="result-box"><span>Your average</span><strong id="res-avg">0</strong></div>
+          <div class="result-box"><span>Personal best</span><strong id="res-best">0</strong></div>
         </div>
 
         <div class="modal-actions">
-          <button class="btn btn-secondary" id="res-btn-menu">MENÚ</button>
-          <button class="btn btn-primary" id="res-btn-again">JUGAR OTRA VEZ</button>
+          <button class="btn btn-secondary" id="res-btn-menu">Menu</button>
+          <button class="btn btn-primary" id="res-btn-again">Play again</button>
         </div>
       </div>
     </div>
 
     <!-- TOAST STACK -->
     <div class="toast-stack" id="toast-stack"></div>
+    <p id="save-warning" class="save-warning hidden" role="status">Saving unavailable. Progress is temporary until storage is available.</p>
+    <dialog id="info-dialog" aria-labelledby="info-title">
+      <h2 id="info-title">Settings</h2>
+      <div id="info-content"></div>
+      <form method="dialog"><button class="btn btn-primary">Done</button></form>
+    </dialog>
 
   </div>
 
@@ -408,75 +522,151 @@
 
     /* ---------- Game Definitions ---------- */
     const GAMES_CONFIG = {
-      reaction: { id: "reaction", title: "Reaction Speed", icon: "⚡", price: 0, bestIsMin: true, format: "ms", desc: "Mide tus reflejos visuales." },
-      sequence: { id: "sequence", title: "Sequence Memory", icon: "🧠", price: 500, bestIsMin: false, format: "lvl", desc: "Recuerda el patrón de luces." },
-      aim: { id: "aim", title: "Aim Trainer", icon: "🎯", price: 1000, bestIsMin: true, format: "ms", desc: "Destruye 30 objetivos rápidamente." },
-      number: { id: "number", title: "Number Memory", icon: "🔢", price: 1500, bestIsMin: false, format: "lvl", desc: "Memoriza el número más largo." },
-      visual: { id: "visual", title: "Visual Memory", icon: "👁️", price: 2000, bestIsMin: false, format: "lvl", desc: "Recuerda los cuadrados iluminados." },
-      chimp: { id: "chimp", title: "Chimp Test", icon: "🐒", price: 2500, bestIsMin: false, format: "lvl", desc: "Haz click en orden numérico oculto." }
+      reaction: { id: "reaction", title: "Reaction Speed", icon: "⚡", price: 0, bestIsMin: true, format: "ms", desc: "React when the screen turns green." },
+      sequence: { id: "sequence", title: "Sequence Memory", icon: "🧠", price: 500, bestIsMin: false, format: "lvl", desc: "Repeat the growing sequence." },
+      aim: { id: "aim", title: "Aim Trainer", icon: "🎯", price: 1000, bestIsMin: true, format: "ms", desc: "Hit 30 targets as quickly as you can." },
+      number: { id: "number", title: "Number Memory", icon: "🔢", price: 1500, bestIsMin: false, format: "lvl", desc: "Recall a longer number each round." },
+      visual: { id: "visual", title: "Visual Memory", icon: "👁️", price: 2000, bestIsMin: false, format: "lvl", desc: "Find the tiles that lit up." },
+      chimp: { id: "chimp", title: "Chimp Test", icon: "🐒", price: 2500, bestIsMin: false, format: "lvl", desc: "Remember the hidden number order." }
     };
 
     /* ---------- Save Manager ---------- */
     class SaveManager {
-      static KEY = "TRAIN_SPACE_ARCADE";
+      static STORAGE_KEY = "ARCADE_GAMES";
+      static GAME_KEY = "train-space";
       constructor() {
-        this.defaults = {
-          credits: 0,
-          unlocked: ["reaction"],
-          stats: {} // { gameId: { playCount, totalScore, bestScore } }
-        };
-        Object.keys(GAMES_CONFIG).forEach(k => {
-          this.defaults.stats[k] = { playCount: 0, totalScore: 0, bestScore: null };
-        });
+        this.failed = false;
         this.data = this.load();
+      }
+      static sanitize(raw = {}) {
+        const object = value => value && typeof value === 'object' && !Array.isArray(value);
+        if (!object(raw)) raw = {};
+        const number = value => Number.isFinite(value) && value >= 0 ? Math.min(value, 1e12) : 0;
+        const stats = {};
+        for (const id of Object.keys(GAMES_CONFIG)) {
+          const st = object(raw.stats?.[id]) ? raw.stats[id] : {};
+          stats[id] = {
+            playCount: Math.floor(number(st.playCount)),
+            totalScore: number(st.totalScore),
+            bestScore: Number.isFinite(st.bestScore) && st.bestScore >= 0 ? number(st.bestScore) : null
+          };
+        }
+        return {
+          version: 2,
+          credits: Math.floor(number(raw.credits)),
+          unlocked: [...new Set(['reaction', ...(Array.isArray(raw.unlocked) ? raw.unlocked : [])])]
+            .filter(id => Object.hasOwn(GAMES_CONFIG, id)),
+          settings: { sound: raw.settings?.sound !== false, motion: raw.settings?.motion !== false },
+          stats
+        };
+      }
+      readRoot() {
+        const root = JSON.parse(localStorage.getItem(SaveManager.STORAGE_KEY) || '{}');
+        if (!root || typeof root !== 'object' || Array.isArray(root)) throw new Error('Invalid save');
+        return root;
       }
       load() {
         try {
-          const raw = localStorage.getItem(SaveManager.KEY);
-          if (!raw) return this.defaults;
-          const parsed = JSON.parse(raw);
-          const merged = { ...this.defaults, ...parsed };
-          merged.stats = { ...this.defaults.stats, ...(parsed.stats || {}) };
-          return merged;
-        } catch(e) { return this.defaults; }
+          const root = this.readRoot();
+          let data = root[SaveManager.GAME_KEY];
+          // Import this game's actual old save only when the new entry is absent.
+          if (!Object.hasOwn(root, SaveManager.GAME_KEY)) {
+            try { data = JSON.parse(localStorage.getItem('TRAIN_SPACE_ARCADE') || 'null'); } catch {}
+            data = SaveManager.sanitize(data);
+            root[SaveManager.GAME_KEY] = data;
+            try { localStorage.setItem(SaveManager.STORAGE_KEY, JSON.stringify(root)); }
+            catch { this.failed = true; }
+          }
+          return SaveManager.sanitize(data);
+        } catch { this.failed = true; return SaveManager.sanitize(); }
       }
-      save() {
-        localStorage.setItem(SaveManager.KEY, JSON.stringify(this.data));
+      refreshUI() {
         document.querySelectorAll("[data-credits]").forEach(el => el.textContent = this.data.credits.toLocaleString());
+        document.getElementById('save-warning').classList.toggle('hidden', !this.failed);
+        document.body.classList.toggle('reduced-motion', !this.data.settings.motion);
+      }
+      update(change) {
+        let root;
+        try {
+          root = this.readRoot();
+          if (!this.failed && Object.hasOwn(root, SaveManager.GAME_KEY)) this.data = SaveManager.sanitize(root[SaveManager.GAME_KEY]);
+        } catch { this.failed = true; }
+        const result = change(this.data);
+        this.data = SaveManager.sanitize(this.data);
+        if (root) {
+          root[SaveManager.GAME_KEY] = this.data;
+          try {
+            localStorage.setItem(SaveManager.STORAGE_KEY, JSON.stringify(root));
+            this.failed = false;
+          } catch { this.failed = true; }
+        }
+        this.refreshUI();
+        return result;
       }
       buy(gameId) {
-        const cost = GAMES_CONFIG[gameId].price;
-        if (this.data.credits >= cost && !this.data.unlocked.includes(gameId)) {
-          this.data.credits -= cost;
-          this.data.unlocked.push(gameId);
-          this.save();
+        if (!Object.hasOwn(GAMES_CONFIG, gameId)) return false;
+        return this.update(data => {
+          if (data.unlocked.includes(gameId) || data.credits < GAMES_CONFIG[gameId].price) return false;
+          data.credits -= GAMES_CONFIG[gameId].price;
+          data.unlocked.push(gameId);
           return true;
-        }
-        return false;
+        });
       }
-      recordScore(gameId, score) {
-        const st = this.data.stats[gameId];
-        const isMin = GAMES_CONFIG[gameId].bestIsMin;
-        
-        st.playCount++;
-        st.totalScore += score;
-        
-        let isNewBest = false;
-        if (st.bestScore === null || (isMin ? score < st.bestScore : score > st.bestScore)) {
-          st.bestScore = score;
-          isNewBest = true;
-        }
-        this.save();
-        return { st, isNewBest };
+      recordScore(gameId, score, earned) {
+        return this.update(data => {
+          const st = data.stats[gameId];
+          const isMin = GAMES_CONFIG[gameId].bestIsMin;
+          st.playCount++;
+          st.totalScore += score;
+          const isNewBest = st.bestScore === null || (isMin ? score < st.bestScore : score > st.bestScore);
+          if (isNewBest) st.bestScore = score;
+          data.credits += earned;
+          return { st: { ...st }, isNewBest };
+        });
       }
     }
 
     const save = new SaveManager();
     let currentActiveGame = null;
 
+    const MODE_ART = {
+      reaction: '<path d="M18 3 7 18h9l-2 11 11-16h-9z"/>',
+      sequence: '<rect x="4" y="4" width="9" height="9"/><rect x="19" y="4" width="9" height="9"/><rect x="4" y="19" width="9" height="9"/><path d="M19 23h9m-4-4v9"/>',
+      aim: '<circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="4"/><path d="M16 1v6m0 18v6M1 16h6m18 0h6"/>',
+      number: '<path d="M8 5 4 9h4v14m-4 0h8m7-15c0-6 11-5 9 1-1 3-9 7-9 13h10"/>',
+      visual: '<path d="M2 16s5-9 14-9 14 9 14 9-5 9-14 9S2 16 2 16Z"/><circle cx="16" cy="16" r="4"/>',
+      chimp: '<rect x="2" y="4" width="12" height="12" rx="2"/><path d="M7 8h2v5m11 10 3 3 6-8"/><rect x="16" y="17" width="15" height="14" rx="2"/>'
+    };
+    function modeIcon(id) {
+      return `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${MODE_ART[id]}</svg>`;
+    }
+    const RULES = {
+      reaction: ['Tap the play area or press Space to start. Wait until it turns green, then react as quickly as possible. A tap while it is red restarts that attempt.', 'Complete five valid attempts. Your score is their average reaction time in milliseconds; lower is better. Credits are based on that average.'],
+      sequence: ['Watch the tiles light up, then select them in exactly the same order. Each round adds one tile to the end of the sequence. A tile may appear more than once.', 'One wrong selection ends the run. Your score is the number of fully completed levels. Each completed level earns 25 credits.'],
+      aim: ['Select each target as soon as it appears. There are 30 targets, one at a time. The timer starts when the first target appears.', 'Your score is total elapsed time divided by 30, in milliseconds per target. Lower is better and earns more credits. Use a mouse or touch the targets directly.'],
+      number: ['Memorize the number before the timer runs out. Type the exact digits when the input appears, then select Submit or press Enter. Leading zeros count.', 'Every correct answer adds another digit. A wrong answer ends the run; you earn 30 credits per completed level. The final level contains 40 digits.'],
+      visual: ['Memorize the highlighted tiles. Once they turn off, select all the tiles that were lit. Correct selections stay visible.', 'A wrong tile costs one of your three lives and restarts that level with a new pattern. Completing a pattern advances the level and earns 25 credits. The board grows to 6 by 6; level 34 is the final level.'],
+      chimp: ['Memorize the numbered tiles. Select them in ascending order, starting at 1. After selecting 1, all remaining numbers are hidden.', 'Each completed round adds one number, starting with four and ending with forty. One wrong selection ends the run. Your score counts completed rounds; each earns 20 credits.']
+    };
+    function showRules(id) {
+      document.getElementById('info-title').textContent = GAMES_CONFIG[id].title;
+      document.getElementById('info-content').innerHTML = RULES[id].map(text => `<p>${text}</p>`).join('');
+      document.getElementById('info-dialog').showModal();
+    }
+    document.getElementById('settings-button').onclick = () => {
+      document.getElementById('info-title').textContent = 'Settings';
+      const content = document.getElementById('info-content');
+      content.innerHTML = ['sound', 'motion'].map(key => `<label class="setting-row"><span>${key === 'sound' ? 'Sound' : 'Animations'}</span><input type="checkbox" data-setting="${key}" ${save.data.settings[key] ? 'checked' : ''}></label>`).join('');
+      content.querySelectorAll('input').forEach(input => {
+        input.onchange = () => save.update(data => { data.settings[input.dataset.setting] = input.checked; });
+      });
+      document.getElementById('info-dialog').showModal();
+    };
+
     /* ---------- Audio System ---------- */
     let audioCtx = null;
     function playSound(type) {
+      if (!save.data.settings.sound) return;
       try {
         if(!audioCtx) {
           const C = window.AudioContext || window.webkitAudioContext;
@@ -525,7 +715,7 @@
     }
 
     function renderDashboard() {
-      save.save(); // Refresh top bar credits
+      save.refreshUI();
       const grid = document.getElementById('modes-grid');
       grid.innerHTML = '';
 
@@ -544,20 +734,20 @@
               <div class="stat-box"><span>Best</span><strong>${formatStat(st.bestScore, game.format)}</strong></div>
               <div class="stat-box"><span>Avg</span><strong>${formatStat(avg, game.format)}</strong></div>
             </div>
-            <button class="btn btn-primary" onclick="launchGame('${game.id}')">JUGAR</button>
+            <div class="card-actions"><button class="btn btn-primary" onclick="launchGame('${game.id}')">Play</button><button class="btn btn-secondary" onclick="showRules('${game.id}')">Rules</button></div>
           `;
         } else {
           bodyHTML = `
-            <div class="mode-stats" style="visibility:hidden">
-              <div class="stat-box"><span>Best</span><strong>-</strong></div>
+            <div class="mode-stats">
+              <div class="stat-box"><span>Unlock price</span><strong>${game.price.toLocaleString()} C</strong></div>
             </div>
-            <button class="btn btn-buy" onclick="buyGame('${game.id}')">DESBLOQUEAR - ${game.price} C</button>
+            <div class="card-actions"><button class="btn btn-buy" onclick="buyGame('${game.id}')" ${save.data.credits < game.price ? 'disabled' : ''}>Unlock</button><button class="btn btn-secondary" onclick="showRules('${game.id}')">Rules</button></div>
           `;
         }
 
         card.innerHTML = `
           <div class="mode-header">
-            <div class="mode-icon">${unlocked ? game.icon : '🔒'}</div>
+            <div class="mode-icon">${modeIcon(game.id)}</div>
             <div>
               <h3 class="mode-title">${game.title}</h3>
               <p class="mode-desc">${game.desc}</p>
@@ -572,27 +762,63 @@
     function buyGame(id) {
       if (save.buy(id)) {
         playSound('buy');
-        showToast(`<b>${GAMES_CONFIG[id].title}</b> desbloqueado`);
+        showToast(`<b>${GAMES_CONFIG[id].title}</b> unlocked`);
         renderDashboard();
       } else {
-        showToast("Créditos insuficientes");
+        showToast("Not enough credits");
       }
     }
 
     /* ---------- Core Game Flow ---------- */
     // Helper to manage timeouts safely
-    let activeTimers = [];
+    const activeTimers = new Set();
+    const activeFrames = new Set();
+    function setSafeFrame(callback) {
+      const id = requestAnimationFrame(() => {
+        activeFrames.delete(id);
+        callback();
+      });
+      activeFrames.add(id);
+      return id;
+    }
+    function inputTime(event) {
+      const now = performance.now();
+      // Event timestamps exclude time spent waiting in the main-thread queue.
+      const stamp = event?.timeStamp;
+      return Number.isFinite(stamp) && stamp > 0 && stamp <= now ? stamp : now;
+    }
+    function bindImmediatePress(element, callback) {
+      element.onpointerdown = event => {
+        if (event.isPrimary === false || event.button !== 0) return;
+        const time = inputTime(event);
+        event.preventDefault();
+        callback(time);
+      };
+      // Keep keyboard/assistive activation without counting a pointer twice.
+      element.onclick = event => {
+        if (event.detail === 0) callback(inputTime(event));
+      };
+    }
     function setSafeTimeout(cb, delay) {
-      const id = setTimeout(cb, delay);
-      activeTimers.push(id);
+      const id = setTimeout(() => {
+        activeTimers.delete(id);
+        cb();
+      }, delay);
+      activeTimers.add(id);
       return id;
     }
     function clearAllTimers() {
       activeTimers.forEach(clearTimeout);
-      activeTimers = [];
+      activeTimers.clear();
+      activeFrames.forEach(cancelAnimationFrame);
+      activeFrames.clear();
     }
 
     function launchGame(id) {
+      if (!Object.hasOwn(GAMES_CONFIG, id) || !save.data.unlocked.includes(id)) return;
+      roundEnded = false;
+      document.getElementById('result-layer').classList.remove('active');
+      document.getElementById('result-layer').inert = true;
       currentActiveGame = id;
       document.getElementById('home-screen').classList.remove('active');
       document.getElementById('game-screen').classList.add('active');
@@ -609,12 +835,15 @@
       if(id === 'number') NumberGame.init();
       if(id === 'chimp') ChimpGame.init();
       if(id === 'visual') VisualGame.init();
+      if(id === 'reaction') document.getElementById('r-area').focus();
     }
 
     function quitGame() {
+      roundEnded = true;
       clearAllTimers();
       currentActiveGame = null;
       document.getElementById('result-layer').classList.remove('active');
+      document.getElementById('result-layer').inert = true;
       document.getElementById('game-screen').classList.remove('active');
       document.getElementById('home-screen').classList.add('active');
       renderDashboard();
@@ -630,17 +859,19 @@
       return 10;
     }
 
+    let roundEnded = true;
     function endGame(score) {
+      if (roundEnded || !currentActiveGame || !Number.isFinite(score) || score < 0) return;
+      roundEnded = true;
       clearAllTimers();
       const id = currentActiveGame;
       const conf = GAMES_CONFIG[id];
       const earned = calculateCredits(id, score);
       
-      save.data.credits += earned;
-      const { st, isNewBest } = save.recordScore(id, score);
+      const { st, isNewBest } = save.recordScore(id, score, earned);
       const avg = st.playCount > 0 ? (st.totalScore / st.playCount) : score;
 
-      document.getElementById('res-icon').textContent = conf.icon;
+      document.getElementById('res-icon').innerHTML = modeIcon(id);
       document.getElementById('res-title').textContent = conf.title;
       document.getElementById('res-score').innerHTML = formatStat(score, conf.format) + (isNewBest ? '<span class="new-best-badge">NEW BEST</span>' : '');
       document.getElementById('res-credits').textContent = `+${earned} C`;
@@ -651,6 +882,8 @@
       else playSound('click');
 
       document.getElementById('result-layer').classList.add('active');
+      document.getElementById('result-layer').inert = false;
+      document.getElementById('res-btn-again').focus();
     }
 
     document.getElementById('btn-quit').addEventListener('click', quitGame);
@@ -680,44 +913,47 @@
       init() {
         this.tries = 0; this.scores = [];
         this.resetUI();
-        this.ui.area.onclick = () => this.handleClick();
+        bindImmediatePress(this.ui.area, time => this.handleClick(time));
       },
       resetUI() {
         this.state = 'start';
         this.ui.area.className = 'reaction-area r-state-start';
         this.ui.icon.textContent = '⚡';
-        this.ui.title.textContent = 'Click to Start';
-        this.ui.desc.textContent = 'Haz click en cualquier parte para comenzar.';
+        this.ui.title.textContent = 'Tap to start';
+        this.ui.desc.textContent = 'Tap or press Space to begin.';
         Array.from(this.ui.dots.children).forEach((d, i) => d.className = i < this.tries ? 'filled' : '');
       },
-      handleClick() {
+      handleClick(pressedAt = performance.now()) {
+        if (roundEnded || currentActiveGame !== 'reaction') return;
         if (this.state === 'start') {
           playSound('click');
           this.state = 'wait';
           this.ui.area.className = 'reaction-area r-state-wait';
           this.ui.icon.textContent = '⏱️';
-          this.ui.title.textContent = 'Espera al verde...';
+          this.ui.title.textContent = 'Wait for green...';
           this.ui.desc.textContent = '';
           const delay = 2000 + Math.random() * 3000;
           setSafeTimeout(() => {
-            if (this.state === 'wait') {
-              this.state = 'ready';
+            setSafeFrame(() => {
+              if (this.state !== 'wait' || roundEnded || currentActiveGame !== 'reaction') return;
               this.ui.area.className = 'reaction-area r-state-ready';
               this.ui.icon.textContent = '👇';
-              this.ui.title.textContent = '¡CLICK!';
+              this.ui.title.textContent = 'GO!';
+              // Change the cue and arm the clock together, just before paint.
               this.startMs = performance.now();
-            }
+              this.state = 'ready';
+            });
           }, delay);
-        } else if (this.state === 'wait') {
+        } else if (this.state === 'wait' || (this.state === 'ready' && pressedAt < this.startMs)) {
           clearAllTimers();
           playSound('wrong');
           this.state = 'start';
           this.ui.area.className = 'reaction-area r-state-start';
           this.ui.icon.textContent = '❌';
-          this.ui.title.textContent = '¡Demasiado pronto!';
-          this.ui.desc.textContent = 'Haz click para intentarlo de nuevo.';
+          this.ui.title.textContent = 'Too soon!';
+          this.ui.desc.textContent = 'Tap to try again.';
         } else if (this.state === 'ready') {
-          const time = performance.now() - this.startMs;
+          const time = pressedAt - this.startMs;
           this.scores.push(time);
           this.tries++;
           playSound('click');
@@ -728,7 +964,7 @@
             this.state = 'start';
             this.ui.area.className = 'reaction-area r-state-start';
             this.ui.icon.textContent = `${Math.round(time)} ms`;
-            this.ui.title.textContent = 'Click para continuar';
+            this.ui.title.textContent = 'Tap to continue';
             this.ui.desc.textContent = '';
             Array.from(this.ui.dots.children).forEach((d, i) => d.className = i < this.tries ? 'filled' : '');
           }
@@ -749,9 +985,10 @@
         this.level = 1; this.sequence = [];
         this.grid.innerHTML = ''; this.cells = [];
         for(let i=0; i<9; i++) {
-          const c = document.createElement('div');
+          const c = document.createElement('button');
+          c.setAttribute('aria-label', `Tile ${i + 1}`);
           c.className = 'grid-cell';
-          c.onmousedown = () => this.handleCellClick(i);
+          c.onclick = () => this.handleCellClick(i);
           this.grid.appendChild(c);
           this.cells.push(c);
         }
@@ -783,7 +1020,7 @@
         setSafeTimeout(playNext, 600);
       },
       handleCellClick(id) {
-        if (this.inputLocked) return;
+        if (this.inputLocked || roundEnded) return;
         if (id === this.sequence[this.step]) {
           playSound('click');
           this.cells[id].classList.add('active');
@@ -807,33 +1044,43 @@
     const AimGame = {
       left: 30,
       startMs: 0,
+      inputLocked: true,
       area: document.getElementById('aim-area'),
       target: document.getElementById('aim-target'),
       leftUI: document.getElementById('aim-left'),
       init() {
         this.left = 30;
         this.leftUI.textContent = this.left;
-        this.target.classList.remove('hidden');
-        this.target.onmousedown = (e) => { e.stopPropagation(); this.hit(); };
-        this.startMs = performance.now();
-        this.spawn();
+        this.inputLocked = true;
+        this.target.classList.add('hidden');
+        bindImmediatePress(this.target, time => this.hit(time));
+        setSafeFrame(() => {
+          this.spawn();
+          this.target.classList.remove('hidden');
+          this.startMs = performance.now();
+          this.inputLocked = false;
+        });
       },
       spawn() {
-        const x = 10 + Math.random() * 80;
-        const y = 10 + Math.random() * 80;
-        this.target.style.left = `${x}%`;
-        this.target.style.top = `${y}%`;
+        const width = this.area.clientWidth || 300;
+        const height = this.area.clientHeight || 300;
+        const inset = 32;
+        this.target.style.left = `${inset + Math.random() * Math.max(0, width - inset * 2)}px`;
+        this.target.style.top = `${inset + Math.random() * Math.max(0, height - inset * 2)}px`;
       },
-      hit() {
-        playSound('click');
+      hit(pressedAt = performance.now()) {
+        if (roundEnded || this.inputLocked || this.left <= 0 || pressedAt < this.startMs) return;
         this.left--;
         this.leftUI.textContent = this.left;
         if (this.left <= 0) {
-          const avg = (performance.now() - this.startMs) / 30;
+          const avg = (pressedAt - this.startMs) / 30;
           this.target.classList.add('hidden');
           endGame(avg);
         } else {
+          this.inputLocked = true;
           this.spawn();
+          setSafeFrame(() => { this.inputLocked = false; });
+          playSound('click');
         }
       }
     };
@@ -858,6 +1105,7 @@
         this.startLevel();
       },
       startLevel() {
+        this.accepting = false;
         this.ui.lvl.textContent = `Level ${this.level}`;
         this.ui.showPhase.classList.remove('hidden');
         this.ui.inPhase.classList.add('hidden');
@@ -882,13 +1130,17 @@
           this.ui.showPhase.classList.add('hidden');
           this.ui.inPhase.classList.remove('hidden');
           this.ui.input.focus();
+          this.accepting = true;
         }, time);
       },
       check() {
+        if (!this.accepting || roundEnded) return;
         const val = this.ui.input.value.trim();
         if(!val) return;
+        this.accepting = false;
         if(val === this.currentNum) {
           playSound('success');
+          if (this.level === 40) { endGame(40); return; }
           this.level++;
           this.startLevel();
         } else {
@@ -910,7 +1162,7 @@
         this.grid.innerHTML = '';
         this.cells = [];
         for(let i=0; i<40; i++) {
-          const c = document.createElement('div');
+          const c = document.createElement('button');
           c.className = 'chimp-cell empty';
           this.grid.appendChild(c);
           this.cells.push(c);
@@ -918,9 +1170,10 @@
         this.startLevel();
       },
       startLevel() {
+        this.inputLocked = false;
         this.expected = 1;
         this.lvlUI.textContent = this.level;
-        this.cells.forEach(c => { c.className = 'chimp-cell empty'; c.textContent = ''; c.onclick = null; });
+        this.cells.forEach(c => { c.className = 'chimp-cell empty'; c.textContent = ''; c.onclick = null; c.style.backgroundColor = ''; c.disabled = true; });
         
         // Pick unique positions
         let pos = [];
@@ -933,14 +1186,18 @@
           const num = idx + 1;
           const c = this.cells[pId];
           c.className = 'chimp-cell';
+          c.disabled = false;
           c.textContent = num;
-          c.onmousedown = () => this.click(num, c);
+          c.onclick = () => this.click(num, c);
         });
       },
       click(num, cell) {
+        if (roundEnded || this.inputLocked || cell.disabled) return;
         if(num === this.expected) {
           playSound('click');
           cell.className = 'chimp-cell empty'; // hide it
+          cell.disabled = true;
+          cell.onclick = null;
           
           if(num === 1) {
             // Hide all remaining numbers text
@@ -950,12 +1207,15 @@
           }
           
           if(num === this.level) {
+            this.inputLocked = true;
+            if (this.level === 40) { endGame(37); return; }
             this.level++;
             setSafeTimeout(() => this.startLevel(), 500);
           } else {
             this.expected++;
           }
         } else {
+          this.inputLocked = true;
           playSound('wrong');
           // reveal all
           this.cells.forEach(c => c.classList.remove('hidden-num'));
@@ -996,9 +1256,10 @@
         const count = size * size;
         
         for(let i=0; i<count; i++) {
-          const c = document.createElement('div');
+          const c = document.createElement('button');
+          c.setAttribute('aria-label', `Tile ${i + 1}`);
           c.className = 'grid-cell';
-          c.onmousedown = () => this.click(i);
+          c.onclick = () => this.click(i);
           this.grid.appendChild(c);
           this.cells.push(c);
         }
@@ -1018,7 +1279,7 @@
         }, 500);
       },
       click(id) {
-        if(this.inputLocked) return;
+        if(this.inputLocked || roundEnded) return;
         const c = this.cells[id];
         if(c.classList.contains('active') || c.classList.contains('wrong')) return;
         
@@ -1028,6 +1289,7 @@
           this.found++;
           if(this.found === this.activeCoords.length) {
             this.inputLocked = true;
+            if (this.level === 34) { endGame(34); return; }
             this.level++;
             playSound('success');
             setSafeTimeout(() => this.startLevel(), 1000);
@@ -1050,6 +1312,31 @@
       }
     };
 
+    document.addEventListener('keydown', event => {
+      if (event.repeat || document.getElementById('info-dialog').open) return;
+      if (['Space', 'Enter'].includes(event.code) && currentActiveGame === 'reaction' && !roundEnded && !['BUTTON', 'INPUT'].includes(event.target.tagName)) {
+        event.preventDefault();
+        ReactionGame.handleClick(inputTime(event));
+      }
+      if (event.key === 'Escape' && currentActiveGame) quitGame();
+    });
+    // Hidden tabs cancel timed tests, so returning cannot create unfair scores.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && currentActiveGame && !roundEnded) {
+        quitGame();
+        showToast('Challenge stopped while the page was hidden.');
+      }
+    });
+    window.addEventListener('storage', event => {
+      if (event.key === SaveManager.STORAGE_KEY && !save.failed) {
+        try { save.data = SaveManager.sanitize(save.readRoot()[SaveManager.GAME_KEY]); } catch { save.failed = true; }
+        if (!currentActiveGame) renderDashboard();
+        else save.refreshUI();
+      }
+    });
+    window.addEventListener('resize', () => {
+      if (currentActiveGame === 'aim' && !roundEnded) AimGame.spawn();
+    });
     // Boot
     renderDashboard();
 

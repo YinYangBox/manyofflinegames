@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#163b38">
+    <title>Bowling 3D</title>
+    <style>
+    :root {
+      color-scheme: dark;
+      --bg: #102d2b;
+      --panel: #163b38;
+      --line: #355653;
+      --text: #f4f4e9;
+      --muted: #b1c6be;
+      --accent: #c5f18a;
+      --gold: #ffdc8b;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    [hidden] {
+      display: none !important;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+    }
+    button, input {
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button:disabled {
+      opacity: .4;
+      cursor: default;
+    }
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 3px;
+    }
+    button {
+      color: inherit;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #244742;
+      min-height: 42px;
+      padding: 8px 14px;
+      font-weight: 700;
+    }
+    button:hover:not(:disabled) {
+      background: #315b51;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #172e21;
+      border-color: var(--accent);
+    }
+    button.primary:hover:not(:disabled) {
+      background: #dcffad;
+    }
+    button.small {
+      padding: 6px 10px;
+      min-height: 36px;
+      font-size: 12px;
+    }
+    .app {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 62px;
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 850;
+      font-size: 19px;
+    }
+    .brand svg {
+      width: 27px;
+      height: 32px;
+      color: var(--accent);
+    }
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .wallet {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--gold);
+      font-weight: 800;
+      padding: 7px 10px;
+      border: 1px solid #5b6550;
+      border-radius: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+    .coin {
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 11px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      flex: 1;
+      min-height: 0;
+    }
+    .stage {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: #d2e4d9;
+    }
+    #world {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    .stage-top {
+      position: absolute;
+      top: 16px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      color: #173e35;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .stage-top span {
+      background: #f5f8e9de;
+      border-radius: 4px;
+      padding: 6px 9px;
+    }
+    #announcement {
+      position: absolute;
+      top: 18%;
+      left: 12px;
+      right: 12px;
+      text-align: center;
+      pointer-events: none;
+      font-size: 34px;
+      font-weight: 900;
+      color: #123b31;
+      text-shadow: 0 2px 0 #f8ffee;
+    }
+    #announcement small {
+      display: block;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    #drag-hint {
+      position: absolute;
+      bottom: 16px;
+      left: 12px;
+      right: 12px;
+      text-align: center;
+      color: #143b31;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    aside {
+      background: var(--panel);
+      border-left: 1px solid var(--line);
+      overflow-y: auto;
+      padding: 24px 20px;
+    }
+    h1 {
+      font-size: 32px;
+      line-height: 1.1;
+      margin: 0 0 9px;
+    }
+    h2 {
+      font-size: 23px;
+      margin: 0 0 18px;
+    }
+    h3 {
+      font-size: 15px;
+      margin: 0;
+    }
+    p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 850;
+      margin-bottom: 14px;
+    }
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      display: block;
+      margin: 24px 0 8px;
+    }
+    .difficulty {
+      display: grid;
+      gap: 8px;
+    }
+    .difficulty button {
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 48px;
+    }
+    .difficulty button span {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .difficulty button.selected {
+      border-color: var(--accent);
+      box-shadow: inset 3px 0 var(--accent);
+    }
+    .wide {
+      width: 100%;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    #play {
+      margin-top: 20px;
+      min-height: 48px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 24px;
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+    }
+    .stats small {
+      color: var(--muted);
+      display: block;
+      font-size: 11px;
+    }
+    .stats strong {
+      display: block;
+      font-size: 23px;
+      margin-top: 4px;
+    }
+    .score-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    #score {
+      font-size: 36px;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+    #round-label {
+      font-weight: 750;
+    }
+    #earned {
+      font-size: 12px;
+      color: var(--gold);
+    }
+    #frames {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+    }
+    .frame {
+      border: 1px solid var(--line);
+      text-align: center;
+      min-width: 0;
+      border-radius: 4px;
+      overflow: hidden;
+      font-variant-numeric: tabular-nums;
+    }
+    .frame.current {
+      border-color: var(--accent);
+    }
+    .frame small {
+      font-size: 10px;
+      display: block;
+      background: #244742;
+      padding: 2px;
+      color: var(--muted);
+    }
+    .frame .rolls {
+      display: block;
+      font-size: 11px;
+      height: 20px;
+      padding-top: 3px;
+      white-space: nowrap;
+    }
+    .frame strong {
+      font-size: 14px;
+      display: block;
+      height: 22px;
+    }
+    .sliders {
+      margin-top: 20px;
+      display: grid;
+      gap: 13px;
+    }
+    .slider-row label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    output {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    input[type=range] {
+      width: 100%;
+      margin: 6px 0 0;
+      accent-color: var(--accent);
+      height: 22px;
+      cursor: pointer;
+    }
+    #bowl {
+      margin-top: 18px;
+      min-height: 48px;
+    }
+    .status {
+      color: var(--muted);
+      font-size: 12px;
+      margin: 12px 0 0;
+      min-height: 18px;
+    }
+    dialog {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      width: min(470px, calc(100vw - 24px));
+      max-height: calc(100dvh - 32px);
+      overflow-y: auto;
+    }
+    dialog::backdrop {
+      background: #061b18b8;
+    }
+    .dialog-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .dialog-top h2 {
+      margin: 0;
+    }
+    .setting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    input[type=checkbox] {
+      accent-color: var(--accent);
+      width: 22px;
+      height: 22px;
+    }
+    #shop {
+      width: min(820px, calc(100vw - 24px));
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tabs .selected {
+      background: var(--accent);
+      color: #183326;
+    }
+    #shop-items {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+      padding-bottom: 12px;
+    }
+    .item canvas {
+      width: 100%;
+      height: 136px;
+      display: block;
+      background: #c7dbcc;
+    }
+    .item h3 {
+      padding: 12px 12px 4px;
+    }
+    .item p {
+      font-size: 11px;
+      margin: 0 12px 12px;
+      min-height: 32px;
+    }
+    .item button {
+      display: block;
+      width: calc(100% - 24px);
+      margin: 0 12px;
+      font-size: 12px;
+    }
+    .result-number {
+      font-size: 66px;
+      font-weight: 850;
+      line-height: 1.1;
+      color: var(--accent);
+    }
+    .result-note {
+      margin: 6px 0 20px;
+    }
+    .result-stats {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .result-stats span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .result-stats strong {
+      display: block;
+      color: var(--text);
+      font-size: 22px;
+    }
+    #toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f2f4df;
+      color: #173b31;
+      padding: 12px 18px;
+      border-radius: 6px;
+      z-index: 10;
+      font-size: 13px;
+      max-width: 90vw;
+    }
+    #save-warning {
+      background: #743b35;
+      color: #fff;
+      padding: 6px;
+      text-align: center;
+      font-size: 11px;
+    }
+    @media (max-width: 760px) {
+      header {
+        min-height: 52px;
+        padding: 8px 12px;
+      }
+      .brand {
+        font-size: 16px;
+      }
+      .brand svg {
+        width: 21px;
+        height: 27px;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto;
+      }
+      aside {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+        padding: 14px;
+        max-height: 47dvh;
+      }
+      h1 {
+        font-size: 24px;
+        margin-bottom: 0;
+      }
+      .eyebrow, #home .stats {
+        display: none;
+      }
+      #home .label {
+        margin: 12px 0 7px;
+      }
+      .difficulty {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .difficulty button {
+        flex-direction: column;
+        gap: 3px;
+        padding: 7px;
+        min-height: 44px;
+        text-align: center;
+      }
+      .difficulty button span {
+        font-size: 10px;
+      }
+      #play {
+        margin-top: 12px;
+        min-height: 42px;
+      }
+      .actions {
+        margin-top: 8px;
+      }
+      .score-header {
+        margin-bottom: 8px;
+      }
+      #score {
+        font-size: 24px;
+      }
+      #frames {
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+        gap: 2px;
+      }
+      .frame small {
+        font-size: 9px;
+      }
+      .frame .rolls {
+        font-size: 9px;
+        height: 16px;
+      }
+      .frame strong {
+        font-size: 11px;
+        height: 18px;
+      }
+      .sliders {
+        grid-template-columns: 1fr 1fr;
+        margin-top: 10px;
+        gap: 5px 16px;
+      }
+      .slider-row label {
+        font-size: 11px;
+      }
+      input[type=range] {
+        height: 18px;
+        margin-top: 3px;
+      }
+      #bowl {
+        margin-top: 7px;
+        min-height: 40px;
+      }
+      .status {
+        margin-top: 6px;
+        font-size: 11px;
+        min-height: 0;
+      }
+      .stage-top {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        font-size: 10px;
+      }
+      #drag-hint {
+        font-size: 10px;
+        bottom: 8px;
+      }
+      #announcement {
+        font-size: 27px;
+      }
+      #shop-items {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .item canvas {
+        height: 110px;
+      }
+    }
+    @media (max-height: 520px) and (min-width: 600px) {
+      header {
+        min-height: 42px;
+        padding: 4px 12px;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr) 280px;
+        grid-template-rows: minmax(0, 1fr);
+      }
+      aside {
+        max-height: none;
+        padding: 12px;
+        border-left: 1px solid var(--line);
+      }
+      .sliders {
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 12px;
+        margin-top: 8px;
+      }
+      #frames {
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+      }
+      #score {
+        font-size: 24px;
+      }
+      .frame .rolls {
+        font-size: 8px;
+      }
+      .frame strong {
+        font-size: 10px;
+      }
+      #home .stats, .eyebrow {
+        display: none;
+      }
+    }
+  </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div class="brand">
+          <svg viewBox="0 0 26 36" fill="none" aria-hidden="true">
+            <path d="M10 3C10 0 16 0 16 3L15 12C15 17 22 20 22 28C22 35 4 35 4 28C4 20 11 17 11 12Z" fill="currentColor"/>
+              <path d="M10 10H16M10 13H16" stroke="#163b38" stroke-width="2"/>
+              </svg>
+              Bowling 3D
+            </div>
+            <div class="header-actions">
+              <div class="wallet" aria-label="Credits">
+                <span class="coin">C</span>
+                <span data-wallet>0</span>
+              </div>
+              <button class="small" id="settings-button">Settings</button>
+              <button class="small" id="pause-button" hidden>Pause</button>
+            </div>
+          </header>
+          <div id="save-warning" hidden>Saving is unavailable. Progress is temporary.</div>
+          <main class="layout">
+            <section class="stage" aria-label="Bowling lane">
+              <canvas id="world" aria-label="3D bowling lane. Drag back from the ball and release to bowl.">
+              </canvas>
+              <div class="stage-top">
+                <span id="lane-tag">MAPLE / LANE 01</span>
+                <span id="mode-tag">EASY</span>
+              </div>
+              <div id="announcement" aria-live="polite">
+              </div>
+              <div id="drag-hint" hidden>Drag back from the ball and release</div>
+            </section>
+            <aside>
+              <section id="home">
+                <div class="eyebrow">TEN FRAMES. ONE PERFECT GAME.</div>
+                <h1>Bowling 3D</h1>
+                <span class="label">Difficulty</span>
+                <div class="difficulty" id="difficulties">
+                </div>
+                <button class="primary wide" id="play">Play</button>
+                <div class="actions">
+                  <button id="shop-button">Skins</button>
+                  <button id="rules-button">Rules</button>
+                </div>
+                <div class="stats">
+                  <div>
+                    <small>Personal best</small>
+                    <strong id="best">0</strong>
+                  </div>
+                  <div>
+                    <small>Games finished</small>
+                    <strong id="games">0</strong>
+                  </div>
+                </div>
+              </section>
+              <section id="game-panel" hidden>
+                <div class="score-header">
+                  <div>
+                    <div id="round-label">Frame 1 / 10</div>
+                    <span id="earned">+0 C this game</span>
+                  </div>
+                  <span id="score">0</span>
+                </div>
+                <div id="frames" aria-label="Scorecard">
+                </div>
+                <div class="sliders" id="sliders">
+                  <div class="slider-row">
+                    <label for="position">Position <output id="position-out">Center</output>
+                  </label>
+                  <input id="position" type="range" min="-2.3" max="2.3" step="0.05" value="0">
+                </div>
+            <div class="slider-row">
+              <label for="spin">Spin <output id="spin-out">0</output>
+            </label>
+            <input id="spin" type="range" min="-100" max="100" step="1" value="0">
+          </div>
+        </div>
+        <div class="status" id="status">First ball</div>
+      </section>
+    </aside>
+  </main>
+</div>
+<dialog id="settings">
+  <div class="dialog-top">
+    <h2>Settings</h2>
+    <button class="small" data-close="settings" aria-label="Close settings">Close</button>
+  </div>
+  <label class="setting">Sound<input id="sound-setting" type="checkbox" checked>
+</label>
+<label class="setting">Show controls<input id="controls-setting" type="checkbox" checked>
+</label>
+<p>Drag from the ball with your mouse or finger to bowl.</p>
+</dialog>
+<dialog id="rules">
+<div class="dialog-top">
+<h2>Rules</h2>
+<button class="small" data-close="rules">Close</button>
+</div>
+<p>Knock down ten pins in each of ten frames. You get two balls per frame. Set your starting Position and Spin, then make each shot by dragging from the ball.</p>
+<p>Drag downward and release to bowl. A longer pull gives more power. Pull left to aim right, or right to aim left. Direction and power come from that gesture and are not saved for the next shot. A tap or an upward drag does not launch the ball.</p>
+<p>
+<b>Strike (X):</b> all ten pins with the first ball. Score 10 plus the pins from your next two balls. <b>Spare (/):</b> all ten with two balls. Score 10 plus your next ball. Otherwise, score the pins you knocked down.</p>
+<p>In frame ten, a strike earns two extra balls and a spare earns one. A strike on an extra ball resets the rack; otherwise the remaining pins stay for your next ball. The maximum score is 300. Pending bonuses appear as a dash on the scorecard.</p>
+<p>
+<b>Easy:</b> bumpers keep the ball on the lane, 2 credits per pin. <b>Normal:</b> open gutters, 4 credits per pin. <b>Hard:</b> stronger hook and heavier pins, 7 credits per pin.</p>
+<p>Strikes and spares earn extra credits. Finish all ten frames for a completion bonus. Buy ball and lane skins with your credits; every skin has the same playing properties.</p>
+</dialog>
+<dialog id="shop">
+<div class="dialog-top">
+  <h2>Skins</h2>
+  <div class="wallet">
+    <span class="coin">C</span>
+    <span data-wallet>0</span>
+  </div>
+  <button class="small" data-close="shop">Close</button>
+</div>
+<div class="tabs">
+  <button id="ball-tab" class="selected">Balls</button>
+  <button id="lane-tab">Lanes</button>
+</div>
+<div id="shop-items">
+</div>
+</dialog>
+<dialog id="pause">
+<h2>Paused</h2>
+<button class="primary wide" id="resume">Resume</button>
+<div class="actions">
+  <button id="restart">Restart</button>
+  <button id="menu">Menu</button>
+</div>
+<p>Credits already earned are kept.</p>
+</dialog>
+<dialog id="results">
+<div class="eyebrow">GAME COMPLETE</div>
+<h2 id="result-title">Nice bowling</h2>
+<div class="result-number" id="result-score">0</div>
+<p class="result-note" id="result-best">Personal best: 0</p>
+<div class="result-stats">
+  <div>
+    <span>Strikes</span>
+    <strong id="result-strikes">0</strong>
+  </div>
+  <div>
+    <span>Spares</span>
+    <strong id="result-spares">0</strong>
+  </div>
+  <div>
+    <span>Credits earned</span>
+    <strong id="result-credits">0</strong>
+  </div>
+</div>
+<div class="actions">
+  <button id="result-menu">Menu</button>
+  <button class="primary" id="again">Play again</button>
+</div>
+</dialog>
+<div id="toast" role="status" hidden>
+</div>
+
+  <script>
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const TAU = Math.PI * 2;
+    const MODES = {
+      easy: {
+        name: 'Easy',
+        hint: 'Bumpers · 2 C/pin',
+        bumpers: true,
+        hook: 0.38,
+        mass: 0.85,
+        reward: 2,
+        threshold: .85,
+        carry: .44,
+        restitution: .42
+      },
+      normal: {
+        name: 'Normal',
+        hint: 'Open gutters · 4 C/pin',
+        bumpers: false,
+        hook: 0.65,
+        mass: 1,
+        reward: 4,
+        threshold: 1.6,
+        carry: .40,
+        restitution: .35
+      },
+      hard: {
+        name: 'Hard',
+        hint: 'Heavy pins · 7 C/pin',
+        bumpers: false,
+        hook: 1.05,
+        mass: 1.8,
+        reward: 7,
+        threshold: 3.2,
+        carry: .34,
+        restitution: .2
+      }
+    };
+    const BALLS = [
+    {
+      id: 'classic',
+      name: 'Classic',
+      cost: 0,
+      desc: 'Ivory shell with racing bands.',
+      color: '#efeacb'
+    },
+    {
+      id: 'robot',
+      name: 'Automaton',
+      cost: 950,
+      desc: 'Armored plates, bolts and a glowing visor.',
+      color: '#739695'
+    },
+    {
+      id: 'orbit',
+      name: 'Orbit',
+      cost: 1750,
+      desc: 'A miniature star map wrapped in gold rings.',
+      color: '#20384b'
+    },
+    {
+      id: 'magma',
+      name: 'Magma',
+      cost: 2600,
+      desc: 'Black volcanic crust split by molten seams.',
+      color: '#3a3030'
+    },
+    {
+      id: 'garden',
+      name: 'Terrarium',
+      cost: 3950,
+      desc: 'Leaf mosaics beneath a glassy shell.',
+      color: '#467b4e'
+    },
+    {
+      id: 'circuit',
+      name: 'Arcade',
+      cost: 4200,
+      desc: 'A rolling screen with pixels and circuitry.',
+      color: '#253944'
+    }
+    ];
+    const LANES = [
+    {
+      id: 'maple',
+      name: 'Maple',
+      cost: 0,
+      desc: 'Timber boards, red stripes and brass rails.',
+      floor: '#d9b87c',
+      rail: '#244b44',
+      accent: '#b85245'
+    },
+    {
+      id: 'workshop',
+      name: 'Workshop',
+      cost: 1050,
+      desc: 'Steel plates, caution stripes and rivets.',
+      floor: '#9aa9a6',
+      rail: '#3d4a4a',
+      accent: '#efb93f'
+    },
+    {
+      id: 'observatory',
+      name: 'Observatory',
+      cost: 4000,
+      desc: 'Constellations, orbit lines and star markers.',
+      floor: '#344b61',
+      rail: '#223c49',
+      accent: '#f2d591'
+    },
+    {
+      id: 'greenhouse',
+      name: 'Greenhouse',
+      cost: 6350,
+      desc: 'Stone tiles, vines and geometric flower beds.',
+      floor: '#b8c7a0',
+      rail: '#476b49',
+      accent: '#e69c8c'
+    }
+    ];
+    class SaveManager {
+      static STORAGE_KEY = 'ARCADE_GAMES';
+      static GAME_KEY = 'bowling-3d';
+      static failed = false;
+      static data;
+      static sanitize(raw) {
+        const d = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {
+        };
+        const integer = (v, max = 1e9) => Number.isFinite(v) ? clamp(Math.floor(v), 0, max) : 0;
+        const owned = (v, items) => [...new Set([items[0].id, ...(Array.isArray(v) ? v : [])])].filter(id => items.some(s => s.id === id));
+        const balls = owned(d.balls, BALLS),
+        lanes = owned(d.lanes, LANES);
+        return {
+          version: 1,
+          credits: integer(d.credits),
+          balls,
+          lanes,
+          ball: balls.includes(d.ball) ? d.ball : 'classic',
+          lane: lanes.includes(d.lane) ? d.lane : 'maple',
+          difficulty: Object.hasOwn(MODES, d.difficulty) ? d.difficulty : 'easy',
+          settings: {
+            sound: d.settings?.sound !== false,
+            controls: d.settings?.controls !== false
+          },
+          stats: {
+            games: integer(d.stats?.games),
+            pins: integer(d.stats?.pins),
+            strikes: integer(d.stats?.strikes),
+            best: Object.fromEntries(Object.keys(MODES).map(id => [id, integer(d.stats?.best?.[id], 300)]))
+          }
+        };
+      }
+      static root() {
+        const root = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
+        if (!root || typeof root !== 'object' || Array.isArray(root)) throw Error('Invalid save root');
+        return root;
+      }
+      static load() {
+        try {
+          this.data = this.sanitize(this.root()[this.GAME_KEY]);
+        }
+        catch {
+          this.failed = true;
+          this.data = this.sanitize();
+        }
+      }
+      static update(change) {
+        let root;
+        try {
+          root = this.root();
+          if (!this.failed && Object.hasOwn(root, this.GAME_KEY)) this.data = this.sanitize(root[this.GAME_KEY]);
+        }
+        catch {
+          this.failed = true;
+        }
+        const result = change(this.data);
+        this.data = this.sanitize(this.data);
+        if (root) {
+          root[this.GAME_KEY] = this.data;
+          try {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(root));
+            this.failed = false;
+          }
+          catch {
+            this.failed = true;
+          }
+        }
+        this.refresh();
+        return result;
+      }
+      static refresh() {
+        document.querySelectorAll('[data-wallet]').forEach(el => {
+          el.textContent = this.data.credits.toLocaleString('en-US');
+        });
+        $('save-warning').hidden = !this.failed;
+      }
+      static buy(type, id) {
+        const items = type === 'ball' ? BALLS : type === 'lane' ? LANES : [];
+        const item = items.find(s => s.id === id);
+        if (!item) return false;
+        return this.update(data => {
+          const owned = data[type === 'ball' ? 'balls' : 'lanes'];
+          if (!owned.includes(id)) {
+            if (data.credits < item.cost) return false;
+            data.credits -= item.cost;
+            owned.push(id);
+          }
+          data[type] = id;
+          return true;
+        });
+      }
+    }
+    // Ten-pin scoring leaves a frame unresolved until its bonus balls exist.
+    function scoreFrames(frames) {
+      const flat = frames.flat();
+      let index = 0,
+      total = 0;
+      const totals = [];
+      for (let i = 0; i < 10; i++) {
+        const f = frames[i] || [];
+        let points = null;
+        if (i === 9) {
+          if (frameComplete(i, f)) points = f.reduce((a, b) => a + b, 0);
+        }
+        else if (f[0] === 10) {
+          if (flat[index + 2] !== undefined) points = 10 + flat[index + 1] + flat[index + 2];
+        }
+        else if (f.length >= 2) {
+          if (f[0] + f[1] === 10) {
+            if (flat[index + 2] !== undefined) points = 10 + flat[index + 2];
+          }
+          else points = f[0] + f[1];
+        }
+        if (points !== null) total += points;
+        totals.push(points === null ? null : total);
+        index += f.length;
+      }
+      return {
+        total,
+        totals
+      };
+    }
+    function frameComplete(index, rolls) {
+      if (index < 9) return rolls[0] === 10 || rolls.length >= 2;
+      return rolls.length >= 3 || (rolls.length === 2 && rolls[0] + rolls[1] < 10);
+    }
+    function rollMarks(f) {
+      return f.map((n, i) => {
+        if (n === 10 && (i === 0 || f[i - 1] === 10 || (i === 2 && f[0] !== 10))) return 'X';
+        if (i > 0 && f[i - 1] !== 10 && f[i - 1] + n === 10) return '/';
+        return n === 0 ? '–' : n;
+      }).join(' ');
+    }
+    const AudioFX = {
+      context: null,
+      unlock() {
+        if (!SaveManager.data.settings.sound) return;
+        try {
+          const C = window.AudioContext || window.webkitAudioContext;
+          if (C && !this.context) this.context = new C();
+          if (this.context?.state === 'suspended') this.context.resume();
+        }
+        catch {
+        }
+      },
+      tone(freq, duration, type = 'sine', volume = .04) {
+        if (!SaveManager.data.settings.sound || !this.context) return;
+        const ctx = this.context,
+        t = ctx.currentTime;
+        const osc = ctx.createOscillator(),
+        gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq * .55), t + duration);
+        gain.gain.setValueAtTime(volume, t);
+        gain.gain.exponentialRampToValueAtTime(.001, t + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(t + duration);
+        osc.onended = () => {
+          osc.disconnect();
+          gain.disconnect();
+        };
+      },
+      hit(speed) {
+        this.tone(220 + speed * 12, .12, 'triangle', Math.min(.09, speed * .009));
+      },
+      win() {
+        this.tone(660, .35);
+        this.tone(880, .5);
+        this.tone(1320, .65);
+      }
+    };
+    const V = {
+      sub: (a, b) => a.map((v, i) => v - b[i]),
+      dot: (a, b) => a.reduce((sum, v, i) => sum + v * b[i], 0),
+      cross: (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]],
+      unit(a) {
+        const n = Math.hypot(...a) || 1;
+        return a.map(v => v/n);
+      }
+    };
+    function shade(hex, light) {
+      const n = parseInt(hex.slice(1), 16);
+      return `rgb(${[n>>16,(n>>8)&255,n&255].map(v => Math.round(clamp(v*light,0,255))).join(',')})`;
+    }
+    function rotate(p, rx = 0, ry = 0, rz = 0) {
+      let [x, y, z] = p;
+      [y, z] = [y*Math.cos(rx)-z*Math.sin(rx), y*Math.sin(rx)+z*Math.cos(rx)];
+      [x, z] = [x*Math.cos(ry)+z*Math.sin(ry), -x*Math.sin(ry)+z*Math.cos(ry)];
+      return [x*Math.cos(rz)-y*Math.sin(rz), x*Math.sin(rz)+y*Math.cos(rz), z];
+    }
+    class Mesh {
+      constructor() {
+        this.faces = [];
+      }
+      face(points, color) {
+        this.faces.push( {
+          points,
+          color
+        });
+      }
+      lathe(profile, colors, segments = 12) {
+        for (let j=0; j<profile.length-1; j++) {
+          for (let i=0; i<segments; i++) {
+            const a=i*TAU/segments,
+            b=(i+1)*TAU/segments;
+            const [y, r]=profile[j],
+            [ny, nr]=profile[j+1];
+            this.face([[r*Math.cos(a), y, r*Math.sin(a)], [nr*Math.cos(a), ny, nr*Math.sin(a)], [nr*Math.cos(b), ny, nr*Math.sin(b)], [r*Math.cos(b), y, r*Math.sin(b)]], colors[j] || '#f6f3df');
+          }
+        }
+      }
+    }
+    const pinMesh = new Mesh();
+    pinMesh.lathe([[0, .17], [.14, .25], [.43, .29], [.65, .24], [.88, .12], [1.0, .105], [1.08, .11], [1.16, .12], [1.24, .19], [1.40, .18], [1.49, .08], [1.50, 0]], ['#eee9d5', '#fffcec', '#fffcec', '#eee9d5', '#b84639', '#fffcec', '#b84639', '#fffcec', '#fffcec', '#fffcec', '#eee9d5']);
+    const ballCache = new Map();
+    function ballMesh(id) {
+      if (ballCache.has(id)) return ballCache.get(id);
+      const m = new Mesh(),
+      rows = 20,
+      cols = 32;
+      const pos = (j, i) => {
+        const phi=j*Math.PI/rows,
+        a=i*TAU/cols;
+        return [.39*Math.sin(phi)*Math.cos(a), .39*Math.cos(phi), .39*Math.sin(phi)*Math.sin(a)];
+      };
+      for (let j=0; j<rows; j++) for (let i=0; i<cols; i++) {
+        let color = '#eae6c8';
+        if (id==='classic') color = j===8 || j===11 ? '#b5453b' : '#efe9cc';
+        if (id==='robot') color = j%5===0 || i%8===0 ? '#263e40' : ((i+j)%7===0 ? '#bacaca' : '#739695');
+        if (id==='robot' && j===9 && i>17 && i<26) color='#b8fb83';
+        if (id==='orbit') color = j===6 || j===13 || (i+j*2)%31===0 ? '#edc86e' : ((i*17+j*13)%37===0 ? '#ffffe3' : '#20384b');
+        if (id==='magma') color = (i+Math.floor(Math.sin(j*1.4)*3))%9===0 || (j+Math.floor(Math.cos(i)*2))%7===0 ? '#ffb342' : (i+j)%3===0 ? '#55423d' : '#2e3030';
+        if (id==='garden') color = i%8===0 || j%6===0 ? '#d1dcbc' : (i+j)%6<3 ? '#457749' : '#93b45d';
+        if (id==='circuit') color = (j===7||j===12) && i%3!==0 ? '#d1ef81' : i%7===0 ? '#48b7a5' : '#233841';
+        m.face([pos(j, i), pos(j, i+1), pos(j+1, i+1), pos(j+1, i)], color);
+      }
+      // Finger holes follow the ball's orientation as it rolls.
+      for (const [u, v] of [[-.12, .13], [.12, .13], [0, -.12]]) {
+        const center=[u, Math.sqrt(.39*.39-u*u-v*v)+.003, v];
+        for (let i=0; i<10; i++) {
+          const a=i*TAU/10,
+          b=(i+1)*TAU/10;
+          m.face([center, [center[0]+Math.cos(b)*.039, center[1]+.003, center[2]+Math.sin(b)*.039], [center[0]+Math.cos(a)*.039, center[1]+.003, center[2]+Math.sin(a)*.039]], '#18252a');
+        }
+      }
+      if(id==='robot') {
+        for(const x of [-1, 1])for(const y of [-1, 1])for(const z of [-1, 1]) {
+          const n=V.unit([x, y, z]),
+          u=V.unit(V.cross(n, [0, 1, 0])),
+          v=V.cross(n, u);
+          const tip=n.map(c=>c*.425);
+          for(let i=0; i<6; i++) {
+            const ring=angle=>n.map((c, k)=>c*.4+.03*(Math.cos(angle)*u[k]+Math.sin(angle)*v[k]));
+            m.face([tip, ring(i*TAU/6), ring((i+1)*TAU/6)], '#d7e0d8');
+          }
+        }
+      }
+      ballCache.set(id, m);
+      return m;
+    }
+    // Perspective projection and locally generated meshes; no external engine.
+    class Renderer {
+      constructor(canvas) {
+        this.canvas=canvas;
+        this.ctx=canvas.getContext('2d');
+        this.width=1;
+        this.height=1;
+        this.focal=1;
+        this.camera=[0, 10, -10];
+        this.look=[0, 0, 12];
+      }
+      resize(w, h, ratio=1) {
+        this.width=w;
+        this.height=h;
+        const dpr=Math.min(ratio, 2);
+        this.canvas.width=Math.round(w*dpr);
+        this.canvas.height=Math.round(h*dpr);
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        this.setup();
+      }
+      setup() {
+        this.forward=V.unit(V.sub(this.look, this.camera));
+        this.right=V.unit(V.cross(this.forward, [0, 1, 0]));
+        this.up=V.cross(this.right, this.forward);
+        this.focal=Math.min(this.height*1.08, this.width*1.36);
+      }
+      project(point) {
+        const p=V.sub(point, this.camera),
+        depth=V.dot(p, this.forward);
+        return [this.width*.5-V.dot(p, this.right)*this.focal/depth, this.height*.49-V.dot(p, this.up)*this.focal/depth, depth];
+      }
+      polygon(points, color) {
+        const c=this.ctx,
+        clipped=[];
+        // Clip against the camera plane as it follows the ball down the lane.
+        for(let i=0; i<points.length; i++) {
+          const a=points[(i+points.length-1)%points.length],
+          b=points[i];
+          const da=V.dot(V.sub(a, this.camera), this.forward),
+          db=V.dot(V.sub(b, this.camera), this.forward);
+          if((da>=.2)!==(db>=.2)) {
+            const t=(.2-da)/(db-da);
+            clipped.push(a.map((v, k)=>lerp(v, b[k], t)));
+          }
+          if(db>=.2)clipped.push(b);
+        }
+        if(clipped.length<3)return;
+        const pts=clipped.map(p=>this.project(p));
+        c.beginPath();
+        pts.forEach((p, i)=>i?c.lineTo(p[0], p[1]):c.moveTo(p[0], p[1]));
+        c.closePath();
+        c.fillStyle=color;
+        c.fill();
+      }
+      line(points, color, width=1) {
+        const c=this.ctx;
+        c.beginPath();
+        for(let i=1; i<points.length; i++) {
+          let a=points[i-1],
+          b=points[i];
+          const da=V.dot(V.sub(a, this.camera), this.forward),
+          db=V.dot(V.sub(b, this.camera), this.forward);
+          if(da<.2&&db<.2)continue;
+          if(da<.2) {
+            const t=(.2-da)/(db-da);
+            a=a.map((v, k)=>lerp(v, b[k], t));
+          }
+          else if(db<.2) {
+            const t=(.2-db)/(da-db);
+            b=b.map((v, k)=>lerp(v, a[k], t));
+          }
+          const pa=this.project(a),
+          pb=this.project(b);
+          c.moveTo(pa[0], pa[1]);
+          c.lineTo(pb[0], pb[1]);
+        }
+        c.strokeStyle=color;
+        c.lineWidth=width;
+        c.stroke();
+      }
+      mesh(mesh, position, angles=[0, 0, 0], scale=1) {
+        const faces=[];
+        for(const face of mesh.faces) {
+          const pts=face.points.map(p=>rotate(p.map(n=>n*scale), ...angles).map((n, i)=>n+position[i]));
+          const normal=V.cross(V.sub(pts[1], pts[0]), V.sub(pts[2], pts[0]));
+          if(V.dot(normal, V.sub(this.camera, pts[0]))<=0) continue;
+          const light=.62+Math.max(0, V.dot(V.unit(normal), V.unit([-2, 6, -4])))*.48;
+          faces.push( {
+            pts,
+            color:shade(face.color, light),
+            depth:pts.reduce((s, p)=>s+this.project(p)[2], 0)/pts.length
+          });
+        }
+        faces.sort((a, b)=>b.depth-a.depth);
+        for(const face of faces) this.polygon(face.pts, face.color);
+      }
+      disk(x, z, r, color, y=.018) {
+        const pts=[];
+        for(let i=0; i<24; i++) pts.push([x+Math.cos(i*TAU/24)*r, y, z+Math.sin(i*TAU/24)*r]);
+        this.polygon(pts, color);
+      }
+      lane(id, bumpers=false) {
+        const s=LANES.find(s=>s.id===id),
+        c=this.ctx;
+        c.fillStyle=id==='observatory'?'#a8bdc8':'#d2e4d9';
+        c.fillRect(0, 0, this.width, this.height);
+        this.polygon([[-5, 0, 28], [5, 0, 28], [5, 5, 28], [-5, 5, 28]], s.rail);
+        for(const x of [-3, 0, 3]) {
+          this.polygon([[x-1.1, 2.3, 27.98], [x+1.1, 2.3, 27.98], [x+1.1, 3.8, 27.98], [x-1.1, 3.8, 27.98]], x===0?s.accent:'#57796e');
+          this.line([[x-1, 4.4, 27.95], [x+1, 4.4, 27.95]], '#fff5c8', 3);
+        }
+        const sign=this.project([0, 2.75, 27.9]);
+        c.fillStyle='#f7f6df';
+        c.font=`800 ${Math.max(12,this.focal/sign[2]*1.1)}px system-ui`;
+        c.textAlign='center';
+        c.fillText('01', sign[0], sign[1]);
+        this.polygon([[-10, -.42, -6], [10, -.42, -6], [10, -.42, 33], [-10, -.42, 33]], '#a7c3b3');
+        this.polygon([[-4, -.2, -2], [4, -.2, -2], [4, -.2, 28], [-4, -.2, 28]], s.rail);
+        this.polygon([[-3, 0, -2], [3, 0, -2], [3, 0, 26], [-3, 0, 26]], s.floor);
+        if(id==='maple') {
+          for(let i=0; i<24; i++) {
+            const x=-3+i*.25;
+            this.polygon([[x, .004, -2], [x+.235, .004, -2], [x+.235, .004, 26], [x, .004, 26]], i%3===0?'#e4c68c':i%3===1?'#d5b177':'#dbb980');
+            for(let z=(i%3)*2; z<26; z+=6) this.line([[x, .008, z], [x+.24, .008, z]], '#be9b65', .6);
+          }
+        }
+        else if(id==='workshop') {
+          for(let z=0; z<26; z+=2) {
+            this.line([[-3, .006, z], [3, .006, z]], '#607a78', 1);
+            for(const x of [-2.8, 2.8]) this.disk(x, z+.18, .045, '#e5e8cc');
+          }
+          for(let z=0; z<26; z++) for(const sign of [-1, 1]) this.polygon([[sign*2.75, .01, z], [sign*2.98, .01, z+.2], [sign*2.98, .01, z+.7], [sign*2.75, .01, z+.5]], z%2?'#334644':s.accent);
+        }
+        else if(id==='observatory') {
+          for(let i=0; i<48; i++) {
+            const x=Math.sin(i*8.7)*2.7,
+            z=(i*3.91)%26;
+            this.disk(x, z, i%5===0?.045:.022, '#f3eac3');
+            if(i%4===0) this.line([[x, .01, z], [Math.sin((i+1)*8.7)*2.7, .01, ((i+1)*3.91)%26]], '#61778a', .5);
+          }
+          for(let z=3; z<25; z+=7) {
+            const pts=[];
+            for(let i=0; i<=40; i++)pts.push([Math.cos(i*TAU/40)*2.3, .014, z+Math.sin(i*TAU/40)*1.3]);
+            this.line(pts, '#baad7c', 1);
+          }
+        }
+        else {
+          for(let z=-2; z<26; z+=2) for(let x=-3; x<3; x++) this.polygon([[x+.035, .007, z+.035], [x+.965, .007, z+.035], [x+.965, .007, z+1.965], [x+.035, .007, z+1.965]], (x+z)%3===0?'#ced5b0':'#b4c09b');
+        }
+        for(const sign of [-1, 1]) {
+          this.polygon([[sign*3, -.12, -2], [sign*3.65, -.12, -2], [sign*3.65, -.12, 26], [sign*3, -.12, 26]], '#526a5c');
+          const y=bumpers?.24:.06;
+          this.line([[sign*3.05, y, -2], [sign*3.05, y, 26]], bumpers?'#f4d68d':s.accent, bumpers?4:2);
+          this.line([[sign*3.7, .06, -2], [sign*3.7, .06, 27]], s.accent, 3);
+          if(id==='greenhouse') for(let z=1; z<26; z+=2) {
+            this.disk(sign*3.85, z, .3, '#567b49');
+            this.disk(sign*3.85, z, .11, '#efb5a0', .03);
+          }
+        }
+        this.polygon([[-3, .014, 1.9], [3, .014, 1.9], [3, .014, 2.04], [-3, .014, 2.04]], s.accent);
+        for(let i=-3; i<=3; i++) {
+          const x=i*.6,
+          z=8-Math.abs(i)*.42;
+          this.polygon([[x, .018, z+.3], [x-.09, .018, z], [x+.09, .018, z]], s.rail);
+        }
+        this.polygon([[-4, 0, 26], [4, 0, 26], [4, 1.1, 27], [-4, 1.1, 27]], s.rail);
+        this.line([[-4, 1.14, 27], [4, 1.14, 27]], s.accent, 4);
+      }
+      render(game) {
+        const follow=game.cameraFollow;
+        this.camera=[0, lerp(10, 9, follow), lerp(-10, 8, follow)];
+        this.look=[0, 0, lerp(12, 21, follow)];
+        this.setup();
+        this.lane(SaveManager.data.lane, game.config.bumpers);
+        const objects=[];
+        for(const p of game.pins) {
+          this.disk(p.x, p.z, p.down?.55:.33, '#4a574a40');
+          objects.push( {
+            position:[p.x, p.down?.18:0, p.z],
+            mesh:pinMesh,
+            angles:[p.tilt*Math.cos(p.heading), 0, -p.tilt*Math.sin(p.heading)]
+          });
+        }
+        const b=game.ball;
+        if(b && b.z<28) {
+          this.disk(b.x, b.z, .43, '#29493645');
+          objects.push( {
+            position:[b.x, b.gutter?.19:.40, b.z],
+            mesh:ballMesh(SaveManager.data.ball),
+            angles:[b.roll, 0, b.turn]
+          });
+        }
+        objects.sort((a, b)=>this.project(b.position)[2]-this.project(a.position)[2]);
+        for(const obj of objects)this.mesh(obj.mesh, obj.position, obj.angles);
+        if(game.drag) {
+          const c=this.ctx,
+          start=game.drag.start,
+          end=game.drag.end;
+          c.beginPath();
+          c.moveTo(start[0], start[1]);
+          c.lineTo(end[0], end[1]);
+          c.strokeStyle='#173f35';
+          c.lineWidth=3;
+          c.stroke();
+          c.beginPath();
+          c.arc(end[0], end[1], 7, 0, TAU);
+          c.fillStyle='#173f35';
+          c.fill();
+        }
+      }
+    }
+    function rack(mass) {
+      const pins=[];
+      for(let row=0; row<4; row++)for(let col=0; col<=row; col++)pins.push( {
+        x:(col-row/2)*.95,
+        z:20+row*.84,
+        vx:0,
+        vz:0,
+        mass,
+        r:.28,
+        down:false,
+        tilt:0,
+        heading:0
+      });
+      return pins;
+    }
+    class Game {
+      constructor() {
+        this.state='menu';
+        this.mode=SaveManager.data.difficulty;
+        this.config=MODES[this.mode];
+        this.frames=Array.from( {
+          length:10
+        }, ()=>[]);
+        this.frame=0;
+        this.earned=0;
+        this.strikes=0;
+        this.spares=0;
+        this.pins=rack(this.config.mass);
+        this.ball=this.newBall();
+        this.drag=null;
+        this.messageTime=0;
+        this.pausedState=null;
+        this.cameraFollow=0;
+      }
+      newBall() {
+        return {
+          x:0,
+          z:1,
+          vx:0,
+          vz:0,
+          r:.39,
+          mass:6,
+          roll:0,
+          turn:0,
+          gutter:false
+        };
+      }
+      start() {
+        UI.closeAll();
+        this.mode=SaveManager.data.difficulty;
+        this.config=MODES[this.mode];
+        this.frames=Array.from( {
+          length:10
+        }, ()=>[]);
+        this.frame=0;
+        this.earned=0;
+        this.strikes=0;
+        this.spares=0;
+        this.pins=rack(this.config.mass);
+        this.prepare();
+        $('home').hidden=true;
+        $('game-panel').hidden=false;
+        $('pause-button').hidden=false;
+        $('settings-button').hidden=true;
+        UI.score();
+        UI.announce('');
+        $('world').focus();
+      }
+      prepare() {
+        this.state='aim';
+        this.ball=this.newBall();
+        this.drag=null;
+        this.cameraFollow=0;
+        this.pins=this.pins.filter(p=>!p.down);
+        for(const p of this.pins) {
+          p.vx=0;
+          p.vz=0;
+        }
+        this.ball.x=Number($('position').value);
+        UI.controls();
+      }
+      parameters() {
+        const pull=this.drag.end[1]-this.drag.start[1];
+        const sideways=this.drag.start[0]-this.drag.end[0];
+        return {
+          x:Number($('position').value),
+          angle:clamp(Math.atan2(sideways,pull)*.35,-.21,.21),
+          power:clamp(pull/Math.max(70,renderer.height*.22)*100,25,100),
+          spin:Number($('spin').value)/100
+        };
+      }
+      bowl() {
+        if(this.state!=='aim'||!this.drag)return false;
+        if(this.drag.end[1]-this.drag.start[1]<=12){this.drag=null;return false;}
+        AudioFX.unlock();
+        const p=this.parameters(),
+        speed=8+p.power*.14;
+        this.ball= {
+          ...this.newBall(),
+          x:p.x,
+          vx:Math.sin(p.angle)*speed,
+          vz:Math.cos(p.angle)*speed
+        };
+        this.spin=p.spin;
+        this.state='rolling';
+        this.shotTime=0;
+        this.settleTime=0;
+        this.standingBefore=this.pins.filter(p=>!p.down).length;
+        this.drag=null;
+        UI.announce('');
+        UI.controls();
+        AudioFX.tone(110, .18, 'triangle');
+        return true;
+      }
+      topple(pin, vx, vz, speed) {
+        if(pin.down || speed<this.config.threshold)return;
+        pin.down=true;
+        pin.r=this.config.carry;
+        pin.heading=Math.atan2(vx, vz);
+        AudioFX.hit(speed);
+      }
+      collide(a, b, isBall=false) {
+        const dx=b.x-a.x,
+        dz=b.z-a.z,
+        dist=Math.hypot(dx, dz),
+        min=a.r+b.r;
+        if(dist>=min)return;
+        const nx=dist>.0001?dx/dist:1,
+        nz=dist>.0001?dz/dist:0;
+        const invA=1/a.mass,
+        invB=1/b.mass;
+        const overlap=min-dist;
+        a.x-=nx*overlap*invA/(invA+invB);
+        a.z-=nz*overlap*invA/(invA+invB);
+        b.x+=nx*overlap*invB/(invA+invB);
+        b.z+=nz*overlap*invB/(invA+invB);
+        const closing=(a.vx-b.vx)*nx+(a.vz-b.vz)*nz;
+        if(closing<=0)return;
+        const impulse=closing*(1+this.config.restitution)/(invA+invB);
+        a.vx-=impulse*nx*invA;
+        a.vz-=impulse*nz*invA;
+        b.vx+=impulse*nx*invB;
+        b.vz+=impulse*nz*invB;
+        this.topple(b, b.vx, b.vz, impulse*invB);
+        if(!isBall)this.topple(a, a.vx, a.vz, impulse*invA);
+      }
+      physics(dt) {
+        const b=this.ball;
+        if(!b.gutter) {
+          b.vx+=this.spin*this.config.hook*dt*(b.z>9?1:.2);
+          b.vz*=Math.exp(-.035*dt);
+        }
+        b.x+=b.vx*dt;
+        b.z+=b.vz*dt;
+        b.roll+=b.vz*dt/.39;
+        b.turn+=b.vx*dt/.39;
+        if(Math.abs(b.x)>2.65 && !b.gutter) {
+          if(this.config.bumpers) {
+            b.x=clamp(b.x, -2.65, 2.65);
+            b.vx*=-.7;
+          }
+          else {
+            b.gutter=true;
+            b.x=Math.sign(b.x)*3.32;
+            b.vx=0;
+          }
+        }
+        for(const p of this.pins) {
+          p.x+=p.vx*dt;
+          p.z+=p.vz*dt;
+          const drag=Math.exp(-(p.down?1.6:3)*dt);
+          p.vx*=drag;
+          p.vz*=drag;
+          if(p.down)p.tilt=Math.min(Math.PI/2, p.tilt+dt*4.5);
+          if(Math.abs(p.x)>3.4) {
+            p.x=clamp(p.x, -3.4, 3.4);
+            p.vx*=-.35;
+          }
+          if(p.z>25.8) {
+            p.z=25.8;
+            p.vz*=-.3;
+          }
+          if(!b.gutter && b.z<27)this.collide(b, p, true);
+        }
+        for(let i=0; i<this.pins.length; i++)for(let j=i+1; j<this.pins.length; j++)this.collide(this.pins[i], this.pins[j]);
+      }
+      update(dt) {
+        if(this.state==='paused')return;
+        const follow=['rolling', 'between'].includes(this.state)?clamp((this.ball.z-7)/11, 0, 1):0;
+        this.cameraFollow=lerp(this.cameraFollow, follow, 1-Math.exp(-dt*4));
+        if(this.state==='menu' || this.state==='over')return;
+        if(this.messageTime>0) {
+          this.messageTime-=dt;
+          if(this.messageTime<=0)UI.announce('');
+        }
+        if(this.state==='rolling') {
+          this.shotTime+=dt;
+          this.physics(dt);
+          const moving=this.pins.some(p=>Math.hypot(p.vx, p.vz)>.3);
+          if((this.ball.z>25 || this.shotTime>4) && !moving)this.settleTime+=dt;
+          else this.settleTime=0;
+          if(this.settleTime>.65 || this.shotTime>8)this.resolve();
+        }
+        else if(this.state==='between') {
+          this.wait-=dt;
+          if(this.wait<=0)this.nextBall();
+        }
+      }
+      resolve() {
+        if(this.state!=='rolling')return;
+        const count=this.pins.filter(p=>p.down).length;
+        const f=this.frames[this.frame];
+        const strike=this.standingBefore===10 && count===10;
+        const spare=!strike && this.standingBefore<10 && count===this.standingBefore;
+        f.push(count);
+        if(strike)this.strikes++;
+        if(spare)this.spares++;
+        const reward=this.config.reward*(count+(strike?10:spare?5:0));
+        this.earned+=reward;
+        SaveManager.update(d=> {
+          d.credits+=reward;
+          d.stats.pins+=count;
+          if(strike)d.stats.strikes++;
+        });
+        UI.announce(strike?'STRIKE!':spare?'SPARE!':count===0?(this.ball.gutter?'GUTTER BALL':'NO PINS'):`${count} PIN${count===1?'':'S'}`, `+${reward} C`);
+        this.messageTime=2;
+        this.state='between';
+        this.wait=1.65;
+        if(strike||spare)AudioFX.win();
+        UI.score();
+        UI.controls();
+      }
+      nextBall() {
+        const f=this.frames[this.frame];
+        if(frameComplete(this.frame, f)) {
+          if(this.frame===9) {
+            this.finish();
+            return;
+          }
+          this.frame++;
+          this.pins=rack(this.config.mass);
+        }
+        else if(this.pins.every(p=>p.down))this.pins=rack(this.config.mass);
+        this.prepare();
+        UI.score();
+      }
+      finish() {
+        if(this.state==='over')return;
+        this.state='over';
+        const score=scoreFrames(this.frames).total,
+        bonus=25*this.config.reward;
+        const oldBest=SaveManager.data.stats.best[this.mode];
+        this.earned+=bonus;
+        SaveManager.update(d=> {
+          d.credits+=bonus;
+          d.stats.games++;
+          d.stats.best[this.mode]=Math.max(d.stats.best[this.mode], score);
+        });
+        $('result-title').textContent=score===300?'Perfect game!':score>oldBest?'New personal best!':'Game complete';
+        $('result-score').textContent=score;
+        $('result-best').textContent=`${this.config.name} · Personal best: ${SaveManager.data.stats.best[this.mode]}`;
+        $('result-strikes').textContent=this.strikes;
+        $('result-spares').textContent=this.spares;
+        $('result-credits').textContent=`+${this.earned} C`;
+        UI.announce('');
+        UI.score();
+        $('results').showModal();
+        AudioFX.win();
+      }
+      pause() {
+        if(!['aim', 'rolling', 'between'].includes(this.state))return;
+        this.pausedState=this.state;
+        this.state='paused';
+        this.drag=null;
+        $('pause').showModal();
+      }
+      resume() {
+        if(this.state!=='paused')return;
+        this.state=this.pausedState;
+        $('pause').close();
+      }
+      menu() {
+        UI.closeAll();
+        this.state='menu';
+        this.drag=null;
+        this.cameraFollow=0;
+        this.pins=rack(this.config.mass);
+        this.ball=this.newBall();
+        $('home').hidden=false;
+        $('game-panel').hidden=true;
+        $('pause-button').hidden=true;
+        $('settings-button').hidden=false;
+        UI.announce('');
+        UI.home();
+        UI.controls();
+      }
+    }
+    let game, renderer, toastTimer;
+    const UI = {
+      announce(text, detail='') {
+        $('announcement').textContent=text;
+        if(detail) {
+          const small=document.createElement('small');
+          small.textContent=detail;
+          $('announcement').appendChild(small);
+        }
+      },
+      toast(text) {
+        $('toast').textContent=text;
+        $('toast').hidden=false;
+        clearTimeout(toastTimer);
+        toastTimer=setTimeout(()=>$('toast').hidden=true, 2400);
+      },
+      closeAll() {
+        document.querySelectorAll('dialog[open]').forEach(d=>d.close());
+      },
+      home() {
+        const d=SaveManager.data;
+        $('difficulties').replaceChildren();
+        for(const [id, mode] of Object.entries(MODES)) {
+          const button=document.createElement('button');
+          button.className=id===d.difficulty?'selected':'';
+          button.innerHTML=`${mode.name}<span>${mode.hint}</span>`;
+          button.onclick=()=> {
+            SaveManager.update(data=> {
+              data.difficulty=id;
+            });
+            game.mode=id;
+            game.config=MODES[id];
+            UI.home();
+          };
+          $('difficulties').appendChild(button);
+        }
+        $('best').textContent=d.stats.best[d.difficulty];
+        $('games').textContent=d.stats.games;
+        $('mode-tag').textContent=MODES[d.difficulty].name.toUpperCase();
+        $('lane-tag').textContent=`${LANES.find(s=>s.id===d.lane).name.toUpperCase()} / LANE 01`;
+        SaveManager.refresh();
+      },
+      score() {
+        const result=scoreFrames(game.frames);
+        $('score').textContent=result.total;
+        $('round-label').textContent=`Frame ${game.frame+1} / 10`;
+        $('earned').textContent=`+${game.earned} C this game`;
+        $('frames').replaceChildren();
+        game.frames.forEach((f, i)=> {
+          const el=document.createElement('div');
+          el.className=`frame ${i===game.frame?'current':''}`;
+          el.innerHTML=`<small>${i+1}</small><span class="rolls">${rollMarks(f)||'·'}</span><strong>${result.totals[i]??'–'}</strong>`;
+          $('frames').appendChild(el);
+        });
+      },
+      controls() {
+        const ready=game.state==='aim';
+        $('sliders').hidden=!SaveManager.data.settings.controls;
+        for(const id of ['position', 'spin'])$(id).disabled=!ready;
+        $('drag-hint').hidden=!ready;
+        $('status').textContent=ready?`${game.pins.filter(p=>!p.down).length} pins standing · Ball ${game.frames[game.frame].length+1}`:game.state==='rolling'?'Rolling…':'';
+        const p=Number($('position').value),
+        s=Number($('spin').value);
+        $('position-out').textContent=Math.abs(p)<.05?'Center':`${Math.abs(p).toFixed(1)} ${p<0?'L':'R'}`;
+        $('spin-out').textContent=s===0?'None':`${Math.abs(s)} ${s<0?'L':'R'}`;
+      },
+      shopType:'ball',
+      shop(type=this.shopType) {
+        this.shopType=type;
+        $('ball-tab').classList.toggle('selected', type==='ball');
+        $('lane-tab').classList.toggle('selected', type==='lane');
+        $('shop-items').replaceChildren();
+        const items=type==='ball'?BALLS:LANES,
+        owned=SaveManager.data[type==='ball'?'balls':'lanes'];
+        for(const item of items) {
+          const card=document.createElement('article');
+          card.className='item';
+          const canvas=document.createElement('canvas');
+          card.appendChild(canvas);
+          const h=document.createElement('h3');
+          h.textContent=item.name;
+          card.appendChild(h);
+          const p=document.createElement('p');
+          p.textContent=item.desc;
+          card.appendChild(p);
+          const button=document.createElement('button'),
+          selected=SaveManager.data[type]===item.id;
+          button.textContent=selected?'Equipped':owned.includes(item.id)?'Equip':`${item.cost} C`;
+          button.disabled=selected||(!owned.includes(item.id)&&SaveManager.data.credits<item.cost);
+          if(selected)button.className='primary';
+          button.onclick=()=> {
+            if(SaveManager.buy(type, item.id)) {
+              this.shop(type);
+              this.home();
+              AudioFX.unlock();
+              AudioFX.tone(800, .2);
+            }
+            else this.toast('Not enough credits');
+          };
+          card.appendChild(button);
+          $('shop-items').appendChild(card);
+          const preview=new Renderer(canvas);
+          preview.resize(240, 150, 1);
+          if(type==='ball') {
+            preview.camera=[0, 1.6, -2];
+            preview.look=[0, 0, 0];
+            preview.setup();
+            preview.focal=220;
+            preview.ctx.fillStyle='#c7dbcc';
+            preview.ctx.fillRect(0, 0, 240, 150);
+            preview.mesh(ballMesh(item.id), [0, 0, 0], [.7, .5, 0], 1.5);
+          }
+          else preview.lane(item.id);
+        }
+        SaveManager.refresh();
+      }
+    };
+    function bind() {
+      $('play').onclick=()=> {
+        AudioFX.unlock();
+        game.start();
+      };
+      $('pause-button').onclick=()=>game.pause();
+      $('resume').onclick=()=>game.resume();
+      $('restart').onclick=()=>game.start();
+      $('menu').onclick=()=>game.menu();
+      $('again').onclick=()=>game.start();
+      $('result-menu').onclick=()=>game.menu();
+      $('shop-button').onclick=()=> {
+        UI.shop();
+        $('shop').showModal();
+      };
+      $('ball-tab').onclick=()=>UI.shop('ball');
+      $('lane-tab').onclick=()=>UI.shop('lane');
+      $('rules-button').onclick=()=>$('rules').showModal();
+      $('settings-button').onclick=()=> {
+        for(const key of ['sound', 'controls'])$(key+'-setting').checked=SaveManager.data.settings[key];
+        $('settings').showModal();
+      };
+      for(const key of ['sound', 'controls'])$(key+'-setting').onchange=()=> {
+        SaveManager.update(d=> {
+          d.settings[key]=$(key+'-setting').checked;
+        });
+        UI.controls();
+      };
+      document.querySelectorAll('[data-close]').forEach(el=>el.onclick=()=>$(el.dataset.close).close());
+      $('pause').addEventListener('cancel', event=> {
+        event.preventDefault();
+        game.resume();
+      });
+      $('results').addEventListener('cancel', event=> {
+        event.preventDefault();
+        game.menu();
+      });
+      for(const id of ['position', 'spin'])$(id).oninput=()=> {
+        if(game.state==='aim')game.ball.x=Number($('position').value);
+        UI.controls();
+      };
+      const canvas=$('world');
+      canvas.tabIndex=0;
+      const local=event=> {
+        const r=canvas.getBoundingClientRect();
+        return [event.clientX-r.left, event.clientY-r.top];
+      };
+      canvas.addEventListener('pointerdown', event=> {
+        if(game.state!=='aim'||event.isPrimary===false||event.button!==0)return;
+        const p=local(event),
+        b=renderer.project([game.ball.x, .4, game.ball.z]);
+        if(Math.hypot(p[0]-b[0], p[1]-b[1])>Math.max(45, renderer.focal*.65/b[2]))return;
+        AudioFX.unlock();
+        canvas.setPointerCapture(event.pointerId);
+        game.drag= {
+          id:event.pointerId,
+          start:p,
+          end:p
+        };
+        event.preventDefault();
+      });
+      canvas.addEventListener('pointermove', event=> {
+        if(!game.drag||game.drag.id!==event.pointerId)return;
+        game.drag.end=local(event);
+      });
+      canvas.addEventListener('pointerup', event=> {
+        if(!game.drag||game.drag.id!==event.pointerId)return;
+        game.drag.end=local(event);
+        game.bowl();
+      });
+      canvas.addEventListener('pointercancel', ()=> {
+        game.drag=null;
+      });
+      document.addEventListener('keydown', event=> {
+        if(event.repeat)return;
+        if(event.code==='Escape' && !document.querySelector('dialog[open]'))game.pause();
+      });
+      document.addEventListener('visibilitychange', ()=> {
+        if(document.hidden)game.pause();
+      });
+      window.addEventListener('resize', ()=> {
+        resize();
+        game.drag=null;
+      });
+      window.addEventListener('storage', event=> {
+        if(event.key!==SaveManager.STORAGE_KEY || SaveManager.failed)return;
+        try {
+          SaveManager.data=SaveManager.sanitize(SaveManager.root()[SaveManager.GAME_KEY]);
+          SaveManager.refresh();
+          if(game.state==='menu')UI.home();
+        }
+        catch {
+        }
+      });
+    }
+    function resize() {
+      const rect=$('world').getBoundingClientRect();
+      renderer.resize(Math.max(1, rect.width), Math.max(1, rect.height), window.devicePixelRatio||1);
+    }
+    let previous=0, accumulator=0;
+    function tick(time) {
+      const dt=Math.min((time-previous)/1000, .05);
+      previous=time;
+      accumulator+=dt;
+      while(accumulator>=1/120) {
+        game.update(1/120);
+        accumulator-=1/120;
+      }
+      renderer.render(game);
+      requestAnimationFrame(tick);
+    }
+    function boot() {
+      SaveManager.load();
+      game=new Game();
+      renderer=new Renderer($('world'));
+      bind();
+      resize();
+      UI.home();
+      UI.controls();
+      requestAnimationFrame(tick);
+    }
+    boot();
+  </script>
+</body>
+</html>

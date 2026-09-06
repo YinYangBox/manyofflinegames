@@ -1,1138 +1,1866 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0b1020">
-  <title>Stack 3D Arcade</title>
-  <style>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#11192b">
+    <title>
+      Stack
+    </title>
+    <style>
     :root {
-      --bg: #080c18;
-      --panel: #11182a;
-      --panel-2: #171f35;
-      --line: rgba(255,255,255,.11);
-      --text: #f4f7ff;
-      --muted: #8e99b5;
-      --gold: #f0bc62;
-      --gold-2: #ffda8a;
-      --cyan: #63d7e7;
-      --red: #ff6878;
-      --green: #71dfa2;
-      --shadow: 0 24px 70px rgba(0,0,0,.42);
-      --board-size: min(72vh, 670px);
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #edf3ff;
+      background: #11192b;
+      --muted: #a0acc3;
+      --line: #ffffff20;
+      --accent: #acffbf;
     }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-    }
-
-    body {
-      min-height: 100dvh;
-      overflow: hidden;
-      color: var(--text);
-      background: radial-gradient(circle at 16% 10%, rgba(66,89,156,.20), transparent 34%),
-                  radial-gradient(circle at 87% 86%, rgba(194,127,52,.13), transparent 31%),
-                  linear-gradient(145deg, #070a13, #0c1222 56%, #090d19);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+    * {
+      box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
     }
-
-    button { color: inherit; font: inherit; }
-    button:focus-visible { outline: 3px solid rgba(99,215,231,.72); outline-offset: 3px; }
-
-    .app { position: relative; width: 100%; min-height: 100dvh; }
-
-    .screen, .game-screen {
-      position: absolute;
-      inset: 0;
-      display: none;
-      min-height: 100dvh;
+    body {
+      margin: 0;
+      overflow: hidden;
     }
-
-    .screen.active, .game-screen.active { display: block; }
-
-    .screen-bar {
-      position: relative;
-      z-index: 4;
-      height: 70px;
+    button, input {
+      font: inherit;
+    }
+    button {
+      color: inherit;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 12px 17px;
+      background: #ffffff09;
+      min-height: 46px;
+      font-weight: 650;
+      touch-action: manipulation;
+    }
+    button:hover:not(:disabled) {
+      background: #ffffff19;
+    }
+    button:disabled {
+      opacity: .4;
+      cursor: default;
+    }
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .primary {
+      background: var(--accent);
+      color: #15322b;
+      border-color: transparent;
+    }
+    .primary:hover:not(:disabled) {
+      background: #ceffdb;
+    }
+    .hidden {
+      display: none !important;
+    }
+    #world {
+      display: block;
+      width: 100vw;
+      height: 100dvh;
+      touch-action: none;
+    }
+    .topbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 3;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 clamp(18px, 4vw, 58px);
+      gap: 12px;
+      padding: max(18px, env(safe-area-inset-top)) 26px 14px;
+      background: linear-gradient(#10182bdd, #10182b00);
+      pointer-events: none;
+    }
+    .topbar button, .wallet {
+      pointer-events: auto;
+    }
+    .brand {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -.06em;
+    }
+    .wallet {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-variant-numeric: tabular-nums;
+    }
+    .coin {
+      display: inline-grid;
+      place-items: center;
+      width: 27px;
+      height: 27px;
+      border: 2px solid #eed198;
+      color: #eed198;
+      border-radius: 50%;
+      font: bold 14px monospace;
+    }
+    .wallet strong {
+      font-size: 18px;
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .top-actions button {
+      padding: 8px 13px;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: max(80px, env(safe-area-inset-top)) 22px max(24px, env(safe-area-inset-bottom));
+      overflow-y: auto;
+      background: #09102044;
+    }
+    .panel {
+      width: min(480px, 100%);
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 25px;
+      background: #142037ed;
+      box-shadow: 0 28px 90px #0005;
+      backdrop-filter: blur(18px);
+    }
+    #menu {
+      place-items: center start;
+      padding-left: max(7vw, 22px);
+      background: none;
+    }
+    #menu .panel {
+      background: #142037e8;
+    }
+    .kicker {
+      color: var(--accent);
+      text-transform: uppercase;
+      font: 11px monospace;
+      letter-spacing: .2em;
+    }
+    h1 {
+      font-size: clamp(58px, 8vw, 90px);
+      margin: 10px 0 8px;
+      line-height: 1;
+      letter-spacing: -.07em;
+    }
+    h2 {
+      margin: 0;
+      font-size: 29px;
+      letter-spacing: -.04em;
+    }
+    h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--muted);
+      margin: 12px 0;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .between {
+      justify-content: space-between;
+    }
+    .gap {
+      margin-top: 20px;
+    }
+    .full {
+      width: 100%;
+    }
+    .menu-links {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 10px;
+    }
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin: 24px 0 18px;
+    }
+    .modes button {
+      padding: 12px 4px;
+      font-size: 12px;
+    }
+    .modes button.active {
+      border-color: var(--accent);
+      background: #acffbf12;
+    }
+    .modes small {
+      display: block;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 5px;
+      font-weight: 400;
+    }
+    .record-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font: 12px monospace;
+      color: var(--muted);
+      margin: 18px 0 0;
+    }
+    #hud {
+      position: fixed;
+      inset: 86px 0 auto;
+      pointer-events: none;
+      text-align: center;
+      z-index: 2;
+    }
+    #height {
+      font-size: clamp(55px, 10vw, 90px);
+      font-weight: 800;
+      letter-spacing: -.065em;
+      line-height: 1;
+    }
+    .hud-label {
+      text-transform: uppercase;
+      letter-spacing: .2em;
+      font: 10px monospace;
+      color: var(--muted);
+    }
+    #combo {
+      color: var(--accent);
+      min-height: 25px;
+      margin-top: 8px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    #feedback {
+      color: #fff;
+      min-height: 23px;
+      font: 12px monospace;
+      margin-top: 5px;
+    }
+    #flightTimer {
+      width: 130px;
+      height: 3px;
+      background: #ffffff16;
+      margin: 12px auto 8px;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    #flightFill {
+      height: 100%;
+      background: var(--accent);
+      transform-origin: left;
+    }
+    #bottomHud {
+      position: fixed;
+      bottom: max(22px, env(safe-area-inset-bottom));
+      left: 20px;
+      right: 20px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      pointer-events: none;
+    }
+    #bottomHud button {
+      pointer-events: auto;
+    }
+    #dropButton {
+      min-width: 150px;
+      background: #acffbf;
+      color: #15322b;
+    }
+    .run-stats {
+      font: 12px monospace;
+      line-height: 1.9;
+      color: var(--muted);
+    }
+    #earned {
+      color: #eed198;
+    }
+    #shop .panel {
+      width: min(980px, 100%);
+    }
+    .skin-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 13px;
+      margin-top: 20px;
+    }
+    .skin-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #0c1524;
+    }
+    .skin-card.selected {
+      border-color: var(--accent);
+    }
+    .skin-card canvas {
+      width: 100%;
+      display: block;
+      aspect-ratio: 1.6;
+    }
+    .skin-info {
+      padding: 14px;
+    }
+    .skin-info p {
+      min-height: 40px;
+      font-size: 11px;
+      line-height: 1.5;
+      margin: 7px 0 12px;
+    }
+    .skin-info button {
+      width: 100%;
+      font-size: 12px;
+    }
+    .setting {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      padding: 15px 0;
       border-bottom: 1px solid var(--line);
-      background: rgba(8,12,24,.66);
-      backdrop-filter: blur(16px);
     }
-
-    .brand { display: flex; align-items: center; gap: 11px; font-size: 13px; font-weight: 950; letter-spacing: 3px; }
-    
-    .brand-mark {
-      width: 29px; height: 29px; display: grid; grid-template-columns: repeat(3, 1fr);
-      border: 2px solid var(--cyan); border-radius: 7px; overflow: hidden;
-      box-shadow: 0 0 20px rgba(99,215,231,.22);
+    .setting input {
+      width: 24px;
+      height: 24px;
+      accent-color: var(--accent);
     }
-    .brand-mark i:nth-child(odd) { background: var(--cyan); }
-
-    .credit-chip {
-      min-width: 84px; height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 0 12px; border: 1px solid rgba(240,188,98,.34); border-radius: 999px;
-      color: var(--gold-2); background: rgba(240,188,98,.08); font-size: 13px; font-weight: 900;
+    .setting small {
+      color: var(--muted);
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
     }
-    .credit-icon {
-      width: 20px; height: 20px; display: grid; place-items: center; border: 1px solid currentColor;
-      border-radius: 50%; font: 900 10px/1 Georgia, serif;
+    .results {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 22px 0;
     }
-
-    .home-shell {
-      width: min(1080px, calc(100% - 32px));
-      min-height: calc(100dvh - 70px); display: grid; grid-template-columns: 1.05fr .95fr;
-      align-items: center; gap: clamp(28px, 6vw, 80px); margin: 0 auto; padding: 28px 0 38px;
+    .results div {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 15px;
     }
-
-    .hero { position: relative; min-height: 460px; display: flex; flex-direction: column; justify-content: center; }
-    .eyebrow, .section-label {
-      margin: 0 0 10px; color: var(--cyan); font-size: 10px; font-weight: 900; letter-spacing: 2.4px; text-transform: uppercase;
+    .results small {
+      color: var(--muted);
+      font-size: 11px;
+      display: block;
     }
-    .hero h1 {
-      position: relative; margin: 0; font: 900 clamp(58px, 8vw, 105px)/.88 Georgia, "Times New Roman", serif;
-      letter-spacing: -5px; text-shadow: 0 14px 38px rgba(0,0,0,.5);
+    .results strong {
+      font-size: 26px;
+      display: block;
+      margin-top: 4px;
     }
-    .hero p:last-child { position: relative; max-width: 390px; margin: 22px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
-
-    .setup-card, .content-shell {
-      border: 1px solid var(--line); background: linear-gradient(145deg, rgba(24,33,56,.92), rgba(13,19,34,.94));
-      box-shadow: var(--shadow); backdrop-filter: blur(18px);
+    .rules-list {
+      padding-left: 20px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
     }
-    .setup-card { padding: clamp(20px, 3vw, 30px); border-radius: 24px; }
-
-    .difficulty-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-bottom: 22px; }
-    .difficulty {
-      min-height: 73px; padding: 12px; text-align: left; border: 1px solid var(--line);
-      border-radius: 14px; background: rgba(255,255,255,.025); cursor: pointer; transition: .16s ease;
+    .rules-list li {
+      margin-top: 10px;
     }
-    .difficulty:hover { transform: translateY(-2px); border-color: rgba(99,215,231,.38); }
-    .difficulty.active {
-      border-color: var(--cyan); background: rgba(99,215,231,.10);
-      box-shadow: inset 0 0 0 1px rgba(99,215,231,.10), 0 8px 24px rgba(0,0,0,.18);
+    .rules-list strong {
+      color: #edf3ff;
     }
-    .difficulty strong, .difficulty span { display: block; }
-    .difficulty strong { font-size: 12px; letter-spacing: 1px; color: var(--cyan); }
-    .difficulty span { margin-top: 6px; color: var(--muted); font-size: 9px; font-weight: 750; }
-
-    .setup-actions { display: grid; gap: 9px; }
-    .quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-
-    .btn, .icon-btn, .shop-btn { border: 0; cursor: pointer; transition: transform .14s ease, filter .14s ease; }
-    .btn:hover:not(:disabled), .icon-btn:hover:not(:disabled), .shop-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.08); }
-    .btn:active:not(:disabled) { transform: translateY(0) scale(.98); }
-    
-    .btn { min-height: 48px; padding: 0 16px; border-radius: 13px; font-size: 10px; font-weight: 950; letter-spacing: 1.2px; }
-    .btn-primary { color: #000; background: linear-gradient(135deg, var(--cyan), #3b9ba8); box-shadow: 0 12px 30px rgba(99,215,231,.22); }
-    .btn-secondary { border: 1px solid var(--line); color: var(--text); background: rgba(255,255,255,.045); }
-    .btn-danger { border: 1px solid rgba(255,104,120,.32); color: #ff9ca6; background: rgba(255,104,120,.08); }
-    .btn:disabled, .shop-btn:disabled { opacity: .42; cursor: not-allowed; }
-    
-    .continue-button.hidden { display: none; }
-
-    .content-shell {
-      width: min(960px, calc(100% - 32px)); max-height: calc(100dvh - 38px);
-      margin: 19px auto; padding: 22px; overflow: auto; border-radius: 22px;
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: #acffbf;
+      color: #15322b;
+      z-index: 30;
+      font-size: 13px;
+      max-width: 90vw;
+      text-align: center;
     }
-    .content-head { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 13px; margin-bottom: 20px; }
-    .content-head h2 { margin: 0; font: 900 27px/1 Georgia, serif; }
-    .icon-btn {
-      width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line);
-      border-radius: 12px; background: rgba(255,255,255,.04); font-size: 24px; line-height: 1;
+    #saveWarning {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #843c3c;
+      padding: 8px;
+      z-index: 40;
+      text-align: center;
+      font-size: 11px;
     }
-
-    .shop-grid, .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; }
-
-    .shop-card {
-      min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.028);
+    @media(max-width:700px) {
+      .topbar {
+        padding-left: 17px;
+        padding-right: 17px;
+      }
+      #menu {
+        place-items: center;
+        padding: 85px 18px 20px;
+      }
+      #menu .panel {
+        max-width: 390px;
+      }
+      .panel {
+        padding: 24px;
+        border-radius: 21px;
+      }
+      .skin-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      #shop {
+        padding: 80px 10px 15px;
+        align-items: start;
+      }
+      #shop .panel {
+        padding: 16px;
+      }
+      .skin-info {
+        padding: 11px;
+      }
+      .skin-info h3 {
+        font-size: 15px;
+      }
+      .skin-info p {
+        min-height: 48px;
+      }
+      #bottomHud {
+        left: 16px;
+        right: 16px;
+      }
     }
-    .shop-card.selected { border-color: rgba(99,215,231,.72); box-shadow: inset 0 0 0 1px rgba(99,215,231,.16); }
-    .skin-art { height: 140px; display: grid; place-items: center; background: rgba(0,0,0,.15); font: 900 40px/1 Georgia; color: var(--cyan); }
-    
-    .shop-copy { padding: 14px; }
-    .shop-copy strong, .shop-copy span { display: block; }
-    .shop-copy strong { font-size: 13px; }
-    .shop-copy span { min-height: 31px; margin: 4px 0 10px; color: var(--muted); font-size: 9px; line-height: 1.45; }
-    
-    .shop-btn {
-      width: 100%; min-height: 36px; border-radius: 10px; color: #000;
-      background: linear-gradient(135deg, var(--cyan), #3b9ba8); font-size: 9px; font-weight: 950; letter-spacing: .8px;
-    }
-    .shop-btn.owned { border: 1px solid var(--line); color: var(--text); background: rgba(255,255,255,.06); }
-
-    .stat-card {
-      min-height: 110px; padding: 17px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.028);
-    }
-    .stat-card span, .stat-card strong { display: block; }
-    .stat-card span { color: var(--muted); font-size: 9px; line-height: 1.55; }
-    .stat-card strong { margin-top: 12px; color: var(--cyan); font: 900 25px/1 Georgia, serif; }
-
-    /* Game layout */
-    .game-layout {
-      width: 100%; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) 330px;
-    }
-    .board-stage {
-      min-width: 0; min-height: 0; display: grid; grid-template-rows: 62px minmax(0, 1fr);
-      padding: 12px 24px 18px; border-right: 1px solid var(--line);
-    }
-    .game-topbar {
-      width: 100%; max-width: 800px; display: flex; align-items: center; gap: 10px; margin: 0 auto;
-    }
-    .game-title { min-width: 0; flex: 1; }
-    .game-title strong, .game-title span { display: block; }
-    .game-title strong { font: 900 16px/1 Georgia, serif; letter-spacing: .7px; }
-    .game-title span { margin-top: 4px; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: 1px; }
-
-    .board-wrap { min-height: 0; display: grid; place-items: center; position: relative; }
-    .board-shell {
-      position: relative; width: 100%; max-width: 800px; height: 100%;
-      border: 1px solid rgba(255,255,255,.15); border-radius: 18px; overflow: hidden;
-      background: linear-gradient(145deg, #293249, #111726); box-shadow: 0 26px 70px rgba(0,0,0,.42);
-    }
-    #game-canvas { width: 100%; height: 100%; display: block; outline: none; }
-
-    .pause-layer {
-      position: absolute; inset: 0; z-index: 12; display: grid; place-items: center;
-      padding: 25px; text-align: center; color: var(--text); background: rgba(7,10,18,.94); backdrop-filter: blur(16px);
-    }
-    .pause-layer.closed { display: none; }
-    .pause-layer h2 { margin: 0 0 9px; font: 900 33px/1 Georgia, serif; }
-    .pause-layer p { margin: 0 0 20px; color: var(--muted); font-size: 11px; }
-
-    .game-side {
-      min-height: 100dvh; display: flex; flex-direction: column; gap: 14px;
-      padding: 23px; background: rgba(8,12,23,.68); backdrop-filter: blur(18px);
-    }
-    .game-brand { font: 900 25px/1 Georgia, serif; }
-    .game-brand small { display: block; margin-top: 7px; color: var(--cyan); font: 850 8px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: 1.6px; }
-
-    .status-card { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
-    .status-box {
-      min-width: 0; padding: 15px 8px; text-align: center; border: 1px solid var(--line);
-      border-radius: 12px; background: rgba(255,255,255,.035);
-    }
-    .status-box span, .status-box strong { display: block; }
-    .status-box span { color: var(--muted); font-size: 9px; font-weight: 900; letter-spacing: .7px; }
-    .status-box strong { margin-top: 8px; color: var(--cyan); font-size: 22px; }
-    .status-box strong.combo-active { color: var(--gold); animation: pulse .5s infinite alternate; }
-
-    @keyframes pulse {
-      from { transform: scale(1); text-shadow: 0 0 5px rgba(240,188,98,0); }
-      to { transform: scale(1.1); text-shadow: 0 0 10px rgba(240,188,98,.8); }
-    }
-
-    .reward-line {
-      padding: 15px; border: 1px solid rgba(99,215,231,.24); border-radius: 12px;
-      color: var(--muted); background: rgba(99,215,231,.055); font-size: 11px; line-height: 1.5; text-align: center;
-    }
-    .reward-line strong { color: var(--cyan); display: block; margin-top: 5px; font-size: 14px;}
-
-    .side-spacer { flex: 1; }
-    .game-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
-    .game-actions .btn { min-height: 48px; }
-
-    .modal-layer {
-      position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
-      padding: 20px; background: rgba(3,5,10,.78); backdrop-filter: blur(13px);
-    }
-    .modal-layer.closed { display: none; }
-    .modal {
-      width: min(410px, 100%); padding: 27px; text-align: center; border: 1px solid var(--line);
-      border-radius: 22px; background: linear-gradient(150deg, #1a233a, #0d1322); box-shadow: var(--shadow);
-    }
-    .modal-symbol {
-      width: 68px; height: 68px; display: grid; place-items: center; margin: 0 auto 17px;
-      border: 2px solid var(--cyan); border-radius: 18px; color: var(--cyan);
-      background: rgba(99,215,231,.08); font: 900 33px/1 Georgia, serif;
-    }
-    .modal h2 { margin: 0; font: 900 30px/1 Georgia, serif; }
-    .modal p { margin: 10px 0 20px; color: var(--muted); font-size: 11px; line-height: 1.6; }
-
-    .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 19px; }
-    .result-box { padding: 11px 7px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.03); }
-    .result-box span, .result-box strong { display: block; }
-    .result-box span { color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .6px; }
-    .result-box strong { margin-top: 5px; color: var(--cyan); font-size: 18px; }
-
-    .modal-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
-
-    .toast-stack { position: fixed; z-index: 60; right: 18px; bottom: 18px; display: grid; gap: 8px; pointer-events: none; }
-    .toast {
-      min-width: 190px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 12px;
-      color: var(--text); background: rgba(20,28,47,.96); box-shadow: 0 14px 34px rgba(0,0,0,.35);
-      font-size: 10px; animation: toast-in .22s ease, toast-out .25s ease 2.45s forwards;
-    }
-    .toast b { color: var(--cyan); }
-
-    @keyframes toast-in { from { transform: translateY(10px); opacity: 0; } }
-    @keyframes toast-out { to { transform: translateY(8px); opacity: 0; } }
-
-    @media (max-width: 900px) {
-      .home-shell { grid-template-columns: 1fr; gap: 12px; padding-top: 20px; }
-      .hero { min-height: 190px; justify-content: flex-end; }
-      .hero h1 { font-size: 62px; }
-      .game-layout { grid-template-columns: 1fr; }
-      .board-stage { min-height: 60vh; padding: 8px 12px 12px; border-right: 0; }
-      .game-side { min-height: auto; padding: 13px 16px 22px; border-top: 1px solid var(--line); }
-      .game-brand, .game-side > .credit-chip { display: none; }
-      .side-spacer { display: none; }
+    @media(max-height:600px) {
+      .overlay {
+        align-items: start;
+        padding-top: 72px;
+      }
+      #menu {
+        align-items: start;
+      }
+      #menu h1 {
+        font-size: 42px;
+      }
+      #menu .modes {
+        margin-top: 12px;
+      }
+      #hud {
+        top: 69px;
+      }
+      #height {
+        font-size: 45px;
+      }
+      .panel {
+        padding: 20px;
+      }
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-</head>
-<body>
-  <main class="app" id="app">
-    <section class="screen active" id="home-screen">
-      <div class="screen-bar">
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-          <span>STACK 3D</span>
+  </head>
+  <body>
+    <canvas id="world" aria-label="Three-dimensional stacking game. Tap to place a block.">
+    </canvas>
+    <header class="topbar">
+      <div class="brand">
+        STACK
+      </div>
+      <div class="top-actions">
+        <div class="wallet" aria-label="Credits">
+          <span class="coin">
+            C
+          </span>
+          <strong id="credits">
+            0
+          </strong>
         </div>
-        <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+        <button id="pauseButton" class="hidden" aria-label="Pause game">
+          Ⅱ
+        </button>
       </div>
-
-      <div class="home-shell">
-        <article class="hero">
-          <p class="eyebrow">PRECISION PUZZLE</p>
-          <h1>STACK</h1>
-          <p>Toca para apilar los bloques. Haz 5 "Perfectos" seguidos para que el bloque vuelva a crecer. ¡No dejes que se acabe el espacio!</p>
-        </article>
-
-        <article class="setup-card">
-          <p class="section-label">Velocidad Inicial</p>
-          <div class="difficulty-grid" id="difficulty-grid">
-            <button class="difficulty active" data-difficulty="normal"><strong>NORMAL</strong><span>Recomendado para empezar</span></button>
-            <button class="difficulty" data-difficulty="fast"><strong>RÁPIDO</strong><span>Mayor recompensa por bloque</span></button>
-          </div>
-
-          <div class="setup-actions">
-            <button class="btn btn-primary" id="play-button">NUEVA PARTIDA</button>
-            <button class="btn btn-secondary continue-button hidden" id="continue-button">CONTINUAR</button>
-            <div class="quick-grid">
-              <button class="btn btn-secondary" data-open="skins-screen">TIENDA (SKINS)</button>
-              <button class="btn btn-secondary" data-open="stats-screen">ESTADÍSTICAS</button>
-            </div>
-          </div>
-        </article>
+    </header>
+    <div id="hud" class="hidden">
+      <div class="hud-label">
+        Height
       </div>
-    </section>
-
-    <section class="screen" id="skins-screen">
-      <div class="content-shell">
-        <div class="content-head">
-          <button class="icon-btn" data-open="home-screen" aria-label="Back">‹</button>
-          <h2>Temas de Bloque</h2>
-          <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+      <div id="height">
+        0
+      </div>
+      <div id="combo">
+      </div>
+      <div id="feedback">
+      </div>
+      <div id="flightTimer">
+        <div id="flightFill">
         </div>
-        <div class="shop-grid" id="skin-grid"></div>
       </div>
-    </section>
-
-    <section class="screen" id="stats-screen">
-      <div class="content-shell">
-        <div class="content-head">
-          <button class="icon-btn" data-open="home-screen" aria-label="Back">‹</button>
-          <h2>Estadísticas</h2>
-          <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
+      <div class="hud-label" id="timerLabel">
+        Place before time runs out
+      </div>
+    </div>
+    <div id="bottomHud" class="hidden">
+      <div class="run-stats">
+        <span id="earned">
+          +0 C
+        </span>
+        <br>
+        <span id="survival">
+          0:00
+        </span>
+        ·
+        <span id="size">
+          100% area
+        </span>
+      </div>
+      <button id="dropButton">
+        Place block
+      </button>
+    </div>
+    <section id="menu" class="overlay">
+      <div class="panel">
+        <span class="kicker">
+          One more perfect fit
+        </span>
+        <h1>
+          Stack
+        </h1>
+        <p>
+          Find the rhythm. Build beyond the clouds.
+        </p>
+        <div class="modes" id="modes">
+          <button data-mode="easy">
+            Easy
+            <small>
+              Relaxed · 1× credits
+            </small>
+          </button>
+          <button data-mode="normal">
+            Normal
+            <small>
+              Steady · 2× credits
+            </small>
+          </button>
+          <button data-mode="hard">
+            Hard
+            <small>
+              Fast · 3× credits
+            </small>
+          </button>
         </div>
-        <div class="stats-grid" id="stats-grid"></div>
-      </div>
-    </section>
-
-    <section class="game-screen" id="game-screen">
-      <div class="game-layout">
-        <section class="board-stage">
-          <div class="game-topbar">
-            <div class="game-title"><strong id="game-mode-name">STACK 3D</strong><span id="game-difficulty">NORMAL</span></div>
-            <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
-          </div>
-
-          <div class="board-wrap" id="canvas-container">
-            <div class="board-shell" id="board-shell">
-              <div class="pause-layer closed" id="pause-layer">
-                <div>
-                  <h2>Pausado</h2>
-                  <p>Tómate un respiro.</p>
-                  <button class="btn btn-primary" id="resume-button">REANUDAR</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <aside class="game-side">
-          <div class="game-brand">STACK 3D<small>ARCADE MODE</small></div>
-          <div class="credit-chip"><span class="credit-icon">C</span><span data-credits>0</span></div>
-
-          <div class="status-card">
-            <div class="status-box"><span>PUNTUACIÓN</span><strong id="side-score">0</strong></div>
-            <div class="status-box"><span>MEJOR RÉCORD</span><strong id="side-best">0</strong></div>
-            <div class="status-box"><span>COMBO PERFECTO</span><strong id="side-combo">0 / 5</strong></div>
-            <div class="status-box"><span>TOTAL PERFECTOS</span><strong id="side-perfects">0</strong></div>
-          </div>
-
-          <div class="reward-line" id="reward-line">Coloca bloques para ganar créditos.<br><strong id="reward-amount">C 0</strong></div>
-          <div class="side-spacer"></div>
-
-          <div class="game-actions">
-            <button class="btn btn-secondary" id="pause-button">PAUSA</button>
-            <button class="btn btn-danger" id="quit-button">MENÚ</button>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <section class="modal-layer closed" id="result-modal">
-      <div class="modal">
-        <div class="modal-symbol" id="result-symbol">×</div>
-        <h2 id="result-title">Fin del Juego</h2>
-        <p id="result-copy">El bloque cayó al abismo.</p>
-        <div class="result-grid">
-          <div class="result-box"><span>PUNTUACIÓN</span><strong id="result-score">0</strong></div>
-          <div class="result-box"><span>PERFECTOS</span><strong id="result-perfects">0</strong></div>
-          <div class="result-box"><span>NUEVO RÉCORD</span><strong id="result-best">NO</strong></div>
-          <div class="result-box"><span>CRÉDITOS</span><strong id="result-credits">0</strong></div>
+        <button id="playButton" class="primary full">
+          Play
+        </button>
+        <div class="menu-links">
+          <button id="skinsButton">
+            Skins
+          </button>
+          <button id="rulesButton">
+            Rules
+          </button>
         </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" id="result-menu">MENÚ</button>
-          <button class="btn btn-primary" id="result-again">JUGAR OTRA VEZ</button>
+        <button id="settingsButton" class="full gap">
+          Settings
+        </button>
+        <div class="record-line">
+          <span id="menuBest">
+            Best 0
+          </span>
+          <span id="menuSkin">
+            Porcelain
+          </span>
         </div>
       </div>
     </section>
-
-    <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
-  </main>
-
-  <script>
-  "use strict";
-
-  /* ---------- Configuration ---------- */
-  const DIFFICULTIES = {
-    normal: { name: "Normal", speedMultiplier: 1, rewardMultiplier: 1 },
-    fast: { name: "Rápido", speedMultiplier: 1.5, rewardMultiplier: 2 }
-  };
-
-  const SKINS = {
-    classic: { name: "Clásico", price: 0, copy: "El estilo original mate.", type: "lambert" },
-    neon: { name: "Neón", price: 500, copy: "Bloques brillantes sin sombras.", type: "basic" },
-    glass: { name: "Cristal", price: 1500, copy: "Material reflectante brillante.", type: "phong" }
-  };
-
-  const GAME_STORAGE_KEY = "stack";
-
-  /* ---------- Persistent data ---------- */
-  class SaveManager {
-    static ROOT_KEY = "ARCADE_GAMES";
-
-    constructor() {
-      this.defaults = {
-        credits: 0,
-        selectedDifficulty: "normal",
-        selectedSkin: "classic",
-        ownedSkins: ["classic"],
-        sound: true,
-        stats: {
-          gamesPlayed: 0,
-          highestScore: 0,
-          totalBlocks: 0,
-          totalPerfects: 0,
-          creditsEarned: 0
-        },
-        activeGame: null
-      };
-
-      this.root = this.readRoot();
-      this.data = this.sanitize(this.root[GAME_STORAGE_KEY]);
-      this.persist();
-    }
-
-    readRoot() {
-      try {
-        const raw = localStorage.getItem(SaveManager.ROOT_KEY);
-        const parsed = raw ? JSON.parse(raw) : {};
-        return parsed && typeof parsed === "object" ? parsed : {};
-      } catch (_) { return {}; }
-    }
-
-    sanitize(value) {
-      const source = value && typeof value === "object" ? value : {};
-      const clean = { ...this.defaults, ...source };
-      clean.credits = this.integer(clean.credits);
-      
-      const validSkins = new Set(Object.keys(SKINS));
-      clean.ownedSkins = Array.isArray(clean.ownedSkins) ? [...new Set(clean.ownedSkins.filter(id => validSkins.has(id)))] : [];
-      if (!clean.ownedSkins.includes("classic")) clean.ownedSkins.unshift("classic");
-      clean.selectedSkin = validSkins.has(clean.selectedSkin) && clean.ownedSkins.includes(clean.selectedSkin) ? clean.selectedSkin : "classic";
-      
-      clean.selectedDifficulty = DIFFICULTIES[clean.selectedDifficulty] ? clean.selectedDifficulty : "normal";
-
-      const sourceStats = source.stats || {};
-      clean.stats = { ...this.defaults.stats, ...sourceStats };
-      ["gamesPlayed", "highestScore", "totalBlocks", "totalPerfects", "creditsEarned"].forEach(key => {
-        clean.stats[key] = this.integer(clean.stats[key]);
-      });
-      return clean;
-    }
-
-    integer(value) {
-      const number = Number(value);
-      return Number.isFinite(number) ? Math.max(0, Math.floor(number)) : 0;
-    }
-
-    persist() {
-      try {
-        this.root[GAME_STORAGE_KEY] = this.data;
-        localStorage.setItem(SaveManager.ROOT_KEY, JSON.stringify(this.root));
-      } catch (_) {}
-      refreshCreditLabels(this.data);
-    }
-
-    update(patch) { Object.assign(this.data, patch); this.persist(); }
-    mutate(callback) { callback(this.data); this.persist(); }
-
-    buySkin(id) {
-      const skin = SKINS[id];
-      if (!skin || this.data.ownedSkins.includes(id) || this.data.credits < skin.price) return false;
-      this.data.credits -= skin.price;
-      this.data.ownedSkins = [...this.data.ownedSkins, id];
-      this.persist();
-      return true;
-    }
-  }
-
-  const save = new SaveManager();
-
-  /* ---------- UI Elements ---------- */
-  const ui = {
-    homeScreen: document.getElementById("home-screen"),
-    gameScreen: document.getElementById("game-screen"),
-    difficultyGrid: document.getElementById("difficulty-grid"),
-    continueButton: document.getElementById("continue-button"),
-    skinGrid: document.getElementById("skin-grid"),
-    statsGrid: document.getElementById("stats-grid"),
-    gameDifficulty: document.getElementById("game-difficulty"),
-    sideScore: document.getElementById("side-score"),
-    sideBest: document.getElementById("side-best"),
-    sideCombo: document.getElementById("side-combo"),
-    sidePerfects: document.getElementById("side-perfects"),
-    rewardAmount: document.getElementById("reward-amount"),
-    pauseLayer: document.getElementById("pause-layer"),
-    pauseButton: document.getElementById("pause-button"),
-    resultModal: document.getElementById("result-modal"),
-    resultScore: document.getElementById("result-score"),
-    resultPerfects: document.getElementById("result-perfects"),
-    resultBest: document.getElementById("result-best"),
-    resultCredits: document.getElementById("result-credits"),
-    toastStack: document.getElementById("toast-stack"),
-    boardShell: document.getElementById("board-shell")
-  };
-
-  let selectedDifficulty = save.data.selectedDifficulty;
-  let audioContext = null;
-
-  /* ---------- Three.js Game Engine ---------- */
-  let scene, camera, renderer;
-  let stack = [];
-  let overhangs = [];
-  const boxHeight = 1;
-  const originalBoxSize = 3;
-  let gameStarted = false;
-  let gameOver = false;
-  let isPaused = false;
-  let score = 0;
-  let perfects = 0;
-  let combo = 0;
-  let creditsEarned = 0;
-
-  // Animation variables
-  let currentAxis = 'x'; // 'x' or 'z'
-  let movingDir = 1;
-  let speed = 0.15;
-  let colorHue = 0;
-
-  function init3D() {
-    if (renderer) return;
-    
-    scene = new THREE.Scene();
-    
-    // Configuración isométrica (OrthographicCamera)
-    const aspect = ui.boardShell.clientWidth / ui.boardShell.clientHeight;
-    const d = 10;
-    camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
-    camera.position.set(10, 10, 10);
-    camera.lookAt(0, 0, 0);
-
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(ui.boardShell.clientWidth, ui.boardShell.clientHeight);
-    ui.boardShell.insertBefore(renderer.domElement, ui.pauseLayer);
-
-    // Luces
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(10, 20, 0);
-    scene.add(dirLight);
-
-    window.addEventListener('resize', onWindowResize);
-    
-    // Input
-    renderer.domElement.addEventListener('pointerdown', handleInput);
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && ui.gameScreen.classList.contains('active') && !gameOver && !isPaused) {
-        e.preventDefault();
-        handleInput();
+    <section id="shop" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+      <div class="panel">
+        <div class="row between">
+          <h2 id="shopTitle">
+            Skins
+          </h2>
+          <button data-close>
+            Back
+          </button>
+        </div>
+        <p>
+          Different constructions. The same fair landing area.
+        </p>
+        <div id="skinGrid" class="skin-grid">
+        </div>
+      </div>
+    </section>
+    <section id="settings" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="panel">
+        <div class="row between">
+          <h2 id="settingsTitle">
+            Settings
+          </h2>
+          <button data-close>
+            Back
+          </button>
+        </div>
+        <label class="setting">
+          <span>
+            Show controls
+            <small>
+              Large placement button for touch screens
+            </small>
+          </span>
+          <input id="controlsSetting" type="checkbox">
+        </label>
+        <label class="setting">
+          <span>
+            Sound
+            <small>
+              Generated locally, no audio downloads
+            </small>
+          </span>
+          <input id="soundSetting" type="checkbox">
+        </label>
+        <label class="setting">
+          <span>
+            Motion effects
+            <small>
+              Camera shake and decorative particles
+            </small>
+          </span>
+          <input id="motionSetting" type="checkbox">
+        </label>
+        <p>
+          Tap the playfield or press Space / Enter to place. Press P or Escape to pause.
+        </p>
+      </div>
+    </section>
+    <section id="rules" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="panel">
+        <div class="row between">
+          <h2 id="rulesTitle">
+            Rules
+          </h2>
+          <button data-close>
+            Back
+          </button>
+        </div>
+        <ol class="rules-list">
+          <li>
+            <strong>
+              Place the moving block.
+            </strong>
+            It alternates between two directions. The part outside the block below breaks away and falls. Miss completely and the run ends.
+          </li>
+          <li>
+            <strong>
+              Perfect fits build a combo.
+            </strong>
+            Land inside the small perfect-fit tolerance to keep the whole block. Any imperfect placement breaks the streak.
+          </li>
+          <li>
+            <strong>
+              Combo 5 starts regrowth.
+            </strong>
+            Every perfect fit from the fifth onward adds 0.14 units to both sides, up to the original size. Keep the streak alive to recover lost area.
+          </li>
+          <li>
+            <strong>
+              Survive for credits.
+            </strong>
+            Every 4 active seconds earns 1 / 2 / 3 credits on Easy / Normal / Hard. Perfect fits award 2 × combo × difficulty multiplier extra credits, up to combo 25 for rewards.
+          </li>
+          <li>
+            <strong>
+              Keep moving.
+            </strong>
+            You have 12 / 10 / 8 seconds to place each block. Pauses earn nothing. Credits are saved as you earn them, even if you lose.
+          </li>
+          <li>
+            <strong>
+              Skins are cosmetic.
+            </strong>
+            Panels, crystals, and ornaments do not change collision sizes. Speed rises gradually with tower height.
+          </li>
+        </ol>
+      </div>
+    </section>
+    <section id="pause" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+      <div class="panel">
+        <span class="kicker">
+          Take a breath
+        </span>
+        <h2 id="pauseTitle" class="gap">
+          Paused
+        </h2>
+        <p>
+          Your tower is waiting. No time or credits advance while paused.
+        </p>
+        <button id="resumeButton" class="primary full gap">
+          Resume
+        </button>
+        <div class="menu-links">
+          <button id="pauseSettings">
+            Settings
+          </button>
+          <button id="quitButton">
+            End run
+          </button>
+        </div>
+      </div>
+    </section>
+    <section id="result" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div class="panel">
+        <span class="kicker" id="resultTag">
+          Run complete
+        </span>
+        <h2 id="resultTitle" class="gap">
+          Good building.
+        </h2>
+        <p id="resultReason">
+        </p>
+        <div class="results">
+          <div>
+            <small>
+              Height
+            </small>
+            <strong id="resultHeight">
+              0
+            </strong>
+          </div>
+          <div>
+            <small>
+              Credits earned
+            </small>
+            <strong id="resultCredits">
+              0
+            </strong>
+          </div>
+          <div>
+            <small>
+              Best combo
+            </small>
+            <strong id="resultCombo">
+              0
+            </strong>
+          </div>
+          <div>
+            <small>
+              Survived
+            </small>
+            <strong id="resultTime">
+              0:00
+            </strong>
+          </div>
+        </div>
+        <button id="againButton" class="primary full">
+          Again
+        </button>
+        <button id="menuButton" class="full gap">
+          Menu
+        </button>
+      </div>
+    </section>
+    <div id="toast" class="hidden" role="status">
+    </div>
+    <div id="saveWarning" class="hidden" role="alert">
+      Saving unavailable. Keep this page open to retain this session.
+    </div>
+    <script>
+    'use strict';
+    // Stack uses a local 3D mesh renderer: world-space vertices, face lighting,
+    // camera projection and depth sorting. No network or external dependencies.
+    const $ = id => document.getElementById(id);
+    const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+    const finite = (n, fallback = 0) => Number.isFinite(n) ? n : fallback;
+    const count = n => Math.floor(clamp(finite(n), 0, 1e12));
+    const display = n => count(n).toLocaleString('en-US');
+    const clock = seconds => Math.floor(seconds / 60) + ':' + String(Math.floor(seconds % 60)).padStart(2, '0');
+    const HEIGHT = 0.46;
+    const MAX_SIZE = 3.4;
+    const MODES = {
+      easy: {
+        speed: 2.35,
+        acceleration: .022,
+        tolerance: .105,
+        deadline: 12,
+        multiplier: 1
+      },
+      normal: {
+        speed: 3.05,
+        acceleration: .028,
+        tolerance: .078,
+        deadline: 10,
+        multiplier: 2
+      },
+      hard: {
+        speed: 4.0,
+        acceleration: .032,
+        tolerance: .052,
+        deadline: 8,
+        multiplier: 3
       }
-    });
-
-    renderer.setAnimationLoop(animationLoop);
-  }
-
-  function getMaterial(hue) {
-    const skin = SKINS[save.data.selectedSkin];
-    const color = new THREE.Color(`hsl(${hue}, 100%, 50%)`);
-    
-    if (skin.type === "basic") return new THREE.MeshBasicMaterial({ color });
-    if (skin.type === "phong") return new THREE.MeshPhongMaterial({ color, shininess: 100 });
-    return new THREE.MeshLambertMaterial({ color }); // classic
-  }
-
-  function createBox(x, z, width, depth, y, hue) {
-    const geometry = new THREE.BoxGeometry(width, boxHeight, depth);
-    const material = getMaterial(hue);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    scene.add(mesh);
-    return mesh;
-  }
-
-  function resetGame3D(restoringState = null) {
-    // Clear scene
-    stack.forEach(mesh => scene.remove(mesh));
-    overhangs.forEach(mesh => scene.remove(mesh));
-    stack = [];
-    overhangs = [];
-    
-    if (restoringState) {
-      // Logic for continuing a saved game
-      score = restoringState.score;
-      perfects = restoringState.perfects;
-      combo = restoringState.combo;
-      colorHue = restoringState.colorHue;
-      speed = restoringState.speed;
-      currentAxis = restoringState.currentAxis;
-      movingDir = restoringState.movingDir;
-      
-      restoringState.stackData.forEach((data, i) => {
-        const mesh = createBox(data.x, data.z, data.w, data.d, data.y, data.hue);
-        stack.push(mesh);
-      });
-      camera.position.y = 10 + (score * boxHeight);
-      camera.lookAt(0, score * boxHeight, 0);
-      gameStarted = true;
-    } else {
-      // Brand new game
-      score = 0; perfects = 0; combo = 0; colorHue = 0; creditsEarned = 0;
-      speed = 0.15 * DIFFICULTIES[selectedDifficulty].speedMultiplier;
-      currentAxis = 'x';
-      movingDir = 1;
-      
-      // Bloque base
-      const base = createBox(0, 0, originalBoxSize, originalBoxSize, 0, colorHue);
-      stack.push(base);
-      
-      // Primer bloque en movimiento
-      colorHue += 5;
-      const top = createBox(
-        -10, 0, // x, z inicial
-        originalBoxSize, originalBoxSize, // w, d
-        boxHeight, colorHue
-      );
-      stack.push(top);
-
-      camera.position.y = 10;
-      camera.lookAt(0, 0, 0);
-      gameStarted = false;
-    }
-    
-    gameOver = false;
-    isPaused = false;
-    updateGameUI();
-  }
-
-  function handleInput() {
-    if (isPaused || gameOver) return;
-    if (!gameStarted) {
-      gameStarted = true;
-      return;
-    }
-    placeBlock();
-  }
-
-  function placeBlock() {
-    const topLayer = stack[stack.length - 1];
-    const prevLayer = stack[stack.length - 2];
-
-    const axis = currentAxis;
-    const sizeParam = axis === 'x' ? 'width' : 'depth';
-    
-    // Extraer tamaño de la geometría
-    const prevSize = prevLayer.geometry.parameters[sizeParam];
-    const topSize = topLayer.geometry.parameters[sizeParam];
-    
-    // Distancia entre los centros
-    let delta = topLayer.position[axis] - prevLayer.position[axis];
-    let overhangSize = Math.abs(delta);
-    
-    // Tolerancia para "Perfecto" (0.15 unidades)
-    const tolerance = 0.15;
-    let isPerfect = false;
-
-    if (overhangSize <= tolerance) {
-      // SNAP a posición perfecta
-      delta = 0;
-      topLayer.position[axis] = prevLayer.position[axis];
-      overhangSize = 0;
-      isPerfect = true;
-      combo++;
-      perfects++;
-      playSound("perfect");
-      
-      if (combo >= 5) {
-        // GROW BLOCK MECHANIC
-        growBlock(topLayer);
-        combo = 0;
-        playSound("grow");
-        showToast("¡5 Perfectos! <b>Bloque Aumentado</b>");
-      }
-    } else {
-      combo = 0; // Reset combo
-    }
-
-    const overlap = prevSize - overhangSize;
-
-    if (overlap > 0) {
-      // Cortar el bloque si no fue perfecto y se encogió
-      if (!isPerfect) {
-        // Dimensiones del bloque cortado (el que se queda)
-        const newWidth = axis === 'x' ? overlap : topLayer.geometry.parameters.width;
-        const newDepth = axis === 'z' ? overlap : topLayer.geometry.parameters.depth;
-
-        // Centro de la parte que se queda
-        const offset = (prevSize / 2) - (overlap / 2);
-        const newPos = prevLayer.position[axis] + (delta > 0 ? offset : -offset);
-
-        // Actualizar el mesh actual para que sea solo la parte que solapa
-        topLayer.geometry.dispose();
-        topLayer.geometry = new THREE.BoxGeometry(newWidth, boxHeight, newDepth);
-        topLayer.position[axis] = newPos;
-
-        // Crear la parte que cae (overhang)
-        const fallingWidth = axis === 'x' ? overhangSize : topLayer.geometry.parameters.width;
-        const fallingDepth = axis === 'z' ? overhangSize : topLayer.geometry.parameters.depth;
-        const fallingOffset = (prevSize / 2) + (overhangSize / 2);
-        const fallingPos = prevLayer.position[axis] + (delta > 0 ? fallingOffset : -fallingOffset);
-
-        const fallingMesh = createBox(
-          axis === 'x' ? fallingPos : topLayer.position.x,
-          axis === 'z' ? fallingPos : topLayer.position.z,
-          fallingWidth, fallingDepth, topLayer.position.y, colorHue
-        );
-        overhangs.push(fallingMesh);
-        playSound("place");
-      }
-
-      // Preparar el siguiente bloque
-      score++;
-      updateGameUI();
-      saveGameState();
-      
-      const nextY = topLayer.position.y + boxHeight;
-      currentAxis = currentAxis === 'x' ? 'z' : 'x';
-      colorHue += 5;
-      
-      // Aumentar velocidad gradualmente
-      speed += 0.003 * DIFFICULTIES[selectedDifficulty].speedMultiplier;
-
-      const nextWidth = topLayer.geometry.parameters.width;
-      const nextDepth = topLayer.geometry.parameters.depth;
-      const startX = currentAxis === 'x' ? -10 : topLayer.position.x;
-      const startZ = currentAxis === 'z' ? -10 : topLayer.position.z;
-
-      const nextLayer = createBox(startX, startZ, nextWidth, nextDepth, nextY, colorHue);
-      stack.push(nextLayer);
-      
-      movingDir = 1; // reset direction
-    } else {
-      // MISSED COMPLETELY
-      topLayer.material.transparent = true;
-      topLayer.material.opacity = 0.5;
-      overhangs.push(topLayer); // Que caiga el bloque entero
-      endGame();
-    }
-  }
-
-  function growBlock(topLayer) {
-    const w = topLayer.geometry.parameters.width;
-    const d = topLayer.geometry.parameters.depth;
-    const increase = 0.5;
-    
-    // Grow both axis slightly, but max out at original size
-    const newWidth = Math.min(originalBoxSize, w + increase);
-    const newDepth = Math.min(originalBoxSize, d + increase);
-    
-    topLayer.geometry.dispose();
-    topLayer.geometry = new THREE.BoxGeometry(newWidth, boxHeight, newDepth);
-  }
-
-  function animationLoop() {
-    if (isPaused) return;
-
-    if (gameStarted && !gameOver) {
-      const topLayer = stack[stack.length - 1];
-      
-      // Move active block
-      topLayer.position[currentAxis] += speed * movingDir;
-      
-      // Bounce off invisible walls
-      if (topLayer.position[currentAxis] > 10 || topLayer.position[currentAxis] < -10) {
-        movingDir *= -1;
-      }
-    }
-
-    // Gravity for overhangs
-    for (let i = overhangs.length - 1; i >= 0; i--) {
-      const mesh = overhangs[i];
-      mesh.position.y -= 0.2;
-      mesh.rotation.x += 0.05;
-      mesh.rotation.z += 0.05;
-      if (mesh.position.y < -15) {
-        scene.remove(mesh);
-        overhangs.splice(i, 1);
-      }
-    }
-
-    // Lerp camera up smoothly
-    if (gameStarted && stack.length > 2) {
-      const targetY = (stack.length - 2) * boxHeight;
-      camera.position.y += (targetY + 10 - camera.position.y) * 0.1;
-      
-      // Keep lookAt matching camera Y minus offset
-      const currentLookAtY = camera.position.y - 10;
-      camera.lookAt(0, currentLookAtY, 0);
-    }
-
-    renderer.render(scene, camera);
-  }
-
-  function onWindowResize() {
-    if (!camera || !renderer) return;
-    const aspect = ui.boardShell.clientWidth / ui.boardShell.clientHeight;
-    const d = 10;
-    camera.left = -d * aspect;
-    camera.right = d * aspect;
-    camera.top = d;
-    camera.bottom = -d;
-    camera.updateProjectionMatrix();
-    renderer.setSize(ui.boardShell.clientWidth, ui.boardShell.clientHeight);
-  }
-
-  /* ---------- Game Flow Logic ---------- */
-  function newGame(difficulty = selectedDifficulty) {
-    selectedDifficulty = difficulty;
-    save.update({ selectedDifficulty, activeGame: null });
-    
-    init3D();
-    resetGame3D();
-    showGameScreen();
-    playSound("start");
-  }
-
-  function resumeSavedGame() {
-    init3D();
-    if (save.data.activeGame) {
-      resetGame3D(save.data.activeGame);
-    } else {
-      resetGame3D();
-    }
-    showGameScreen();
-  }
-
-  function saveGameState() {
-    if (gameOver) return;
-    const state = {
-      score, perfects, combo, colorHue, speed, currentAxis, movingDir,
-      stackData: stack.map(m => ({
-        x: m.position.x, y: m.position.y, z: m.position.z,
-        w: m.geometry.parameters.width, d: m.geometry.parameters.depth,
-        hue: m.material.color.getHSL({h:0,s:0,l:0}).h * 360
-      }))
     };
-    save.update({ activeGame: state });
-  }
-
-  function endGame() {
-    gameOver = true;
-    save.update({ activeGame: null });
-    playSound("lose");
-    
-    // Calculate Credits
-    const diffMulti = DIFFICULTIES[selectedDifficulty].rewardMultiplier;
-    const reward = Math.floor((score * 2 + perfects * 5) * diffMulti);
-    creditsEarned = reward;
-
-    let isNewBest = false;
-    save.mutate(data => {
-      data.credits += reward;
-      data.stats.gamesPlayed += 1;
-      data.stats.totalBlocks += score;
-      data.stats.totalPerfects += perfects;
-      data.stats.creditsEarned += reward;
-      if (score > data.stats.highestScore) {
-        data.stats.highestScore = score;
-        isNewBest = true;
-      }
-    });
-
-    ui.resultScore.textContent = String(score);
-    ui.resultPerfects.textContent = String(perfects);
-    ui.resultBest.textContent = isNewBest ? "SÍ" : "NO";
-    ui.resultCredits.textContent = `+${reward}`;
-    
-    setTimeout(() => {
-      ui.resultModal.classList.remove("closed");
-      refreshAll();
-    }, 1000); // Give a second to watch block fall
-  }
-
-  function togglePause() {
-    if (gameOver || !gameStarted) return;
-    isPaused = !isPaused;
-    ui.pauseLayer.classList.toggle("closed", !isPaused);
-    ui.pauseButton.textContent = isPaused ? "REANUDAR" : "PAUSA";
-    if (isPaused) {
-      playSound("pause");
-      saveGameState();
-    } else {
-      playSound("select");
+    const SKINS = [
+    {
+      id: 'porcelain',
+      name: 'Porcelain',
+      cost: 0,
+      color: '#a6dcca',
+      dark: '#41677b',
+      glow: '#dcfff2',
+      description: 'Stepped ceramic slabs with inset seams.'
+    },
+    {
+      id: 'robotic',
+      name: 'Robotic',
+      cost: 220,
+      color: '#788ea6',
+      dark: '#273e57',
+      glow: '#8effbd',
+      description: 'Armored panels, corner bolts, and a machine-eye visor.'
+    },
+    {
+      id: 'astral',
+      name: 'Astral',
+      cost: 420,
+      color: '#8974c4',
+      dark: '#382b69',
+      glow: '#d6baff',
+      description: 'Faceted star cores suspended inside orbital frames.'
+    },
+    {
+      id: 'greenhouse',
+      name: 'Greenhouse',
+      cost: 580,
+      color: '#7cac85',
+      dark: '#315b52',
+      glow: '#b7e197',
+      description: 'Living terraces, planter beds, and tiny sculpted trees.'
+    },
+    {
+      id: 'reactor',
+      name: 'Reactor',
+      cost: 780,
+      color: '#c3b278',
+      dark: '#44474e',
+      glow: '#c4ff58',
+      description: 'Containment ribs around a luminous energy chamber.'
+    },
+    {
+      id: 'glacier',
+      name: 'Glacier',
+      cost: 860,
+      color: '#8fc5de',
+      dark: '#375c8c',
+      glow: '#d2f9ff',
+      description: 'Cut ice shelves with jagged crystalline crowns.'
+    },
+    {
+      id: 'clockwork',
+      name: 'Clockwork',
+      cost: 1100,
+      color: '#bc8d59',
+      dark: '#513e3e',
+      glow: '#ffd397',
+      description: 'Brass gear teeth, copper rails, and precision axles.'
+    },
+    {
+      id: 'citadel',
+      name: 'Citadel',
+      cost: 1500,
+      color: '#a2abbc',
+      dark: '#424b69',
+      glow: '#f0c48d',
+      description: 'Carved stone, arched windows, and battlement corners.'
     }
-  }
-
-  function updateGameUI() {
-    ui.sideScore.textContent = score;
-    ui.sideBest.textContent = Math.max(save.data.stats.highestScore, score);
-    ui.sideCombo.textContent = `${combo} / 5`;
-    ui.sidePerfects.textContent = perfects;
-    
-    if (combo > 0 && combo < 5) {
-      ui.sideCombo.classList.add("combo-active");
-    } else {
-      ui.sideCombo.classList.remove("combo-active");
-    }
-
-    const estCredits = Math.floor((score * 2 + perfects * 5) * DIFFICULTIES[selectedDifficulty].rewardMultiplier);
-    ui.rewardAmount.textContent = `C ${estCredits}`;
-  }
-
-  function leaveForMenu() {
-    if (gameStarted && !gameOver) saveGameState();
-    isPaused = false;
-    gameStarted = false;
-    ui.gameScreen.classList.remove("active");
-    openScreen("home-screen");
-  }
-
-  /* ---------- Menus & Data ---------- */
-  function showOnlyScreen(id) {
-    document.querySelectorAll(".screen").forEach(screen => {
-      screen.classList.toggle("active", screen.id === id);
-    });
-  }
-
-  function openScreen(id) {
-    ui.resultModal.classList.add("closed");
-    ui.gameScreen.classList.remove("active");
-    showOnlyScreen(id);
-    refreshAll();
-  }
-
-  function showGameScreen() {
-    ui.resultModal.classList.add("closed");
-    showOnlyScreen(null);
-    ui.gameScreen.classList.add("active");
-    ui.pauseLayer.classList.add("closed");
-    
-    // Force renderer resize
-    setTimeout(onWindowResize, 50);
-  }
-
-  function refreshAll() {
-    selectedDifficulty = DIFFICULTIES[selectedDifficulty] ? selectedDifficulty : save.data.selectedDifficulty;
-    
-    ui.difficultyGrid.querySelectorAll("[data-difficulty]").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.difficulty === selectedDifficulty);
-    });
-    ui.continueButton.classList.toggle("hidden", !save.data.activeGame);
-    
-    ui.gameDifficulty.textContent = DIFFICULTIES[selectedDifficulty].name.toUpperCase();
-    
-    refreshSkinShop();
-    refreshStats();
-    refreshCreditLabels(save.data);
-  }
-
-  function refreshSkinShop() {
-    ui.skinGrid.replaceChildren();
-    Object.entries(SKINS).forEach(([id, skin]) => {
-      const owned = save.data.ownedSkins.includes(id);
-      const selected = save.data.selectedSkin === id;
-      const card = document.createElement("article");
-      card.className = `shop-card${selected ? " selected" : ""}`;
-      
-      const art = document.createElement("div");
-      art.className = "skin-art";
-      art.textContent = id.substring(0,2).toUpperCase();
-      
-      const copy = document.createElement("div");
-      copy.className = "shop-copy";
-      copy.innerHTML = `<strong>${skin.name}</strong><span>${skin.copy}</span>`;
-      const btn = document.createElement("button");
-      btn.className = `shop-btn${owned ? " owned" : ""}`;
-      btn.dataset.skinId = id;
-      btn.disabled = selected || (!owned && save.data.credits < skin.price);
-      btn.textContent = selected ? "SELECCIONADO" : owned ? "USAR" : `C ${skin.price}`;
-      
-      copy.appendChild(btn);
-      card.append(art, copy);
-      ui.skinGrid.appendChild(card);
-    });
-  }
-
-  function refreshStats() {
-    const s = save.data.stats;
-    const values = [
-      ["Partidas Jugadas", s.gamesPlayed],
-      ["Mejor Puntuación", s.highestScore],
-      ["Bloques Apilados", s.totalBlocks],
-      ["Total Perfectos", s.totalPerfects],
-      ["Créditos Ganados", s.creditsEarned],
-      ["Skins", `${save.data.ownedSkins.length}/${Object.keys(SKINS).length}`]
     ];
-    ui.statsGrid.innerHTML = values.map(([label, val]) => `<div class="stat-card"><span>${label}</span><strong>${typeof val==='number'?val.toLocaleString():val}</strong></div>`).join("");
-  }
-
-  function refreshCreditLabels(data) {
-    document.querySelectorAll("[data-credits]").forEach(n => { n.textContent = data.credits.toLocaleString("en-US"); });
-  }
-
-  function showToast(html) {
-    const toast = document.createElement("div");
-    toast.className = "toast";
-    toast.innerHTML = html;
-    ui.toastStack.appendChild(toast);
-    setTimeout(() => toast.remove(), 2800);
-  }
-
-  /* ---------- Sound System ---------- */
-  function getAudioContext() {
-    if (!audioContext) {
-      const AudioConstructor = window.AudioContext || window.webkitAudioContext;
-      if (!AudioConstructor) return null;
-      audioContext = new AudioConstructor();
+    const skinById = id => SKINS.find(s => s.id === id) || SKINS[0];
+    class SaveManager {
+      static STORAGE_KEY = 'ARCADE_GAMES';
+      static GAME_KEY = 'stack';
+      static data = null;
+      static failed = false;
+      static defaults() {
+        return {
+          version: 1,
+          credits: 0,
+          owned: ['porcelain'],
+          skin: 'porcelain',
+          mode: 'normal',
+          best: {
+            easy: 0,
+            normal: 0,
+            hard: 0
+          },
+          bestCombo: 0,
+          totalLayers: 0,
+          totalRuns: 0,
+          settings: {
+            controls: true,
+            sound: true,
+            motion: true
+          }
+        };
+      }
+      static sanitize(raw) {
+        const d = this.defaults();
+        if (!raw || typeof raw !== 'object') return d;
+        d.credits = count(raw.credits);
+        d.owned = SKINS.filter(s => s.cost === 0 || (Array.isArray(raw.owned) && raw.owned.includes(s.id))).map(s => s.id);
+        d.skin = d.owned.includes(raw.skin) ? raw.skin : 'porcelain';
+        d.mode = Object.hasOwn(MODES, raw.mode) ? raw.mode : 'normal';
+        for (const mode of Object.keys(MODES)) d.best[mode] = count(raw.best?.[mode]);
+        for (const key of ['bestCombo', 'totalLayers', 'totalRuns']) d[key] = count(raw[key]);
+        for (const key of Object.keys(d.settings)) {
+          if (typeof raw.settings?.[key] === 'boolean') d.settings[key] = raw.settings[key];
+        }
+        return d;
+      }
+      static root() {
+        const raw = localStorage.getItem(this.STORAGE_KEY);
+        const root = raw ? JSON.parse(raw) : {
+        };
+        if (!root || typeof root !== 'object' || Array.isArray(root)) throw new Error('Invalid arcade save');
+        return root;
+      }
+      static load() {
+        try {
+          this.data = this.sanitize(this.root()[this.GAME_KEY]);
+        }
+        catch (error) {
+          this.data = this.defaults();
+          this.failed = true;
+        }
+        $('saveWarning').classList.toggle('hidden', !this.failed);
+      }
+      static update(change) {
+        // Refresh before every transaction so purchases use the current wallet.
+        // All sibling games and extra integration fields remain in the root.
+        let root;
+        try {
+          root = this.root();
+          if (!this.failed) this.data = this.sanitize(root[this.GAME_KEY]);
+        }
+        catch (error) {
+          this.failed = true;
+        }
+        change(this.data);
+        try {
+          if (!root) throw new Error('Save unavailable');
+          root[this.GAME_KEY] = {
+            ...root[this.GAME_KEY],
+            ...this.data
+          };
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(root));
+          this.failed = false;
+        }
+        catch (error) {
+          this.failed = true;
+        }
+        $('saveWarning').classList.toggle('hidden', !this.failed);
+        $('credits').textContent = display(this.data.credits);
+      }
+      static buy(id) {
+        const skin = SKINS.find(s => s.id === id);
+        if (!skin) return false;
+        let success = false;
+        this.update(d => {
+          if (!d.owned.includes(id)) {
+            if (d.credits < skin.cost) return;
+            d.credits -= skin.cost;
+            d.owned.push(id);
+          }
+          d.skin = id;
+          success = true;
+        });
+        return success;
+      }
     }
-    if (audioContext.state === "suspended") audioContext.resume().catch(()=>{});
-    return audioContext;
-  }
-
-  function playSound(type) {
-    if (!save.data.sound) return;
-    const audio = getAudioContext();
-    if (!audio) return;
-    
-    // [freq, duration, delay, type]
-    const patterns = {
-      select: [[280,.025,0,"sine"]],
-      place: [[400,.04,0,"square"]],
-      perfect: [[600,.05,0,"sine"], [800,.1,.05,"sine"]],
-      grow: [[300,.1,0,"sine"], [400,.1,.1,"sine"], [600,.2,.2,"sine"]],
-      pause: [[250,.04,0,"sine"],[180,.05,.045,"sine"]],
-      start: [[260,.04,0,"square"],[390,.05,.05,"square"],[520,.07,.11,"square"]],
-      buy: [[350,.04,0,"sine"],[530,.05,.05,"sine"],[730,.09,.11,"sine"]],
-      lose: [[190,.1,0,"sawtooth"],[145,.15,.1,"sawtooth"],[105,.3,.25,"sawtooth"]]
+    // Small vector helpers keep every skin in the same world coordinate system.
+    const V = {
+      add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
+      sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+      dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+      cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+      rotate(point, angles) {
+        let [x, y, z] = point;
+        const [rx, ry, rz] = angles;
+        [y, z] = [y * Math.cos(rx) - z * Math.sin(rx), y * Math.sin(rx) + z * Math.cos(rx)];
+        [x, z] = [x * Math.cos(ry) + z * Math.sin(ry), -x * Math.sin(ry) + z * Math.cos(ry)];
+        [x, y] = [x * Math.cos(rz) - y * Math.sin(rz), x * Math.sin(rz) + y * Math.cos(rz)];
+        return [x, y, z];
+      }
     };
-    
-    const start = audio.currentTime;
-    (patterns[type] || patterns.select).forEach(([frequency, duration, delay, oscType]) => {
-      const oscillator = audio.createOscillator();
-      const gain = audio.createGain();
-      oscillator.type = oscType || "sine";
-      oscillator.frequency.value = frequency;
-      
-      gain.gain.setValueAtTime(.0001, start + delay);
-      gain.gain.exponentialRampToValueAtTime(.05, start + delay + .008);
-      gain.gain.exponentialRampToValueAtTime(.0001, start + delay + duration + .05);
-      
-      oscillator.connect(gain);
-      gain.connect(audio.destination);
-      oscillator.start(start + delay);
-      oscillator.stop(start + delay + duration + .1);
-    });
-  }
-
-  /* ---------- Event Listeners ---------- */
-  document.querySelectorAll("[data-open]").forEach(btn => {
-    btn.addEventListener("click", () => { openScreen(btn.dataset.open); playSound("select"); });
-  });
-
-  ui.difficultyGrid.addEventListener("click", e => {
-    const btn = e.target.closest("[data-difficulty]");
-    if (!btn) return;
-    selectedDifficulty = btn.dataset.difficulty;
-    save.update({ selectedDifficulty });
-    refreshAll();
-    playSound("select");
-  });
-
-  ui.skinGrid.addEventListener("click", e => {
-    const btn = e.target.closest("[data-skin-id]");
-    if (btn && !btn.disabled) {
-      const id = btn.dataset.skinId;
-      const owned = save.data.ownedSkins.includes(id);
-      if (!owned && !save.buySkin(id)) return;
-      save.data.selectedSkin = id;
-      save.persist();
-      refreshAll();
-      playSound(owned ? "select" : "buy");
-      if (!owned) showToast(`<b>${SKINS[id].name}</b> desbloqueado`);
+    function shade(hex, factor) {
+      const n = parseInt(hex.slice(1), 16);
+      const rgb = [n >> 16, n >> 8 & 255, n & 255];
+      return 'rgb(' + rgb.map(v => Math.round(clamp(v * factor, 0, 255))).join(',') + ')';
     }
-  });
-
-  document.getElementById("play-button").addEventListener("click", () => newGame(selectedDifficulty));
-  ui.continueButton.addEventListener("click", resumeSavedGame);
-  ui.pauseButton.addEventListener("click", togglePause);
-  document.getElementById("resume-button").addEventListener("click", togglePause);
-  document.getElementById("quit-button").addEventListener("click", leaveForMenu);
-  document.getElementById("result-menu").addEventListener("click", leaveForMenu);
-  document.getElementById("result-again").addEventListener("click", () => newGame(selectedDifficulty));
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden && gameStarted && !gameOver && !isPaused && ui.gameScreen.classList.contains("active")) {
-      togglePause();
+    class Mesh {
+      constructor() {
+        this.faces = [];
+      }
+      face(vertices, color, glow = false) {
+        this.faces.push( {
+          vertices,
+          color,
+          glow
+        });
+      }
+      box(x, y, z, w, h, d, color) {
+        const a = x - w / 2,
+        b = x + w / 2;
+        const c = y - h / 2,
+        e = y + h / 2;
+        const f = z - d / 2,
+        g = z + d / 2;
+        this.face([[a, e, f], [a, e, g], [b, e, g], [b, e, f]], color);
+        this.face([[a, c, g], [a, c, f], [b, c, f], [b, c, g]], color);
+        this.face([[b, c, f], [b, e, f], [b, e, g], [b, c, g]], color);
+        this.face([[a, c, g], [a, e, g], [a, e, f], [a, c, f]], color);
+        this.face([[b, c, g], [b, e, g], [a, e, g], [a, c, g]], color);
+        this.face([[a, c, f], [a, e, f], [b, e, f], [b, c, f]], color);
+      }
+      diamond(x, y, z, radius, height, color, sides = 6) {
+        for (let i = 0; i < sides; i++) {
+          const a = i * Math.PI * 2 / sides,
+          b = (i + 1) * Math.PI * 2 / sides;
+          const p = [x + Math.cos(a) * radius, y, z + Math.sin(a) * radius];
+          const q = [x + Math.cos(b) * radius, y, z + Math.sin(b) * radius];
+          this.face([[x, y+height/2, z], q, p], color);
+          this.face([[x, y-height/2, z], p, q], color);
+        }
+      }
+      ring(x, y, z, rx, rz, thickness, color, segments = 18) {
+        for (let i = 0; i < segments; i++) {
+          const a = i * Math.PI * 2 / segments,
+          b = (i + 1) * Math.PI * 2 / segments;
+          this.face([
+          [x+Math.cos(a)*rx, y, z+Math.sin(a)*rz],
+          [x+Math.cos(b)*rx, y, z+Math.sin(b)*rz],
+          [x+Math.cos(b)*(rx-thickness), y, z+Math.sin(b)*(rz-thickness)],
+          [x+Math.cos(a)*(rx-thickness), y, z+Math.sin(a)*(rz-thickness)]
+          ].reverse(), color, true);
+        }
+      }
     }
-  });
-
-  // Boot
-  refreshAll();
-  openScreen("home-screen");
-
+    function blockMesh(w, d, skinId, detail = true) {
+      const skin = skinById(skinId),
+      m = new Mesh();
+      const x = w / 2,
+      z = d / 2,
+      trim = Math.min(w, d) * .075;
+      const box = (...args) => m.box(...args);
+      // The primary prism always occupies the exact collision footprint.
+      box(0, 0, 0, w, HEIGHT, d, skin.color);
+      box(0, -.20, 0, w, .06, d, skin.dark);
+      box(0, .205, 0, w * .95, .05, d * .95, skin.color);
+      if (!detail || Math.min(w, d) < .16) return m;
+      switch (skinId) {
+        case 'porcelain':
+        box(0, .237, 0, w * .72, .018, d * .72, skin.glow);
+        box(0, .249, 0, w * .68, .009, d * .68, skin.color);
+        box(0, .03, z + .003, w * .6, .045, .008, skin.dark);
+        break;
+        case 'robotic':
+        box(0, .25, 0, w * .62, .05, d * .56, skin.dark);
+        box(0, .28, 0, w * .32, .016, d * .09, skin.glow);
+        for (const a of [-1, 1]) for (const b of [-1, 1]) {
+          box(a * x * .77, .24, b * z * .77, trim, .07, trim, '#c8d0d5');
+        }
+        box(0, .04, z + .008, w * .63, .16, .02, skin.dark);
+        for (const a of [-1, 1]) box(a * w * .16, .06, z + .022, w * .09, .055, .018, skin.glow);
+        for (const a of [-1, 1]) box(a * x * .92, 0, 0, trim, .38, d * .48, skin.dark);
+        break;
+        case 'astral':
+        box(0, .242, 0, w * .82, .035, d * .82, skin.dark);
+        m.ring(0, .269, 0, w * .36, d * .36, trim * .30, skin.glow);
+        m.diamond(0, .29, 0, Math.min(w, d) * .18, .20, skin.glow, 5);
+        for (let i = 0; i < 3; i++) {
+          const a = i * Math.PI * 2 / 3;
+          m.diamond(Math.cos(a) * w * .31, .29, Math.sin(a) * d * .31, trim * .45, .12, '#f0d9ff', 4);
+        }
+        box(0, -.04, z + .007, w * .77, .035, .012, skin.glow);
+        break;
+        case 'greenhouse':
+        box(0, .25, 0, w * .78, .04, d * .76, '#314c46');
+        for (const a of [-1, 0, 1]) {
+          const px = a * w * .25;
+          box(px, .28, 0, trim, .09, trim, '#8f6e4e');
+          m.diamond(px, .33, 0, Math.min(w, d) * .105, .18, skin.glow, 5);
+        }
+        for (const a of [-1, 1]) box(0, .255, a * z * .81, w * .89, .045, trim * .55, '#bbca95');
+        box(0, 0, z + .012, w * .8, .12, .02, '#bfd7b2');
+        break;
+        case 'reactor':
+        box(0, .24, 0, w * .66, .03, d * .65, skin.dark);
+        m.ring(0, .26, 0, w * .26, d * .26, trim * .8, skin.glow, 12);
+        box(0, .265, 0, w * .13, .055, d * .13, skin.glow);
+        for (let i = -1; i <= 1; i++) {
+          box(i * w * .28, 0, z + .02, w * .065, .36, .05, skin.dark);
+          box(x + .02, 0, i * d * .28, .05, .36, d * .065, skin.dark);
+        }
+        box(0, 0, z + .003, w * .85, .08, .012, skin.glow);
+        break;
+        case 'glacier':
+        for (let i = 0; i < 5; i++) {
+          const a = i * 2.4,
+          r = .17 + (i % 2) * .1;
+          m.diamond(Math.cos(a) * w * r, .28, Math.sin(a) * d * r, Math.min(w, d) * .11, .14 + (i % 3) * .035, i % 2 ? skin.color : skin.glow, 4);
+        }
+        box(0, -.08, z + .003, w * .9, .045, .008, skin.glow);
+        box(x + .003, .05, 0, .008, .05, d * .7, skin.glow);
+        break;
+        case 'clockwork':
+        box(0, .25, 0, w * .75, .035, d * .74, skin.dark);
+        m.ring(0, .275, 0, w * .24, d * .24, trim * .55, skin.glow, 16);
+        for (let i = 0; i < 12; i++) {
+          const a = i * Math.PI / 6;
+          box(Math.cos(a) * w * .24, .28, Math.sin(a) * d * .24, w * .055, .05, d * .055, skin.glow);
+        }
+        box(0, .285, 0, trim, .09, trim, '#ddbe86');
+        for (const a of [-1, 1]) box(a * w * .38, 0, z + .015, w * .09, .35, .035, skin.dark);
+        break;
+        case 'citadel':
+        for (const a of [-1, 1]) for (const b of [-1, 1]) {
+          box(a * x * .78, .275, b * z * .78, w * .16, .10, d * .16, '#c4c8cd');
+        }
+        for (let i = -1; i <= 1; i++) {
+          const px = i * w * .25;
+          box(px, .00, z + .007, w * .115, .20, .015, skin.dark);
+          box(px, .015, z + .018, w * .06, .12, .01, skin.glow);
+        }
+        box(0, .05, x > z ? -z - .003 : 0, w * .75, .03, d * .7, '#c9c5bc');
+        break;
+      }
+      return m;
+    }
+    class Renderer {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.width = 1;
+        this.height = 1;
+        this.scale = 50;
+        this.target = [0, 0, 0];
+        this.origin = [.5, .57];
+        this.faces = [];
+        this.setAngle(.78, .53);
+      }
+      setAngle(yaw, elevation) {
+        this.right = [Math.cos(yaw), 0, -Math.sin(yaw)];
+        this.up = [-Math.sin(yaw)*Math.sin(elevation), Math.cos(elevation), -Math.cos(yaw)*Math.sin(elevation)];
+        this.view = [Math.sin(yaw)*Math.cos(elevation), Math.sin(elevation), Math.cos(yaw)*Math.cos(elevation)];
+      }
+      resize(width, height, ratio = 1) {
+        this.width = width;
+        this.height = height;
+        this.canvas.width = Math.round(width * ratio);
+        this.canvas.height = Math.round(height * ratio);
+        this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        this.surface = document.createElement('canvas');
+        this.surface.width = Math.max(1, Math.round(width));
+        this.surface.height = Math.max(1, Math.round(height));
+        this.surfaceContext = this.surface.getContext('2d');
+        this.pixels = this.surfaceContext.createImageData(this.surface.width, this.surface.height);
+        this.depthBuffer = new Float32Array(this.surface.width * this.surface.height);
+      }
+      project(point) {
+        const p = V.sub(point, this.target);
+        return [this.width*this.origin[0] + V.dot(p, this.right)*this.scale,
+        this.height*this.origin[1] - V.dot(p, this.up)*this.scale];
+      }
+      submit(mesh, position, rotation = [0, 0, 0], alpha = 1) {
+        for (const face of mesh.faces) {
+          const points = face.vertices.map(p => V.add(V.rotate(p, rotation), position));
+          const normal = V.cross(V.sub(points[1], points[0]), V.sub(points[2], points[0]));
+          const length = Math.hypot(...normal);
+          if (length < 1e-8 || V.dot(normal, this.view) <= 0) continue;
+          const light = face.glow ? 1.18 : .65 + Math.max(0, V.dot(normal, [-.25, .86, .44]) / length) * .44;
+          this.faces.push( {
+            points,
+            depth: points.reduce((n, p)=>n+V.dot(p, this.view), 0)/points.length,
+            color: shade(face.color, light),
+            alpha
+          });
+        }
+      }
+      flush() {
+        const c = this.ctx;
+        if (!this.surface) this.resize(this.width, this.height);
+        const width = this.surface.width, height = this.surface.height;
+        const pixels = this.pixels.data, depths = this.depthBuffer;
+        pixels.fill(0);
+        depths.fill(-Infinity);
+        // Resolve visibility per pixel, not by a face's average depth. Large
+        // base faces must never paint over a nearer block or its decoration.
+        this.faces.sort((a, b)=>a.depth-b.depth);
+        for (const face of this.faces) {
+          const points = face.points.map(p => [...this.project(p), V.dot(p, this.view)]);
+          const rgb = face.color.match(/\d+/g).map(Number);
+          for (let i = 1; i < points.length - 1; i++) {
+            const [a, b, d] = [points[0], points[i], points[i + 1]];
+            const area = (b[0]-a[0])*(d[1]-a[1])-(b[1]-a[1])*(d[0]-a[0]);
+            if (Math.abs(area) < 1e-8) continue;
+            const left = Math.max(0, Math.floor(Math.min(a[0], b[0], d[0])));
+            const right = Math.min(width-1, Math.ceil(Math.max(a[0], b[0], d[0])));
+            const top = Math.max(0, Math.floor(Math.min(a[1], b[1], d[1])));
+            const bottom = Math.min(height-1, Math.ceil(Math.max(a[1], b[1], d[1])));
+            for (let y = top; y <= bottom; y++) {
+              for (let x = left; x <= right; x++) {
+                const px = x+.5, py = y+.5;
+                const u = ((b[0]-px)*(d[1]-py)-(b[1]-py)*(d[0]-px))/area;
+                const v = ((d[0]-px)*(a[1]-py)-(d[1]-py)*(a[0]-px))/area;
+                const w = 1-u-v;
+                if (u < -1e-9 || v < -1e-9 || w < -1e-9) continue;
+                const depth = u*a[2]+v*b[2]+w*d[2];
+                const index = y*width+x;
+                if (depth < depths[index]-1e-6) continue;
+                depths[index] = depth;
+                const offset = index*4;
+                pixels[offset] = rgb[0];
+                pixels[offset+1] = rgb[1];
+                pixels[offset+2] = rgb[2];
+                pixels[offset+3] = Math.round(clamp(face.alpha, 0, 1)*255);
+              }
+            }
+          }
+        }
+        this.surfaceContext.putImageData(this.pixels, 0, 0);
+        c.globalAlpha = 1;
+        c.drawImage(this.surface, 0, 0, this.width, this.height);
+        this.faces.length = 0;
+      }
+      background(time = 0) {
+        const c = this.ctx,
+        w = this.width,
+        h = this.height;
+        const gradient = c.createLinearGradient(0, 0, w, h);
+        gradient.addColorStop(0, '#111a2c');
+        gradient.addColorStop(.6, '#1e3048');
+        gradient.addColorStop(1, '#34545b');
+        c.fillStyle = gradient;
+        c.fillRect(0, 0, w, h);
+        for (let i = 0; i < 40; i++) {
+          const x = ((i*137.51)%997)/997*w;
+          const y = ((i*273.43)%991)/991*h;
+          c.fillStyle = 'rgba(196,226,244,' + (.10 + .09*Math.sin(i+time*.3)) + ')';
+          c.fillRect(x, y, i%4===0?2:1, i%4===0?2:1);
+        }
+      }
+      outline(block, color) {
+        const y = block.y + HEIGHT / 2 + .008;
+        const points = [[block.x-block.w/2, y, block.z-block.d/2], [block.x+block.w/2, y, block.z-block.d/2], [block.x+block.w/2, y, block.z+block.d/2], [block.x-block.w/2, y, block.z+block.d/2]];
+        const c = this.ctx;
+        c.strokeStyle = color;
+        c.lineWidth = 1.5;
+        c.beginPath();
+        points.forEach((p, i)=> {
+          const [x, y] = this.project(p);
+          if(i)c.lineTo(x, y);
+          else c.moveTo(x, y);
+        });
+        c.closePath();
+        c.stroke();
+      }
+    }
+    function makeBlock(x, y, z, w, d, skin, detail = true) {
+      return {
+        x,
+        y,
+        z,
+        w,
+        d,
+        mesh: blockMesh(w, d, skin, detail)
+      };
+    }
+    // Pure placement geometry is shared by the game and its tests.
+    function intersection(top, moving, axis, tolerance) {
+      const span = axis === 'x' ? 'w' : 'd';
+      const delta = moving[axis] - top[axis];
+      if (Math.abs(delta) <= Math.min(tolerance, top[span]*.13)) {
+        return {
+          perfect: true,
+          center: top[axis],
+          size: top[span],
+          cut: 0,
+          delta
+        };
+      }
+      const lo = Math.max(top[axis]-top[span]/2, moving[axis]-moving[span]/2);
+      const hi = Math.min(top[axis]+top[span]/2, moving[axis]+moving[span]/2);
+      const size = Math.max(0, hi-lo);
+      return {
+        perfect: false,
+        center: (lo+hi)/2,
+        size,
+        cut: moving[span]-size,
+        delta
+      };
+    }
+    class Game {
+      constructor() {
+        this.state = 'menu';
+        this.blocks = [];
+        this.debris = [];
+        this.particles = [];
+        this.camera = [0, 0, 0];
+        this.shake = 0;
+        this.visualTime = 0;
+        this.active = null;
+        this.preview();
+      }
+      preview() {
+        this.skin = SaveManager.data?.skin || 'porcelain';
+        this.blocks = [];
+        for (let i=0; i<8; i++) this.blocks.push(makeBlock(Math.sin(i*.4)*.2, i*HEIGHT, Math.cos(i*.6)*.15, 3.4-i*.09, 3.4-i*.09, this.skin));
+        this.active = null;
+        this.debris = [];
+        this.particles = [];
+        this.camera = [0, 1.7, 0];
+      }
+      start() {
+        this.mode = SaveManager.data.mode;
+        this.config = MODES[this.mode];
+        this.skin = SaveManager.data.skin;
+        this.state = 'playing';
+        this.height = 0;
+        this.combo = 0;
+        this.bestCombo = 0;
+        this.elapsed = 0;
+        this.creditSeconds = 0;
+        this.earned = 0;
+        this.feedback = '';
+        this.feedbackLife = 0;
+        this.delay = 0;
+        this.endDelay = 0;
+        this.settled = false;
+        this.shake = 0;
+        this.blocks = [makeBlock(0, 0, 0, MAX_SIZE, MAX_SIZE, this.skin)];
+        this.debris = [];
+        this.particles = [];
+        this.camera = [0, 0, 0];
+        this.spawn();
+        UI.screen(null);
+        UI.hud(true);
+        SaveManager.update(d => d.totalRuns++);
+        AudioFX.play('start');
+      }
+      top() {
+        return this.blocks[this.blocks.length-1];
+      }
+      spawn() {
+        const top = this.top();
+        this.axis = this.height % 2 === 0 ? 'x' : 'z';
+        // Slide at the final placement height, directly against the tower.
+        this.active = makeBlock(top.x, top.y+HEIGHT, top.z, top.w, top.d, this.skin);
+        this.phase = this.height % 4 < 2 ? -.95 : .95;
+        this.direction = this.phase < 0 ? 1 : -1;
+        this.active[this.axis] += this.phase*5;
+        this.flight = 0;
+      }
+      place() {
+        if (this.state !== 'playing' || !this.active) return false;
+        this.land();
+        return true;
+      }
+      earn(amount) {
+        const reward = count(amount);
+        if (!reward) return;
+        this.earned += reward;
+        SaveManager.update(d => d.credits += reward);
+      }
+      falling(block, direction = 1) {
+        this.debris.push( {
+          ...block,
+          vx: this.axis==='x'?direction*.9:0,
+          vz: this.axis==='z'?direction*.9:0,
+          vy: -.4,
+          rotation: [0, 0, 0],
+          spin: [this.axis==='z'?direction*1.8:.3, .4, this.axis==='x'?-direction*1.8:.2],
+          age: 0,
+          bounces: 0
+        });
+        if (this.debris.length > 18) this.debris.shift();
+      }
+      land() {
+        const top = this.top(),
+        moving = this.active;
+        const result = intersection(top, moving, this.axis, this.config.tolerance);
+        moving.y = top.y + HEIGHT;
+        this.active = null;
+        if (result.size <= .025) {
+          this.falling(moving, Math.sign(result.delta)||1);
+          this.finish('The block missed the tower.');
+          return;
+        }
+        const span = this.axis==='x'?'w':'d';
+        if (!result.perfect && result.cut > 0) {
+          const direction = Math.sign(result.delta);
+          const cut = {
+            ...moving
+          };
+          cut[span] = result.cut;
+          cut[this.axis] = moving[this.axis] + direction * (moving[span]-result.cut)/2;
+          cut.mesh = blockMesh(cut.w, cut.d, this.skin, false);
+          this.falling(cut, direction);
+        }
+        moving[this.axis] = result.center;
+        moving[span] = result.size;
+        if (result.perfect) {
+          this.combo++;
+          this.bestCombo = Math.max(this.bestCombo, this.combo);
+          const reward = 2*Math.min(this.combo, 25)*this.config.multiplier;
+          this.earn(reward);
+          let growth = false;
+          if (this.combo >= 5) {
+            const before = moving.w*moving.d;
+            moving.w = Math.min(MAX_SIZE, moving.w+.14);
+            moving.d = Math.min(MAX_SIZE, moving.d+.14);
+            growth = moving.w*moving.d > before+.0001;
+          }
+          this.feedback = (growth?'REGROWTH':'PERFECT')+' · +'+reward+' C';
+          this.burst(moving);
+          AudioFX.play('perfect', this.combo);
+        }
+        else {
+          this.combo = 0;
+          this.feedback = 'TRIMMED · '+Math.round(result.size/(result.size+result.cut)*100)+'% retained';
+          this.shake = .06;
+          AudioFX.play('cut');
+        }
+        moving.mesh = blockMesh(moving.w, moving.d, this.skin);
+        this.blocks.push(moving);
+        this.height++;
+        // Only the visible upper section needs meshes in memory.
+        if (this.blocks.length > 42) this.blocks.shift();
+        this.delay = .14;
+        this.feedbackLife = 1.4;
+        SaveManager.update(d => {
+          d.best[this.mode] = Math.max(d.best[this.mode], this.height);
+          d.bestCombo = Math.max(d.bestCombo, this.bestCombo);
+          d.totalLayers++;
+        });
+      }
+      burst(block) {
+        if (!SaveManager.data.settings.motion) return;
+        for (let i=0; i<16; i++) {
+          const a = i*Math.PI/8;
+          this.particles.push( {
+            x:block.x,
+            y:block.y+.4,
+            z:block.z,
+            vx:Math.cos(a)*2.8,
+            vy:1.4+(i%3)*.4,
+            vz:Math.sin(a)*2.8,
+            life:.8,
+            max:.8
+          });
+        }
+        if (this.particles.length > 80) this.particles.splice(0, this.particles.length-80);
+      }
+      finish(reason) {
+        if (this.state !== 'playing' && this.state !== 'paused') return;
+        this.state = 'ending';
+        this.reason = reason;
+        this.endDelay = .7;
+        this.active = null;
+        AudioFX.play('lose');
+        UI.hud(false);
+      }
+      pause() {
+        if (this.state !== 'playing') return;
+        this.state = 'paused';
+        UI.screen('pause');
+      }
+      resume() {
+        if (this.state !== 'paused') return;
+        this.state = 'playing';
+        UI.screen(null);
+      }
+      update(dt) {
+        if (this.state === 'paused') return;
+        this.visualTime += dt;
+        if (this.state === 'playing') {
+          this.elapsed += dt;
+          this.creditSeconds += dt;
+          while (this.creditSeconds >= 4) {
+            this.creditSeconds -= 4;
+            this.earn(this.config.multiplier);
+          }
+          this.feedbackLife = Math.max(0, this.feedbackLife-dt);
+          if (this.active) {
+              this.flight += dt;
+              const speed = this.config.speed*(1+Math.min(this.height, 100)*this.config.acceleration);
+              this.phase += this.direction*speed*dt/5;
+              if (this.phase > 1) {
+                this.phase = 2-this.phase;
+                this.direction = -1;
+              }
+              if (this.phase < -1) {
+                this.phase = -2-this.phase;
+                this.direction = 1;
+              }
+              this.active[this.axis] = this.top()[this.axis] + this.phase*5;
+              if (this.flight >= this.config.deadline) {
+                this.falling(this.active, Math.sign(this.phase)||1);
+                this.finish('Placement time ran out.');
+              }
+          }
+          else if (this.state === 'playing') {
+            this.delay -= dt;
+            if (this.delay <= 0) this.spawn();
+          }
+        }
+        if (this.state === 'ending') {
+          this.endDelay -= dt;
+          if (this.endDelay <= 0) {
+            this.state = 'over';
+            UI.results();
+          }
+        }
+        this.updatePhysics(dt);
+        const top = this.top();
+        if (top && this.state !== 'menu') {
+          const target = [top.x, top.y, top.z];
+          const smooth = 1-Math.exp(-dt*5);
+          this.camera = this.camera.map((n, i)=>n+(target[i]-n)*smooth);
+        }
+        this.shake *= Math.exp(-dt*14);
+      }
+      updatePhysics(dt) {
+        for (const body of this.debris) {
+          body.age += dt;
+          body.vy -= 15*dt;
+          body.x += body.vx*dt;
+          body.y += body.vy*dt;
+          body.z += body.vz*dt;
+          body.rotation = body.rotation.map((n, i)=>n+body.spin[i]*dt);
+          // Floor collision approximates the rotated prism with its extent.
+          const extents = [0, 0, 0];
+          for (const x of [-body.w/2, body.w/2]) for (const y of [-HEIGHT/2, HEIGHT/2]) for (const z of [-body.d/2, body.d/2]) {
+            const p = V.rotate([x, y, z], body.rotation);
+            for(let i=0; i<3; i++) extents[i]=Math.max(extents[i], Math.abs(p[i]));
+          }
+          const floor = -.34;
+          if (body.y-extents[1] < floor && body.vy < 0) {
+            body.y = floor+extents[1];
+            body.vy *= -.27;
+            body.vx *= .62;
+            body.vz *= .62;
+            body.spin = body.spin.map(n=>n*.5);
+            body.bounces++;
+          }
+        }
+        this.debris = this.debris.filter(b=>b.age<3.5 && b.y>this.camera[1]-20);
+        for (const p of this.particles) {
+          p.life -= dt;
+          p.vy -= 4*dt;
+          p.x += p.vx*dt;
+          p.y += p.vy*dt;
+          p.z += p.vz*dt;
+        }
+        this.particles = this.particles.filter(p=>p.life>0);
+      }
+    }
+    class AudioFX {
+      static context = null;
+      static play(kind, combo = 1) {
+        if (!SaveManager.data?.settings.sound) return;
+        try {
+          const C = window.AudioContext || window.webkitAudioContext;
+          if (!C) return;
+          this.context ||= new C();
+          if (this.context.state==='suspended') this.context.resume().catch(()=> {
+          });
+          const c = this.context,
+          t = c.currentTime;
+          const oscillator = c.createOscillator(),
+          gain = c.createGain();
+          const pitch = kind==='perfect'?330*Math.pow(2, Math.min(combo, 12)/12):kind==='lose'?130:kind==='cut'?180:420;
+          oscillator.type = kind==='cut'?'triangle':'sine';
+          oscillator.frequency.setValueAtTime(pitch, t);
+          oscillator.frequency.exponentialRampToValueAtTime(kind==='lose'?45:pitch*1.25, t+.16);
+          gain.gain.setValueAtTime(.0001, t);
+          gain.gain.exponentialRampToValueAtTime(.055, t+.01);
+          gain.gain.exponentialRampToValueAtTime(.0001, t+.23);
+          oscillator.connect(gain);
+          gain.connect(c.destination);
+          oscillator.start(t);
+          oscillator.stop(t+.24);
+        }
+        catch (error) {
+          /* Audio is optional. */
+        }
+      }
+    }
+    let game, renderer;
+    const UI = {
+      modal: 'menu',
+      back: 'menu',
+      toastTimer: null,
+      screen(name) {
+        this.modal = name;
+        for (const id of ['menu', 'shop', 'rules', 'settings', 'pause', 'result']) $(id).classList.toggle('hidden', id!==name);
+        if (name) {
+          $(name).scrollTop = 0;
+          const button = $(name).querySelector('button');
+          button?.focus( {
+            preventScroll:true
+          });
+        }
+        else document.activeElement?.blur?.();
+      },
+      hud(visible) {
+        $('hud').classList.toggle('hidden', !visible);
+        $('bottomHud').classList.toggle('hidden', !visible);
+        $('pauseButton').classList.toggle('hidden', !visible);
+        $('dropButton').classList.toggle('hidden', !SaveManager.data.settings.controls);
+      },
+      menu() {
+        game.state = 'menu';
+        game.preview();
+        this.screen('menu');
+        this.hud(false);
+        this.refreshMenu();
+      },
+      refreshMenu() {
+        const d = SaveManager.data;
+        $('credits').textContent = display(d.credits);
+        $('menuBest').textContent = 'Best '+d.best[d.mode];
+        $('menuSkin').textContent = skinById(d.skin).name;
+        document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active', b.dataset.mode===d.mode));
+      },
+      open(name) {
+        this.back = game.state==='paused'?'pause':'menu';
+        if (name==='settings') {
+          for (const key of ['controls', 'sound', 'motion']) $(key+'Setting').checked = SaveManager.data.settings[key];
+        }
+        if (name==='shop') this.shop();
+        this.screen(name);
+      },
+      close() {
+        this.screen(this.back);
+        this.refreshMenu();
+        this.hud(game.state==='paused');
+      },
+      toast(text) {
+        clearTimeout(this.toastTimer);
+        $('toast').textContent=text;
+        $('toast').classList.remove('hidden');
+        this.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'), 2200);
+      },
+      shop() {
+        $('skinGrid').replaceChildren();
+        for (const skin of SKINS) {
+          const card = document.createElement('article');
+          card.className = 'skin-card'+(SaveManager.data.skin===skin.id?' selected':'');
+          const canvas = document.createElement('canvas');
+          canvas.setAttribute('aria-label', skin.name+' 3D preview');
+          const r = new Renderer(canvas);
+          r.resize(360, 225);
+          r.scale=47;
+          r.target=[0, .1, 0];
+          r.origin=[.5, .60];
+          r.background();
+          r.submit(blockMesh(3, 2.7, skin.id), [0, -.4, 0]);
+          r.submit(blockMesh(2.7, 2.4, skin.id), [0, .06, 0]);
+          r.flush();
+          const info = document.createElement('div');
+          info.className='skin-info';
+          const title=document.createElement('h3');
+          title.textContent=skin.name;
+          const description=document.createElement('p');
+          description.textContent=skin.description;
+          const button=document.createElement('button');
+          const owned=SaveManager.data.owned.includes(skin.id),
+          selected=SaveManager.data.skin===skin.id;
+          button.textContent=selected?'Equipped':owned?'Equip':display(skin.cost)+' C';
+          button.disabled=selected||(!owned&&SaveManager.data.credits<skin.cost);
+          button.onclick=()=> {
+            if (SaveManager.buy(skin.id)) {
+              AudioFX.play('start');
+              game.preview();
+              this.shop();
+              this.refreshMenu();
+            }
+            else this.toast('Not enough credits.');
+          };
+          info.append(title, description, button);
+          card.append(canvas, info);
+          $('skinGrid').append(card);
+        }
+      },
+      results() {
+        this.screen('result');
+        this.hud(false);
+        $('resultTag').textContent=game.height>0&&game.height>=SaveManager.data.best[game.mode]?'Personal best':'Run complete';
+        $('resultReason').textContent=game.reason;
+        $('resultHeight').textContent=game.height;
+        $('resultCredits').textContent='+'+game.earned+' C';
+        $('resultCombo').textContent=game.bestCombo;
+        $('resultTime').textContent=clock(game.elapsed);
+      },
+      update() {
+        if (game.state!=='playing') return;
+        $('height').textContent=game.height;
+        $('combo').textContent=game.combo>=5?'COMBO '+game.combo+' · REGROWTH':game.combo?'COMBO '+game.combo:'';
+        $('feedback').textContent=game.feedbackLife>0?game.feedback:'';
+        $('earned').textContent='+'+game.earned+' C';
+        $('survival').textContent=clock(game.elapsed);
+        const top=game.top();
+        $('size').textContent=Math.round(top.w*top.d/(MAX_SIZE*MAX_SIZE)*100)+'% area';
+        const remaining=game.active?1-game.flight/game.config.deadline:1;
+        $('flightFill').style.transform='scaleX('+clamp(remaining, 0, 1)+')';
+        $('flightFill').style.background=remaining<.25?'#ff9488':'#acffbf';
+        $('dropButton').disabled=!game.active;
+      }
+    };
+    const Runtime = {
+      last: 0,
+      accumulator: 0,
+      uiTime: 0,
+      start() {
+        SaveManager.load();
+        game=new Game();
+        renderer=new Renderer($('world'));
+        this.resize();
+        this.bind();
+        UI.refreshMenu();
+        this.last=performance.now();
+        requestAnimationFrame(t=>this.frame(t));
+      },
+      resize() {
+        renderer.resize(window.innerWidth, window.innerHeight, Math.min(window.devicePixelRatio||1, 2));
+      },
+      render() {
+        const r=renderer,
+        c=r.ctx,
+        menu=game.state==='menu';
+        const motion=SaveManager.data.settings.motion&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        r.background(motion?game.visualTime:0);
+        r.setAngle(.78+(menu&&motion?Math.sin(game.visualTime*.14)*.16:0), .53);
+        r.origin=[menu&&r.width>700?.73:.5, r.height<550?.61:.59];
+        r.scale=Math.min(r.width/(menu?11:12.5), r.height/10.5, 84);
+        r.target=[...game.camera];
+        if (motion && game.shake>.001) r.target[0]+=Math.sin(game.visualTime*95)*game.shake;
+        // A floor and a low plinth ground the falling pieces in 3D space.
+        if (game.camera[1]<10) {
+          const floor=new Mesh();
+          floor.box(0, -.49, 0, 9, .30, 9, '#263f50');
+          r.submit(floor, [0, 0, 0]);
+        }
+        for (const b of game.blocks) {
+          if (b.y<game.camera[1]-13) continue;
+          r.submit(b.mesh, [b.x, b.y, b.z]);
+        }
+        for (const b of game.debris) r.submit(b.mesh, [b.x, b.y, b.z], b.rotation, Math.min(1, (3.5-b.age)*2));
+        if (game.active) r.submit(game.active.mesh, [game.active.x, game.active.y, game.active.z]);
+        r.flush();
+        if (motion) for (const p of game.particles) {
+          const [x, y]=r.project([p.x, p.y, p.z]);
+          c.globalAlpha=p.life/p.max;
+          c.fillStyle=skinById(game.skin).glow;
+          c.fillRect(x-2, y-2, 4, 4);
+        }
+        c.globalAlpha=1;
+      },
+      frame(now) {
+        const elapsed=Math.max(0, (now-this.last)/1000);
+        this.last=now;
+        // A suspended browser cannot award time or teleport a moving block.
+        if (elapsed>.3 && game.state==='playing') game.pause();
+        if (!document.hidden) {
+          this.accumulator+=Math.min(elapsed, .1);
+          while(this.accumulator>=1/120) {
+            game.update(1/120);
+            this.accumulator-=1/120;
+          }
+          this.uiTime+=elapsed;
+          if(this.uiTime>=.05) {
+            UI.update();
+            this.uiTime=0;
+          }
+          this.render();
+        }
+        requestAnimationFrame(t=>this.frame(t));
+      },
+      bind() {
+        $('playButton').onclick=()=>game.start();
+        $('againButton').onclick=()=>game.start();
+        $('menuButton').onclick=()=>UI.menu();
+        $('skinsButton').onclick=()=>UI.open('shop');
+        $('rulesButton').onclick=()=>UI.open('rules');
+        $('settingsButton').onclick=()=>UI.open('settings');
+        $('pauseSettings').onclick=()=>UI.open('settings');
+        $('pauseButton').onclick=()=>game.pause();
+        $('resumeButton').onclick=()=>game.resume();
+        $('quitButton').onclick=()=> {
+          UI.screen(null);
+          game.finish('You ended the run. Credits kept.');
+        };
+        $('world').addEventListener('pointerdown', event=> {
+          if(event.isPrimary && event.button===0 && !UI.modal) {
+            event.preventDefault();
+            game.place();
+          }
+        });
+        $('dropButton').onclick=()=>game.place();
+        document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>UI.close());
+        document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=> {
+          SaveManager.update(d=>d.mode=b.dataset.mode);
+          UI.refreshMenu();
+        });
+        for(const key of ['controls', 'sound', 'motion']) $(key+'Setting').onchange=()=> {
+          SaveManager.update(d=>d.settings[key]=$(key+'Setting').checked);
+          $('dropButton').classList.toggle('hidden', !SaveManager.data.settings.controls);
+        };
+        window.addEventListener('keydown', event=> {
+          if(event.repeat) return;
+          if(event.code==='Tab'&&UI.modal) {
+            const buttons=[...$(UI.modal).querySelectorAll('button:not(:disabled),input')];
+            const first=buttons[0],
+            last=buttons[buttons.length-1];
+            if(event.shiftKey&&document.activeElement===first) {
+              event.preventDefault();
+              last?.focus();
+            }
+            else if(!event.shiftKey&&document.activeElement===last) {
+              event.preventDefault();
+              first?.focus();
+            }
+          }
+          if(event.code==='Escape'||event.code==='KeyP') {
+            event.preventDefault();
+            if(game.state==='playing')game.pause();
+            else if(UI.modal==='pause')game.resume();
+            else if(['settings', 'rules', 'shop'].includes(UI.modal))UI.close();
+          }
+          if((event.code==='Space'||event.code==='Enter')&&!UI.modal) {
+            event.preventDefault();
+            game.place();
+          }
+        });
+        window.addEventListener('resize', ()=>this.resize());
+        document.addEventListener('visibilitychange', ()=> {
+          if(document.hidden)game.pause();
+          this.last=performance.now();
+          this.accumulator=0;
+        });
+        window.addEventListener('blur', ()=>game.pause());
+      }
+    };
+    Runtime.start();
   </script>
-</body>
+  </body>
 </html>

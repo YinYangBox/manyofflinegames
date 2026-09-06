@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#141514">
+  <title>Roguelike Dungeon</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #141514;
+      --panel: #232522;
+      --line: #50534a;
+      --ink: #f0ead9;
+      --muted: #b0b2a4;
+      --gold: #ebc47f;
+      --green: #9ac493;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px system-ui, sans-serif; }
+    button, select { font: inherit; color: inherit; }
+    button { cursor: pointer; touch-action: manipulation; }
+    button:disabled { opacity: .45; cursor: default; }
+    button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    .hidden { display: none !important; }
+    header { height: 64px; padding: 0 24px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #191b18; }
+    header strong { letter-spacing: .12em; font: bold 13px monospace; }
+    .wallet { color: var(--gold); white-space: nowrap; font: bold 17px monospace; }
+    main { max-width: 1120px; margin: auto; padding: 32px 24px; }
+    .eyebrow { color: var(--gold); font: bold 11px monospace; letter-spacing: .18em; text-transform: uppercase; }
+    h1 { font: 900 clamp(48px, 7vw, 86px)/.96 Georgia, serif; letter-spacing: -.045em; margin: 18px 0; }
+    h2 { font: bold 32px Georgia, serif; margin: 4px 0 20px; }
+    h3 { margin: 0 0 12px; font-size: 16px; }
+    p { color: var(--muted); line-height: 1.6; }
+    .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; min-height: 550px; }
+    .hero-art { width: 100%; border: 1px solid var(--line); border-radius: 12px; background: #10120f; image-rendering: pixelated; }
+    .hero p { max-width: 390px; }
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .between { justify-content: space-between; }
+    .btn { padding: 12px 18px; min-height: 44px; background: #2b2e28; border: 1px solid #606453; border-radius: 6px; font-weight: 650; }
+    .btn:hover { background: #3a3e33; }
+    .primary { background: var(--gold); color: #211e17; border-color: var(--gold); }
+    .primary:hover { background: #ffdda1; }
+    .danger { color: #ffb2a8; }
+    .subtle { color: var(--muted); }
+    .difficulty { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 25px 0; }
+    .difficulty button { background: #22251f; padding: 12px 5px; border: 1px solid var(--line); border-radius: 6px; }
+    .difficulty button.selected { border-color: var(--gold); background: #403829; }
+    .difficulty small { display: block; color: var(--muted); font-size: 10px; margin-top: 6px; }
+    .menu-links { margin-top: 14px; }
+    .menu-links button { padding: 9px 12px; font-size: 12px; }
+    #controlsToggle { margin-top: 16px; min-width: 190px; border: 2px solid var(--gold); color: var(--gold); }
+    #gameControls { border-color: var(--gold); color: var(--gold); }
+    .panel { padding: 22px; border: 1px solid var(--line); background: var(--panel); border-radius: 9px; }
+    .shop { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
+    .skin canvas { width: 100%; height: 130px; object-fit: contain; background: #191c17; border-radius: 5px; image-rendering: pixelated; }
+    .skin p { font-size: 12px; min-height: 38px; }
+    .skin .btn { width: 100%; }
+    .skin.selected { border-color: var(--gold); }
+    .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .rules p { font-size: 14px; margin-bottom: 0; }
+    #arena { height: calc(100dvh - 64px); padding: 0; max-width: none; position: relative; overflow: hidden; }
+    #world { display: block; width: 100%; height: 100%; touch-action: none; background: #080b09; }
+    .hud { position: absolute; inset: 12px 14px auto; display: flex; justify-content: space-between; align-items: start; gap: 8px; pointer-events: none; }
+    .hud > div { pointer-events: auto; background: #181d18ed; border: 1px solid #626852; padding: 10px 12px; border-radius: 6px; }
+    .health { width: 175px; height: 7px; background: #54352b; margin-top: 7px; }
+    .health span { height: 100%; background: #bbd3a0; display: block; }
+    #objective { font: 12px monospace; line-height: 1.7; }
+    .hud button { padding: 8px 10px; min-height: 38px; font-size: 12px; }
+    #hint { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); background: #151a16e8; border: 1px solid var(--line); border-radius: 5px; padding: 8px 12px; font: 12px monospace; pointer-events: none; white-space: nowrap; }
+    #minimap { position: absolute; right: 16px; top: 88px; width: 140px; height: 140px; background: #0a0d0aee; border: 1px solid var(--line); image-rendering: pixelated; pointer-events: none; }
+    #touch { position: absolute; inset: auto 15px max(18px, env(safe-area-inset-bottom)); display: flex; justify-content: space-between; align-items: end; pointer-events: none; }
+    #touch button { pointer-events: auto; touch-action: none; user-select: none; width: 52px; height: 52px; background: #333c2ddc; border: 1px solid #929b7c; border-radius: 12px; font: bold 20px monospace; }
+    .dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap: 4px; }
+    .dpad [data-dir="up"] { grid-column: 2; }
+    .dpad [data-dir="left"] { grid-column: 1; }
+    .dpad [data-dir="down"] { grid-column: 2; }
+    .dpad [data-dir="right"] { grid-column: 3; }
+    #touch .attack { width: 78px; height: 78px; border-radius: 50%; background: #ab8148e8; color: #fff6dc; font: bold 12px monospace; }
+    #touch .interact { font-size: 12px; width: 65px; }
+    .overlay { position: fixed; inset: 0; z-index: 100; padding: 20px; background: #060905d9; backdrop-filter: blur(7px); display: grid; place-items: center; }
+    .modal { width: min(700px, 100%); max-height: calc(100dvh - 40px); overflow: auto; padding: 24px; border: 1px solid #7c806b; border-radius: 12px; background: #22261f; box-shadow: 0 20px 100px #0009; }
+    .modal.small { max-width: 430px; text-align: center; }
+    .slots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; }
+    .armor { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-bottom: 20px; }
+    .slot { padding: 9px 4px; background: #171c15; border: 1px solid #565e48; border-radius: 7px; min-height: 114px; text-align: center; font: 11px system-ui; }
+    .slot canvas { display: block; margin: auto; width: 45px; height: 45px; image-rendering: pixelated; }
+    .slot small { display: block; color: var(--gold); margin-top: 5px; font-size: 10px; }
+    .slot.empty { opacity: .65; }
+    #itemDetail { min-height: 85px; margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
+    #itemDetail p { font-size: 13px; margin: 0 0 10px; }
+    #toast { position: fixed; z-index: 250; bottom: 25px; left: 50%; transform: translateX(-50%); padding: 12px 18px; border: 1px solid var(--gold); border-radius: 7px; background: #24291ff2; max-width: 90vw; pointer-events: none; text-align: center; }
+    #saveWarning { background: #6e3823; color: #fff1dd; padding: 7px 15px; position: fixed; z-index: 300; bottom: 0; font-size: 12px; width: 100%; text-align: center; }
+    @media(max-width: 760px) {
+      header { height: 54px; padding: 0 12px; }
+      header strong { font-size: 10px; letter-spacing: .07em; }
+      main { padding: 22px 16px; }
+      .hero { grid-template-columns: 1fr; min-height: auto; gap: 25px; }
+      .hero-art { max-height: 230px; object-fit: cover; }
+      .shop { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .skin { padding: 12px; }
+      .rules { grid-template-columns: 1fr; }
+      #arena { height: calc(100dvh - 54px); }
+      .hud { inset: 8px 8px auto; }
+      .hud > div { padding: 7px; }
+      .health { width: 100px; }
+      #healthText, #objective { font-size: 10px; }
+      .hud .row { gap: 4px; }
+      .hud button { font-size: 10px; padding: 6px; min-height: 34px; }
+      #minimap { width: 90px; height: 90px; top: 95px; right: 8px; }
+      .modal { padding: 16px; }
+      .slots, .armor { gap: 5px; }
+      .slot { font-size: 9px; }
+      #hint { bottom: 140px; font-size: 10px; max-width: 95%; white-space: normal; text-align: center; }
+    }
+    @media(max-height: 500px) and (orientation: landscape) {
+      header { height: 42px; }
+      #arena { height: calc(100dvh - 42px); }
+      #minimap { width: 75px; height: 75px; }
+      #touch button { height: 40px; width: 40px; }
+      .dpad { grid-template-columns: repeat(3,40px); grid-template-rows: repeat(2,40px); }
+    }
+  </style>
+</head>
+<body>
+  <header><strong>ROGUELIKE DUNGEON</strong><span class="wallet">C <span id="wallet">0</span></span></header>
+  <main id="home">
+    <div class="hero">
+      <section>
+        <span class="eyebrow">Stone. Steel. Survival.</span>
+        <h1>Roguelike<br>Dungeon</h1>
+        <p>Break the spawners. Clear the undead.<br>Bring back what the dark has buried.</p>
+        <div id="difficulties" class="difficulty"></div>
+        <div class="row"><button id="start" class="btn primary">New Expedition</button><button id="continue" class="btn hidden">Continue</button></div>
+        <div class="row menu-links">
+          <button id="shopOpen" class="btn">Skins</button>
+          <button id="rulesOpen" class="btn">Rules</button>
+          <button id="soundToggle" class="btn">Sound: On</button>
+        </div>
+        <button id="controlsToggle" class="btn" aria-controls="touch" aria-pressed="false">Show Controls</button>
+        <p id="record" class="subtle" style="font-size:12px"></p>
+      </section>
+      <canvas id="cover" width="480" height="480" class="hero-art" aria-label="Pixel adventurer in a torchlit stone dungeon"></canvas>
+    </div>
+  </main>
+  <main id="shopPage" class="hidden">
+    <div class="row between"><div><span class="eyebrow">The wardrobe</span><h2>Skins</h2></div><button class="btn" data-home>Back</button></div>
+    <p>Complete silhouettes and matching weapons. Cosmetic only.</p><div id="skins" class="shop"></div>
+  </main>
+  <main id="rulesPage" class="hidden">
+    <div class="row between"><h2>Rules</h2><button class="btn" data-home>Back</button></div>
+    <div class="rules">
+      <article class="panel"><h3>Your expedition</h3><p>Explore a connected, randomly generated dungeon. Destroy every monster spawner, then defeat every remaining monster to win. Spawners keep summoning while they stand, up to the living-enemy cap. You cannot win by only killing their summons.</p></article>
+      <article class="panel"><h3>Move & fight</h3><p>WASD or arrow keys move. Aim with the mouse; click or hold Space to swing. Without mouse aim, attacks face your movement. E opens nearby chests or picks up loot. Touch controls provide movement, Attack, and Use; touch attacks aim at the nearest visible target in reach. Attacks never pass through walls.</p></article>
+      <article class="panel"><h3>Light & enemies</h3><p>One tile represents one metre. Easy visibility is 7m, Normal 6m, Hard 4m, and Insane 3m. Walls block sight for you and the undead, including diagonal corners. The map remembers explored terrain, not unseen enemies. Skeletons fire arrows on EVERY difficulty. They aim during their warning flash, then release a straight shot: move sideways or take cover. Arrows stop at walls. Zombies attack in melee. Enemies only track your last seen position briefly.</p></article>
+      <article class="panel"><h3>Combat difficulty</h3><p>Easy / Normal / Hard / Insane: zombie health is 58 / 84 / 144 / 240; skeleton health is 42 / 60 / 96 / 144. Zombie hits deal 7 / 13 / 26 / 38 damage and arrows deal 6 / 11 / 22 / 30 before armor. Higher modes also increase movement and attack speed. Your sword still deals 24 damage.</p></article>
+      <article class="panel"><h3>Spawner pressure</h3><p>Spawner health is 120 / 288 / 720 / 1440 from Easy to Insane. They attempt waves of 1 / 1 / 2 / 3 monsters every 20 / 12 / 7 / 4.5 seconds, with global limits of 18 / 32 / 55 / 80 living monsters. Crowded spawn tiles can delay a summon. Destroy spawners to stop new waves; then clear the remaining undead.</p></article>
+      <article class="panel"><h3>Inventory & armor</h3><p>Tab or Inventory pauses the expedition. Your backpack has exactly five slots. Helmet, chestplate, gloves, and boots each have a separate equipment slot. Select armor to equip or swap it; select a potion to drink it. The sword is your permanent weapon and needs no backpack slot. Unequipping needs a free slot. Dropped items remain on the floor.</p></article>
+      <article class="panel"><h3>Coffers & credits</h3><p>Enemies pay 12 / 18 / 26 / 36 credits by difficulty. Credit chests contain 55–100 credits multiplied by 1 / 1.5 / 2 / 3. Other chests hold armor or a potion instead. A full backpack never deletes loot: it stays on the ground. Skin purchases are permanent and only available outside combat.</p></article>
+      <article class="panel"><h3>Survival & saving</h3><p>You start with 100 health and two potions. Armor reduces incoming damage, up to 60%. Drinking a potion restores 40 health. Death ends the expedition and loses its equipment, but earned credits and skins stay. Inventory and Pause stop all monsters. Menu, hiding the tab, and periodic checkpoints save the run. Offline play needs no downloaded assets; progress requires browser storage.</p></article>
+    </div>
+  </main>
+  <main id="arena" class="hidden">
+    <canvas id="world" aria-label="Dungeon playfield"></canvas>
+    <div class="hud">
+      <div><span id="healthText">100 / 100 HP</span><div class="health"><span id="healthFill"></span></div><div id="objective"></div></div>
+      <div class="row"><button id="inventoryOpen" class="btn">Inventory · Tab</button><button id="pauseOpen" class="btn">Pause</button><button id="gameControls" class="btn">Controls</button></div>
+    </div>
+    <canvas id="minimap" width="160" height="160" aria-label="Explored dungeon map"></canvas>
+    <div id="hint">WASD · Space to attack · E to open · Tab inventory</div>
+    <div id="touch" class="hidden">
+      <div class="dpad"><button data-dir="up" aria-label="Move up">↑</button><button data-dir="left" aria-label="Move left">←</button><button data-dir="down" aria-label="Move down">↓</button><button data-dir="right" aria-label="Move right">→</button></div>
+      <div class="row"><button id="touchUse" class="interact">USE</button><button id="touchAttack" class="attack">ATTACK</button></div>
+    </div>
+  </main>
+  <div id="inventory" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Inventory">
+    <div class="modal"><div class="row between"><h2>Inventory</h2><button id="inventoryClose" class="btn">Close · Tab</button></div>
+      <p id="armorSummary"></p><div id="armor" class="armor"></div><h3>Backpack · 5 slots</h3><div id="backpack" class="slots"></div><div id="itemDetail"><p>Select an item to inspect it.</p></div>
+    </div>
+  </div>
+  <div id="pause" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Paused">
+    <div class="modal small"><span class="eyebrow">Take a breath</span><h2>Paused</h2><p>The dungeon can wait.</p><div class="row" style="justify-content:center"><button id="resume" class="btn primary">Resume</button><button id="menu" class="btn">Save & Menu</button></div></div>
+  </div>
+  <div id="result" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Expedition result">
+    <div class="modal small"><span id="resultLabel" class="eyebrow"></span><h2 id="resultTitle"></h2><p id="resultText"></p><div class="row" style="justify-content:center"><button id="again" class="btn primary">New Expedition</button><button id="resultMenu" class="btn">Menu</button></div></div>
+  </div>
+  <div id="confirm" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Replace expedition">
+    <div class="modal small"><h2>Replace expedition?</h2><p>Current equipment and dungeon progress will be lost. Your credits and skins stay.</p><div class="row" style="justify-content:center"><button id="confirmYes" class="btn primary">Replace</button><button id="confirmNo" class="btn">Cancel</button></div></div>
+  </div>
+  <div id="toast" class="hidden" role="status"></div><div id="saveWarning" class="hidden" role="status">Progress could not be saved. Keep this tab open and allow browser storage.</div>
+  <script>
+    'use strict';
+
+    // All artwork and sound are generated locally. No libraries or requests.
+    const $ = id => document.getElementById(id);
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+    const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const EQUIPMENT = ['helmet', 'chestplate', 'gloves', 'boots'];
+    const CONFIG = {
+      easy: {
+        name: 'Easy', size: 45, rooms: 17, sight: 7, speed: .82, damage: 7,
+        zombieHp: 58, skeletonHp: 42, nestHp: 120, windup: .65, attackDelay: 1.5,
+        arrowDamage: 6, arrowSpeed: 5, shotDelay: 2.4, shotWindup: .8, grace: .8,
+        nests: 4, interval: 20, cap: 18, burst: 1, initial: 1, credits: 12, chest: 1
+      },
+      normal: {
+        name: 'Normal', size: 49, rooms: 20, sight: 6, speed: 1.2, damage: 13,
+        zombieHp: 84, skeletonHp: 60, nestHp: 288, windup: .5, attackDelay: 1.05,
+        arrowDamage: 11, arrowSpeed: 6.5, shotDelay: 1.7, shotWindup: .6, grace: .6,
+        nests: 5, interval: 12, cap: 32, burst: 1, initial: 2, credits: 18, chest: 1.5
+      },
+      hard: {
+        name: 'Hard', size: 55, rooms: 23, sight: 4, speed: 1.9, damage: 26,
+        zombieHp: 144, skeletonHp: 96, nestHp: 720, windup: .3, attackDelay: .65,
+        arrowDamage: 22, arrowSpeed: 8, shotDelay: 1.05, shotWindup: .4, grace: .4,
+        nests: 6, interval: 7, cap: 55, burst: 2, initial: 3, credits: 26, chest: 2
+      },
+      insane: {
+        name: 'Insane', size: 61, rooms: 27, sight: 3, speed: 2.3, damage: 38,
+        zombieHp: 240, skeletonHp: 144, nestHp: 1440, windup: .22, attackDelay: .42,
+        arrowDamage: 30, arrowSpeed: 10, shotDelay: .7, shotWindup: .28, grace: .3,
+        nests: 7, interval: 4.5, cap: 80, burst: 3, initial: 4, credits: 36, chest: 3
+      }
+    };
+    const SKINS = [
+      { id: 'wanderer', name: 'Wanderer', price: 0, note: 'Leather cloak, hood, and an iron blade.' },
+      { id: 'knight', name: 'Iron Sentinel', price: 2800, note: 'Plate helmet, tower shield, and a broadsword.' },
+      { id: 'plague', name: 'Plague Doctor', price: 4900, note: 'Beaked mask, wide hat, and a hooked cane.' },
+      { id: 'dwarf', name: 'Forge Dwarf', price: 7600, note: 'Braided beard, horned helmet, and a warhammer.' },
+      { id: 'clockwork', name: 'Clockwork', price: 11000, note: 'Brass limbs, moving gears, and a toothed saw.' },
+      { id: 'warden', name: 'Root Warden', price: 15500, note: 'Branch antlers, a wooden mask, and a thorn blade.' }
+    ];
+
+    class Random {
+      constructor(seed) { this.state = seed >>> 0 || 917231; }
+      next() {
+        let t = this.state += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        this.state >>>= 0;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      }
+      int(a, b) { return Math.floor(this.next() * (b - a + 1)) + a; }
+      pick(list) { return list[this.int(0, list.length - 1)]; }
+    }
+
+    class SaveManager {
+      static STORAGE_KEY = 'ARCADE_GAMES';
+      static GAME_KEY = 'dungeons';
+      static data = null;
+      static defaults() {
+        return {
+          version: 1, credits: 0, owned: ['wanderer'], skin: 'wanderer',
+          difficulty: 'easy', sound: true, controls: null, run: null,
+          stats: { kills: 0, chests: 0, wins: 0, deaths: 0 }
+        };
+      }
+      static root() {
+        const raw = localStorage.getItem(this.STORAGE_KEY);
+        if (!raw) return {};
+        const root = JSON.parse(raw);
+        if (!root || typeof root !== 'object' || Array.isArray(root)) throw Error('Invalid save root');
+        return root;
+      }
+      static load() {
+        const base = this.defaults();
+        try {
+          const raw = this.root()[this.GAME_KEY];
+          if (raw && typeof raw === 'object') {
+            base.credits = Number.isFinite(raw.credits) ? Math.max(0, Math.floor(raw.credits)) : 0;
+            base.owned = SKINS.filter(s => s.id === 'wanderer' || raw.owned?.includes(s.id)).map(s => s.id);
+            base.skin = base.owned.includes(raw.skin) ? raw.skin : 'wanderer';
+            base.difficulty = CONFIG[raw.difficulty] ? raw.difficulty : 'easy';
+            base.sound = raw.sound !== false;
+            base.controls = typeof raw.controls === 'boolean' ? raw.controls : null;
+            for (const key of Object.keys(base.stats)) base.stats[key] = Math.max(0, Math.floor(Number(raw.stats?.[key]) || 0));
+            if (validRun(raw.run)) base.run = raw.run;
+          }
+        } catch (error) { $('saveWarning').classList.remove('hidden'); }
+        this.data = base;
+      }
+      static save() {
+        try {
+          const root = this.root();
+          root[this.GAME_KEY] = this.data;
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(root));
+          $('saveWarning').classList.add('hidden');
+          return true;
+        } catch (error) {
+          $('saveWarning').classList.remove('hidden');
+          return false;
+        }
+      }
+    }
+
+    function validRun(r) {
+      if (!r || !CONFIG[r.difficulty] || r.status !== 'active') return false;
+      const n = CONFIG[r.difficulty].size;
+      if (r.n !== n || !Array.isArray(r.tiles) || r.tiles.length !== n * n) return false;
+      if (!r.tiles.every(v => v === 0 || v === 1) || !Array.isArray(r.seen) || r.seen.length !== n * n) return false;
+      if (!r.player || !Number.isFinite(r.player.x) || !Number.isFinite(r.player.y) || !(r.player.hp > 0 && r.player.hp <= 100)) return false;
+      if (!Array.isArray(r.bag) || r.bag.length !== 5 || !r.armor) return false;
+      if (!['mobs', 'spawners', 'chests', 'loot'].every(k => Array.isArray(r[k]))) return false;
+      return r.spawners.length > 0 && r.mobs.length <= CONFIG[r.difficulty].cap;
+    }
+
+    // A room chain is carved before extra connections: every floor is reachable.
+    function generateDungeon(difficulty, seed) {
+      const cfg = CONFIG[difficulty];
+      const rng = new Random(seed);
+      const n = cfg.size;
+      const tiles = Array(n * n).fill(1);
+      const rooms = [];
+      const carve = (x, y) => { if (x > 0 && y > 0 && x < n - 1 && y < n - 1) tiles[y * n + x] = 0; };
+      function corridor(a, b) {
+        let x = a.x, y = a.y;
+        while (x !== b.x) { carve(x, y); x += Math.sign(b.x - x); }
+        while (y !== b.y) { carve(x, y); y += Math.sign(b.y - y); }
+        carve(x, y);
+      }
+      for (let i = 0; i < cfg.rooms; i++) {
+        const w = rng.int(4, 7), h = rng.int(4, 7);
+        const x = i === 0 ? 2 : rng.int(2, n - w - 2);
+        const y = i === 0 ? 2 : rng.int(2, n - h - 2);
+        for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) carve(xx, yy);
+        const center = { x: x + Math.floor(w / 2), y: y + Math.floor(h / 2) };
+        if (rooms.length) corridor(rooms[rooms.length - 1], center);
+        rooms.push(center);
+      }
+      for (let i = 0; i < 4; i++) corridor(rng.pick(rooms), rng.pick(rooms));
+      const start = { x: rooms[0].x + .5, y: rooms[0].y + .5 };
+      const candidates = [];
+      for (let y = 2; y < n - 2; y++) for (let x = 2; x < n - 2; x++) {
+        if (tiles[y * n + x] === 0 && Math.hypot(x + .5 - start.x, y + .5 - start.y) > 9) candidates.push({ x: x + .5, y: y + .5 });
+      }
+      const occupied = [];
+      function place(spacing) {
+        for (let tries = 0; tries < 2500; tries++) {
+          const p = rng.pick(candidates);
+          if (!occupied.some(q => distance(p, q) < spacing)) { occupied.push(p); return { ...p }; }
+        }
+        const p = candidates.find(p => !occupied.some(q => distance(p, q) < .5));
+        occupied.push(p);
+        return { ...p };
+      }
+      const spawners = Array.from({ length: cfg.nests }, (_, id) => ({ ...place(6), id, hp: cfg.nestHp, maxHp: cfg.nestHp, timer: cfg.interval + id * .5, discovered: false }));
+      const chests = Array.from({ length: cfg.nests * 3 + 3 }, (_, id) => ({ ...place(2), id, opened: false }));
+      // A reachable starter chest makes the equipment loop available immediately.
+      chests.push({ x: start.x + 1, y: start.y, id: chests.length, opened: false, starter: true });
+      return {
+        status: 'active', combatVersion: 2, difficulty, seed, rng: rng.state, n, tiles, seen: Array(n * n).fill(0),
+        player: { ...start, hp: 100, face: Math.PI / 2, cooldown: 0, invulnerable: 0 },
+        spawners, chests, mobs: [], loot: [], arrows: [],
+        bag: [potion(), potion(), null, null, null],
+        armor: { helmet: null, chestplate: null, gloves: null, boots: null },
+        earned: 0, kills: 0, opened: 0, seconds: 0, nextId: 1
+      };
+    }
+
+    function potion() { return { type: 'potion', name: 'Healing Potion', tier: 0, defense: 0 }; }
+    function armorItem(rng, type) {
+      const tier = rng.int(1, 3);
+      const materials = ['', 'Leather', 'Iron', 'Runic'];
+      return { type: type || rng.pick(EQUIPMENT), tier, defense: tier * 4, name: materials[tier] };
+    }
+    function itemName(item) {
+      return item.type === 'potion' ? item.name : item.name + ' ' + item.type[0].toUpperCase() + item.type.slice(1);
+    }
+    function wall(run, x, y) {
+      const tx = Math.floor(x), ty = Math.floor(y);
+      return tx < 0 || ty < 0 || tx >= run.n || ty >= run.n || run.tiles[ty * run.n + tx] === 1;
+    }
+
+    // Supercover grid traversal: diagonal seams cannot reveal another room.
+    function lineOfSight(run, ax, ay, bx, by) {
+      let x = Math.floor(ax), y = Math.floor(ay);
+      const endX = Math.floor(bx), endY = Math.floor(by);
+      const dx = bx - ax, dy = by - ay;
+      const sx = Math.sign(dx), sy = Math.sign(dy);
+      const deltaX = dx === 0 ? Infinity : Math.abs(1 / dx);
+      const deltaY = dy === 0 ? Infinity : Math.abs(1 / dy);
+      let maxX = dx === 0 ? Infinity : ((sx > 0 ? x + 1 - ax : ax - x) * deltaX);
+      let maxY = dy === 0 ? Infinity : ((sy > 0 ? y + 1 - ay : ay - y) * deltaY);
+      for (let i = 0; i < run.n * 3; i++) {
+        if (x === endX && y === endY) return true;
+        if (Math.abs(maxX - maxY) < 1e-9) {
+          if (wall(run, x + sx, y) || wall(run, x, y + sy)) return false;
+          x += sx; y += sy; maxX += deltaX; maxY += deltaY;
+        } else if (maxX < maxY) { x += sx; maxX += deltaX; }
+        else { y += sy; maxY += deltaY; }
+        if (x === endX && y === endY) return true;
+        if (wall(run, x, y)) return false;
+      }
+      return false;
+    }
+
+    function canStand(run, x, y, radius = .24) {
+      return !wall(run, x - radius, y - radius) && !wall(run, x + radius, y - radius)
+        && !wall(run, x - radius, y + radius) && !wall(run, x + radius, y + radius);
+    }
+    function moveActor(run, actor, dx, dy) {
+      if (canStand(run, actor.x + dx, actor.y)) actor.x += dx;
+      if (canStand(run, actor.x, actor.y + dy)) actor.y += dy;
+    }
+
+    class AudioEngine {
+      constructor() { this.context = null; }
+      tone(frequency, duration, type = 'triangle', slide = 0) {
+        if (!SaveManager.data.sound) return;
+        try {
+          const C = window.AudioContext || window.webkitAudioContext;
+          if (!C) return;
+          this.context ||= new C();
+          if (this.context.state === 'suspended') this.context.resume().catch(() => {});
+          const time = this.context.currentTime;
+          const wave = this.context.createOscillator(), gain = this.context.createGain();
+          wave.type = type;
+          wave.frequency.setValueAtTime(frequency, time);
+          wave.frequency.exponentialRampToValueAtTime(Math.max(30, frequency + slide), time + duration);
+          gain.gain.setValueAtTime(.035, time);
+          gain.gain.exponentialRampToValueAtTime(.001, time + duration);
+          wave.connect(gain); gain.connect(this.context.destination);
+          wave.start(time); wave.stop(time + duration);
+        } catch (error) { /* A silent browser must remain playable. */ }
+      }
+    }
+
+    // Pixel sprites use geometry, not emoji or downloaded images.
+    function drawActor(ctx, x, y, scale, skin, time = 0, walking = false) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+      const bob = walking ? Math.sin(time * 12) * 1.2 : 0;
+      const r = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+      r(-9, 9, 18, 3, '#070b09');
+      ctx.translate(0, bob);
+      if (skin === 'zombie') {
+        r(-6,-3,12,12,'#606951'); r(-8,-11,15,10,'#839378');
+        r(-7,-12,5,4,'#333d2e'); r(-5,-7,3,2,'#d1d685'); r(3,-7,3,2,'#d1d685');
+        r(-3,-3,6,2,'#334431'); r(-11,-1,5,5,'#859175'); r(6,1,6,5,'#859175');
+        r(-6,7,4,5,'#363d2e'); r(2,8,5,4,'#363d2e'); r(0,2,3,4,'#322d27');
+      } else if (skin === 'skeleton') {
+        r(-7,-12,14,10,'#d6d1b3'); r(-5,-9,4,4,'#303c35'); r(2,-9,4,4,'#303c35');
+        r(-3,-3,6,3,'#c2bba0'); r(-1,0,2,8,'#d6d1b3');
+        for (let i=0;i<3;i++) r(-5,i*3,10,1,'#bdb797');
+        r(-8,0,2,9,'#c2bba0'); r(6,0,2,9,'#c2bba0');
+        r(-4,8,2,5,'#d6d1b3'); r(3,8,2,5,'#d6d1b3'); r(9,0,2,12,'#6b583c');
+        ctx.strokeStyle='#b99c68';ctx.lineWidth=2;
+        ctx.beginPath();ctx.arc(8,2,9,-Math.PI/2,Math.PI/2);ctx.stroke();
+        ctx.strokeStyle='#e0d5b4';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(8,-7);ctx.lineTo(8,11);ctx.stroke();
+      } else if (skin === 'knight') {
+        r(-7,-2,14,13,'#869696'); r(-4,0,8,7,'#c6cfbe'); r(-8,-13,16,12,'#abb8ac');
+        r(-6,-9,12,3,'#263332'); r(-1,-13,2,12,'#e4dfbd'); r(-3,-17,6,4,'#955447');
+        r(-13,0,7,12,'#667d75'); r(-11,2,3,7,'#d9bd74'); r(9,-8,3,18,'#d6dec8');
+        r(6,5,9,2,'#c1a16a'); r(-6,9,5,4,'#657876'); r(2,9,5,4,'#657876');
+      } else if (skin === 'plague') {
+        r(-8,-2,16,13,'#343e43'); r(-10,9,20,3,'#252e36'); r(-6,-12,12,10,'#b8bcaa');
+        r(-12,-13,24,3,'#20292d'); r(-7,-20,14,7,'#343e43'); r(-7,-16,14,2,'#917449');
+        r(1,-9,10,4,'#e2d5ab'); r(7,-5,3,3,'#c3b489'); r(-4,-10,4,3,'#617f78');
+        r(12,0,2,15,'#ab9670'); r(10,-2,5,2,'#ab9670'); r(-2,1,3,7,'#807354');
+      } else if (skin === 'dwarf') {
+        r(-10,-1,20,12,'#765b3c'); r(-7,-10,14,10,'#cc9872'); r(-8,-13,16,4,'#92988b');
+        r(-12,-16,4,8,'#decfa7'); r(8,-16,4,8,'#decfa7'); r(-4,-6,3,2,'#211f1a'); r(3,-6,3,2,'#211f1a');
+        r(-7,-2,14,8,'#d09f5d'); r(-4,5,4,6,'#d09f5d'); r(2,5,4,6,'#d09f5d');
+        r(-4,7,4,2,'#6d583b'); r(2,7,4,2,'#6d583b'); r(12,-4,3,17,'#937047'); r(8,-8,12,7,'#b2b8a1');
+      } else if (skin === 'clockwork') {
+        r(-7,-3,14,12,'#b28a4c'); r(-8,-13,16,10,'#d3b675'); r(-5,-10,4,4,'#80d4bc'); r(2,-10,4,4,'#80d4bc');
+        r(-3,-5,6,2,'#433e2c'); r(-11,0,3,9,'#ada58b'); r(8,0,3,9,'#ada58b');
+        r(-6,9,3,5,'#c5b684'); r(3,9,3,5,'#c5b684');
+        ctx.save(); ctx.translate(0,3); ctx.rotate(time); ctx.fillStyle='#3c4536';
+        for(let i=0;i<4;i++) { ctx.rotate(Math.PI/4); ctx.fillRect(-1,-5,2,10); } ctx.restore();
+        r(-2,1,4,4,'#e2dbab'); r(12,-2,3,12,'#7a876d');
+        ctx.strokeStyle='#d3c399'; ctx.lineWidth=3; ctx.beginPath();ctx.arc(14,-4,5,0,Math.PI*2);ctx.stroke();
+      } else if (skin === 'warden') {
+        r(-8,-3,16,15,'#445e3e'); r(-5,-13,10,12,'#9f8d60'); r(-3,-9,2,3,'#cdec99'); r(2,-9,2,3,'#cdec99');
+        r(-8,-18,3,10,'#9f8d60'); r(5,-18,3,10,'#9f8d60'); r(-13,-20,6,3,'#9f8d60'); r(8,-20,6,3,'#9f8d60');
+        r(-14,-24,3,6,'#9f8d60'); r(11,-24,3,6,'#9f8d60'); r(-12,-4,6,5,'#779458'); r(6,-4,6,5,'#779458');
+        r(-6,9,4,5,'#73623e'); r(2,9,4,5,'#73623e'); r(12,-9,3,20,'#839d55'); r(9,-5,8,2,'#b2ca7b');
+      } else {
+        r(-8,-3,16,15,'#706047'); r(-5,-1,10,10,'#9c8460'); r(-8,-13,16,12,'#696b50');
+        r(-5,-10,10,7,'#c5aa7f'); r(-4,-8,3,2,'#252d27'); r(2,-8,3,2,'#252d27');
+        r(-10,0,3,10,'#4b503b'); r(7,0,3,10,'#4b503b'); r(-6,10,5,4,'#51412f'); r(2,10,5,4,'#51412f');
+        r(12,-6,2,16,'#bdc5b2'); r(9,7,8,2,'#b49861'); r(-8,5,16,2,'#443e2b');
+      }
+      ctx.restore();
+    }
+
+    function drawItem(ctx, item, x, y, scale = 1) {
+      ctx.save(); ctx.translate(x,y); ctx.scale(scale,scale);
+      const fill=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
+      const c = ['#b96e63','#ab885b','#aeb9b0','#b5a2dc'][item.tier];
+      if (item.type==='potion') {
+        fill(-3,-10,6,4,'#b0a17f'); fill(-5,-6,10,3,'#d5d6bd'); fill(-7,-3,14,12,'#647b62');
+        fill(-5,0,10,7,'#d89979'); fill(-4,-3,3,4,'#f4e9c8');
+      } else if(item.type==='helmet') {
+        fill(-8,-7,16,13,c); fill(-10,-2,20,6,c); fill(-6,-1,12,3,'#27322d'); fill(-1,-7,2,12,'#d6c99e');
+      } else if(item.type==='chestplate') {
+        fill(-7,-7,14,16,c); fill(-11,-7,5,7,c); fill(6,-7,5,7,c); fill(-2,-5,4,11,'#d3c49c');
+      } else if(item.type==='gloves') {
+        fill(-10,-3,8,12,c);fill(2,-3,8,12,c);fill(-8,-7,5,6,c);fill(3,-7,5,6,c);
+      } else {
+        fill(-9,-8,6,14,c); fill(3,-8,6,14,c); fill(-11,3,8,5,c); fill(3,3,8,5,c);
+      }
+      if(item.tier===3) { fill(-1,0,2,3,'#e6dcff'); }
+      ctx.restore();
+    }
+
+    class DungeonGame {
+      constructor() {
+        this.run = null;
+        this.mode = 'home';
+        this.keys = new Set();
+        this.visible = new Set();
+        this.effects = [];
+        this.sound = new AudioEngine();
+        this.attackHeld = false;
+        this.mouseAim = false;
+        this.camera = { x: 0, y: 0, tile: 40, w: 1, h: 1 };
+        this.fovClock = 0;
+        this.saveClock = 0;
+        this.hudClock = 0;
+        this.swing = 0;
+      }
+      get cfg() { return CONFIG[this.run.difficulty]; }
+      rng() { return new Random(this.run.rng); }
+      start() {
+        const seed = (Date.now() ^ Math.floor(Math.random()*0xffffffff)) >>> 0;
+        this.run = generateDungeon(SaveManager.data.difficulty, seed);
+        const rng = this.rng();
+        for (const nest of this.run.spawners) {
+          for (let i = 0; i < this.cfg.initial; i++) this.spawn(nest, rng);
+        }
+        this.run.rng = rng.state;
+        this.activate();
+        this.checkpoint();
+      }
+      activate() {
+        // Upgrade old expeditions once, keeping remaining health proportions.
+        if (this.run.combatVersion !== 2) {
+          for (const nest of this.run.spawners) {
+            nest.hp = Math.ceil(clamp(nest.hp / (nest.maxHp || 120), 0, 1) * this.cfg.nestHp);
+            nest.maxHp = this.cfg.nestHp;
+            nest.timer = Math.min(nest.timer, this.cfg.interval);
+          }
+          for (const mob of this.run.mobs) {
+            const maxHp = mob.type === 'skeleton' ? this.cfg.skeletonHp : this.cfg.zombieHp;
+            mob.hp = Math.ceil(clamp(mob.hp / mob.maxHp, 0, 1) * maxHp);
+            mob.maxHp = maxHp;
+            mob.cooldown = Math.min(mob.cooldown, this.cfg.attackDelay);
+            mob.windup = 0;
+          }
+          this.run.combatVersion = 2;
+        }
+        this.run.arrows ||= [];
+        this.mode = 'play'; this.clearInput(); this.effects = []; this.swing = 0;
+        this.fovClock = this.saveClock = this.hudClock = 0;
+        UI.page('arena'); UI.closeOverlays(); this.reveal(); this.hud(); resize();
+        this.checkpoint();
+      }
+      checkpoint() {
+        if (this.run?.status === 'active') SaveManager.data.run = this.run;
+        SaveManager.save(); UI.wallet();
+      }
+      clearInput() {
+        this.keys.clear();
+        this.attackHeld = false;
+        this.attackPointer = null;
+        this.mouseAim = false;
+      }
+      canSee(entity) {
+        const p = this.run.player;
+        return distance(p,entity) <= this.cfg.sight && lineOfSight(this.run,p.x,p.y,entity.x,entity.y);
+      }
+      reveal() {
+        const r=this.run,p=r.player,range=this.cfg.sight;
+        this.visible.clear();
+        for(let y=Math.floor(p.y-range);y<=Math.ceil(p.y+range);y++) {
+          for(let x=Math.floor(p.x-range);x<=Math.ceil(p.x+range);x++) {
+            if(x<0||y<0||x>=r.n||y>=r.n) continue;
+            if(Math.hypot(x+.5-p.x,y+.5-p.y)>range) continue;
+            if(lineOfSight(r,p.x,p.y,x+.5,y+.5)) { this.visible.add(y*r.n+x);r.seen[y*r.n+x]=1; }
+          }
+        }
+        for(const nest of r.spawners) if(this.canSee(nest)) nest.discovered=true;
+      }
+      spawn(nest,rng) {
+        const r=this.run;
+        if(r.mobs.length>=this.cfg.cap) return false;
+        const positions=[];
+        for(let y=-1;y<=1;y++) for(let x=-1;x<=1;x++) {
+          const p={x:nest.x+x,y:nest.y+y};
+          if(canStand(r,p.x,p.y)&&distance(p,r.player)>1.6&&!r.mobs.some(m=>distance(m,p)<.7)) positions.push(p);
+        }
+        if(!positions.length) return false;
+        const p=rng.pick(positions),type=rng.next()<.6?'zombie':'skeleton';
+        const maxHp=type==='zombie'?this.cfg.zombieHp:this.cfg.skeletonHp;
+        r.mobs.push({...p,id:r.nextId++,type,hp:maxHp,maxHp,cooldown:.5+rng.next(),windup:0,alert:0,target:null,stun:0,face:0});
+        return true;
+      }
+      update(dt) {
+        if(this.mode!=='play'||!this.run) return;
+        const r=this.run,p=r.player;
+        r.seconds+=dt; p.cooldown=Math.max(0,p.cooldown-dt);p.invulnerable=Math.max(0,p.invulnerable-dt);this.swing=Math.max(0,this.swing-dt);
+        let dx=(this.keys.has('right')?1:0)-(this.keys.has('left')?1:0);
+        let dy=(this.keys.has('down')?1:0)-(this.keys.has('up')?1:0);
+        const magnitude=Math.hypot(dx,dy);
+        if(magnitude) {
+          dx/=magnitude;dy/=magnitude;
+          moveActor(r,p,dx*2.65*dt,dy*2.65*dt);
+          if(!this.mouseAim) p.face=Math.atan2(dy,dx);
+        }
+        if(this.attackHeld) this.attack(!this.mouseAim);
+        const rng=this.rng();
+        for(const nest of r.spawners) {
+          if(nest.hp<=0) continue;
+          nest.timer-=dt;
+          if(nest.timer<=0) {
+            for(let i=0;i<this.cfg.burst;i++) this.spawn(nest,rng);
+            nest.timer=this.cfg.interval;
+          }
+        }
+        for(const mob of r.mobs) this.updateMob(mob,dt);
+        this.updateArrows(dt);
+        r.rng=rng.state;
+        if(p.hp<=0) {this.finish(false);return;}
+        if(r.spawners.every(s=>s.hp<=0)&&r.mobs.length===0) {this.finish(true);return;}
+        for(const effect of this.effects) effect.life-=dt;
+        this.effects=this.effects.filter(e=>e.life>0);
+        this.fovClock-=dt;this.saveClock+=dt;this.hudClock-=dt;
+        if(this.fovClock<=0) {this.reveal();this.fovClock=.07;}
+        if(this.hudClock<=0) {this.hud();this.hudClock=.15;}
+        if(this.saveClock>=4) {this.checkpoint();this.saveClock=0;}
+      }
+      updateMob(m,dt) {
+        const r=this.run,p=r.player;
+        m.cooldown=Math.max(0,m.cooldown-dt);m.stun=Math.max(0,m.stun-dt);
+        const sees=distance(m,p)<=Math.min(6,this.cfg.sight)&&lineOfSight(r,m.x,m.y,p.x,p.y);
+        if(sees) {m.target={x:p.x,y:p.y};m.alert=2.4;}
+        else {m.alert=Math.max(0,m.alert-dt);if(m.alert===0)m.target=null;}
+        if(m.stun>0)return;
+        if(m.windup>0) {
+          m.windup-=dt;
+          if(m.windup<=0) {
+            if(m.type==='skeleton') {
+              this.shoot(m);
+              m.cooldown=this.cfg.shotDelay;
+            } else {
+              if(distance(m,p)<1.05&&lineOfSight(r,m.x,m.y,p.x,p.y)) this.hurt(this.cfg.damage);
+              m.cooldown=this.cfg.attackDelay;
+            }
+          }
+          return;
+        }
+        if(m.type==='skeleton'&&sees) {
+          if(m.cooldown<=0) {
+            m.shotAngle=Math.atan2(p.y-m.y,p.x-m.x);
+            m.windup=this.cfg.shotWindup;
+            return;
+          }
+          // Archers try to hold distance while their next shot is cooling down.
+          if(distance(m,p)<2) {
+            const away=Math.atan2(m.y-p.y,m.x-p.x);
+            moveActor(r,m,Math.cos(away)*this.cfg.speed*dt,Math.sin(away)*this.cfg.speed*dt);
+          }
+          if(distance(m,p)<Math.min(4.5,this.cfg.sight-.25)) return;
+        }
+        if(m.type!=='skeleton'&&sees&&distance(m,p)<.95&&m.cooldown<=0) {m.windup=this.cfg.windup;return;}
+        if(m.target&&distance(m,m.target)>.6) {
+          const angle=Math.atan2(m.target.y-m.y,m.target.x-m.x);
+          const speed=this.cfg.speed*(m.type==='skeleton'?1.12:1);
+          moveActor(r,m,Math.cos(angle)*speed*dt,Math.sin(angle)*speed*dt);
+          m.face=angle;
+        }
+      }
+      hurt(baseDamage) {
+        const p=this.run.player;
+        if(p.invulnerable>0||p.hp<=0)return;
+        const amount=Math.max(2,Math.round(baseDamage*(1-this.defense()/100)));
+        p.hp=Math.max(0,p.hp-amount);
+        p.invulnerable=this.cfg.grace;
+        this.float(p.x,p.y,'−'+amount,'#f0a483');
+        this.sound.tone(90,.1,'sawtooth',-40);
+      }
+      shoot(mob) {
+        if(this.run.arrows.length>=120)return;
+        const angle=Number.isFinite(mob.shotAngle)?mob.shotAngle:mob.face;
+        this.run.arrows.push({
+          x:mob.x,y:mob.y,vx:Math.cos(angle)*this.cfg.arrowSpeed,
+          vy:Math.sin(angle)*this.cfg.arrowSpeed,life:1.8,damage:this.cfg.arrowDamage
+        });
+        if(this.canSee(mob))this.sound.tone(420,.07,'triangle',-220);
+      }
+      updateArrows(dt) {
+        const r=this.run,p=r.player;
+        for(const a of r.arrows) {
+          a.life-=dt;
+          const steps=Math.max(1,Math.ceil(Math.hypot(a.vx,a.vy)*dt/.08));
+          for(let i=0;i<steps&&a.life>0;i++) {
+            const x=a.x+a.vx*dt/steps,y=a.y+a.vy*dt/steps;
+            // Short segments plus supercover checks stop fast and diagonal shots.
+            if(wall(r,x,y)||!lineOfSight(r,a.x,a.y,x,y)) {a.life=0;break;}
+            a.x=x;a.y=y;
+            if(distance(a,p)<.3) {this.hurt(a.damage);a.life=0;break;}
+          }
+        }
+        r.arrows=r.arrows.filter(a=>a.life>0);
+      }
+      defense() { return Math.min(60,Object.values(this.run.armor).reduce((sum,item)=>sum+(item?.defense||0),0)); }
+      attack(autoAim=false) {
+        if(this.mode!=='play')return;
+        const r=this.run,p=r.player;
+        if(p.cooldown>0)return;
+        const targets=[...r.mobs,...r.spawners.filter(s=>s.hp>0)].filter(e=>distance(p,e)<1.65&&this.canSee(e));
+        if(autoAim&&targets.length) {
+          targets.sort((a,b)=>distance(p,a)-distance(p,b));
+          p.face=Math.atan2(targets[0].y-p.y,targets[0].x-p.x);
+        }
+        p.cooldown=.44;this.swing=.18;this.sound.tone(190,.07,'triangle',-100);
+        for(const target of targets) {
+          const angle=Math.atan2(target.y-p.y,target.x-p.x);
+          if(Math.cos(angle-p.face)<.12)continue;
+          target.hp=Math.max(0,target.hp-24);
+          this.float(target.x,target.y,'24','#efe0b8');
+          if(target.type) {target.stun=.2;target.windup=0;}
+          if(target.hp===0) {
+            if(target.type) {
+              r.mobs=r.mobs.filter(m=>m!==target);r.kills++;SaveManager.data.stats.kills++;
+              this.reward(this.cfg.credits,target);
+            } else {
+              this.float(target.x,target.y,'SEALED','#c3dc91');this.sound.tone(100,.3,'triangle',180);
+            }
+          }
+        }
+        // Rewards and defeated enemies are committed in the same snapshot.
+        this.checkpoint();
+      }
+      reward(amount,position) {
+        this.run.earned+=amount;SaveManager.data.credits+=amount;
+        this.float(position.x,position.y,'+C '+amount,'#ebc47f');UI.wallet();
+      }
+      float(x,y,text,color) { this.effects.push({x,y,text,color,life:1.1}); }
+      interact() {
+        if(this.mode!=='play')return;
+        const r=this.run,p=r.player;
+        const nearby=entity=>distance(p,entity)<1.5&&this.canSee(entity);
+        const loot=r.loot.find(nearby);
+        if(loot) {
+          const empty=r.bag.indexOf(null);
+          if(empty<0) {UI.toast('Backpack full. Equip or drop an item.');return;}
+          r.bag[empty]=loot.item;r.loot=r.loot.filter(l=>l!==loot);UI.toast(itemName(loot.item)+' collected');
+        } else {
+          const chest=r.chests.find(c=>!c.opened&&nearby(c));
+          if(!chest) {UI.toast('Move closer to a chest or dropped item.');return;}
+          chest.opened=true;r.opened++;SaveManager.data.stats.chests++;
+          const rng=this.rng();
+          if(!chest.starter&&rng.next()<.48) {
+            const amount=Math.round(rng.int(55,100)*this.cfg.chest);this.reward(amount,chest);UI.toast('Chest: C '+amount);
+          } else {
+            const item=chest.starter?armorItem(rng,'chestplate'):rng.next()<.2?potion():armorItem(rng);
+            const empty=r.bag.indexOf(null);
+            if(empty>=0) {r.bag[empty]=item;UI.toast(itemName(item)+' found · Open Inventory');}
+            else {r.loot.push({x:chest.x,y:chest.y,item});UI.toast('Backpack full. Loot remains beside the chest.');}
+          }
+          r.rng=rng.state;this.sound.tone(390,.16,'triangle',250);
+        }
+        this.checkpoint();this.hud();
+      }
+      equip(index) {
+        const r=this.run,item=r.bag[index];
+        if(!item)return;
+        if(item.type==='potion') {
+          if(r.player.hp>=100) {UI.toast('Health is already full.');return;}
+          r.player.hp=Math.min(100,r.player.hp+40);r.bag[index]=null;
+        } else {
+          const old=r.armor[item.type];r.armor[item.type]=item;r.bag[index]=old;
+        }
+        this.checkpoint();UI.inventory();this.hud();
+      }
+      unequip(type) {
+        const index=this.run.bag.indexOf(null);
+        if(index<0) {UI.toast('A free backpack slot is required.');return;}
+        this.run.bag[index]=this.run.armor[type];this.run.armor[type]=null;
+        this.checkpoint();UI.inventory();
+      }
+      drop(index) {
+        const r=this.run,item=r.bag[index];
+        if(!item)return;
+        r.loot.push({x:r.player.x,y:r.player.y,item});r.bag[index]=null;
+        this.checkpoint();UI.inventory();
+      }
+      finish(won) {
+        if(this.run.status!=='active')return;
+        this.run.status=won?'won':'lost';this.mode='result';this.clearInput();
+        SaveManager.data.stats[won?'wins':'deaths']++;SaveManager.data.run=null;SaveManager.save();
+        UI.closeOverlays();$('resultLabel').textContent=won?'All spawners sealed':'The dungeon remains';
+        $('resultTitle').textContent=won?'Dungeon Cleared':'Expedition Lost';
+        $('resultText').textContent=this.run.kills+' enemies defeated · C '+this.run.earned+' earned. Your credits and skins are safe.';
+        $('result').classList.remove('hidden');UI.wallet();
+      }
+      hud() {
+        if(!this.run)return;
+        const r=this.run;
+        $('healthText').textContent=Math.ceil(r.player.hp)+' / 100 HP · '+this.defense()+'% armor';
+        $('healthFill').style.width=r.player.hp+'%';
+        $('objective').textContent=r.spawners.filter(s=>s.hp>0).length+' spawners · '+r.mobs.length+' undead · C '+r.earned;
+        const use=[...r.loot,...r.chests.filter(c=>!c.opened)].find(e=>distance(e,r.player)<1.5&&this.canSee(e));
+        $('hint').textContent=use?'E / USE · '+(use.item?'Pick up '+itemName(use.item):'Open chest'):'Move · Attack · Break every spawner';
+      }
+    }
+
+    const game = new DungeonGame();
+    const canvas = $('world');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      const box=canvas.getBoundingClientRect();
+      if(!box.width||!box.height)return;
+      const dpr=Math.min(window.devicePixelRatio||1,2);
+      canvas.width=Math.floor(box.width*dpr);canvas.height=Math.floor(box.height*dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;
+      game.camera.w=box.width;game.camera.h=box.height;
+      game.camera.tile=clamp(Math.min(box.width/11,box.height/12),24,52);
+    }
+    function paintWorld(time) {
+      if(!game.run||!['play','inventory','pause','result'].includes(game.mode))return;
+      const r=game.run,p=r.player,cam=game.camera,t=cam.tile,w=cam.w,h=cam.h;
+      cam.x=w/2-p.x*t;cam.y=h/2-p.y*t;
+      ctx.fillStyle='#080c09';ctx.fillRect(0,0,w,h);
+      const x0=Math.max(0,Math.floor(-cam.x/t)-1),x1=Math.min(r.n,Math.ceil((w-cam.x)/t)+1);
+      const y0=Math.max(0,Math.floor(-cam.y/t)-1),y1=Math.min(r.n,Math.ceil((h-cam.y)/t)+1);
+      for(let y=y0;y<y1;y++) for(let x=x0;x<x1;x++) {
+        const index=y*r.n+x;if(!r.seen[index])continue;
+        const visible=game.visible.has(index),px=Math.floor(cam.x+x*t),py=Math.floor(cam.y+y*t);
+        const light=visible?1-.26*Math.pow(Math.min(1,Math.hypot(x+.5-p.x,y+.5-p.y)/game.cfg.sight),2):.21;
+        ctx.globalAlpha=light;
+        if(r.tiles[index]) {
+          ctx.fillStyle='#4a5145';ctx.fillRect(px,py,t+1,t+1);
+          ctx.fillStyle='#626857';ctx.fillRect(px+1,py+1,t-2,3);
+          ctx.fillStyle='#303a31';ctx.fillRect(px,py+t-5,t,5);
+          ctx.fillStyle='#384035';ctx.fillRect(px+((y%2)?t*.35:t*.66),py+4,2,t-9);
+          if((x*7+y*11)%13===0) {ctx.fillStyle='#4c6440';ctx.fillRect(px+2,py+t-10,8,4);}
+          // Torch details stay inside the visible wall tile; no light leaks.
+          if(visible && y+1<r.n && !r.tiles[(y+1)*r.n+x] && (x+y)%5===0) {
+            const flame=3+Math.sin(time*7+x)*1.3;
+            ctx.fillStyle='#b1824440';ctx.fillRect(px+2,py+2,t-4,t-4);
+            ctx.fillStyle='#362c20';ctx.fillRect(px+t*.44,py+t*.5,t*.12,t*.35);
+            ctx.fillStyle='#d89d56';ctx.fillRect(px+t*.4,py+t*.38-flame,t*.2,t*.22+flame);
+            ctx.fillStyle='#f1d794';ctx.fillRect(px+t*.46,py+t*.4,t*.08,t*.15);
+          }
+        } else {
+          ctx.fillStyle=(x+y)%2?'#252e24':'#293227';ctx.fillRect(px,py,t+1,t+1);
+          ctx.fillStyle='#323c2d';ctx.fillRect(px+3,py+3,t-6,1);
+          if((x*13+y*7)%11===0) {ctx.fillStyle='#3d4433';ctx.fillRect(px+t*.2,py+t*.7,4,2);}
+        }
+        ctx.globalAlpha=1;
+      }
+      // Clip every dynamic sprite and melee trail to currently visible tiles.
+      ctx.save();
+      ctx.beginPath();
+      for (const index of game.visible) {
+        const x=index%r.n,y=Math.floor(index/r.n);
+        ctx.rect(Math.floor(cam.x+x*t),Math.floor(cam.y+y*t),Math.ceil(t)+1,Math.ceil(t)+1);
+      }
+      ctx.clip();
+      function pos(e) {return{x:cam.x+e.x*t,y:cam.y+e.y*t};}
+      for(const chest of r.chests) {
+        if(!game.canSee(chest))continue;
+        const q=pos(chest),s=t/32;
+        ctx.save();ctx.translate(q.x,q.y);ctx.scale(s,s);
+        ctx.fillStyle=chest.opened?'#463d2b':'#8e6338';ctx.fillRect(-10,-6,20,14);
+        ctx.fillStyle=chest.opened?'#1a2118':'#b18a48';ctx.fillRect(-10,-9,20,5);
+        ctx.fillStyle='#d4b570';ctx.fillRect(-7,-6,2,14);ctx.fillRect(5,-6,2,14);ctx.fillRect(-2,-3,4,5);
+        ctx.restore();
+      }
+      for(const nest of r.spawners) {
+        if(!game.canSee(nest))continue;
+        const q=pos(nest);
+        ctx.save();ctx.translate(q.x,q.y);ctx.scale(t/32,t/32);
+        ctx.fillStyle='#434d3e';ctx.fillRect(-12,-10,24,22);ctx.fillStyle='#1a201a';ctx.fillRect(-8,-6,16,14);
+        if(nest.hp>0) {
+          ctx.strokeStyle='#b4cb83';ctx.lineWidth=2;
+          ctx.beginPath();ctx.arc(0,1,7+Math.sin(time*3),0,Math.PI*2);ctx.stroke();
+          ctx.fillStyle='#d0dda0';for(let i=0;i<3;i++)ctx.fillRect(-8+i*7,-12,2,8);
+          ctx.fillStyle='#273426';ctx.fillRect(-12,15,24,3);ctx.fillStyle='#b4cb83';ctx.fillRect(-12,15,24*nest.hp/nest.maxHp,3);
+        } else {ctx.fillStyle='#6a7157';ctx.fillRect(-7,-1,5,4);ctx.fillRect(2,5,6,3);}
+        ctx.restore();
+      }
+      for(const loot of r.loot) if(game.canSee(loot)) {const q=pos(loot);drawItem(ctx,loot.item,q.x,q.y,t/38);}
+      for(const mob of [...r.mobs].sort((a,b)=>a.y-b.y)) {
+        if(!game.canSee(mob))continue;
+        const q=pos(mob);
+        if(mob.windup>0) {ctx.strokeStyle='#eeb07e';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x,q.y,t*.45,0,Math.PI*2);ctx.stroke();}
+        drawActor(ctx,q.x,q.y,t/35,mob.type,time,!!mob.target);
+        if(mob.hp<mob.maxHp) {ctx.fillStyle='#c39169';ctx.fillRect(q.x-t*.3,q.y-t*.5,t*.6*mob.hp/mob.maxHp,3);}
+      }
+      const q=pos(p);
+      for(const arrow of r.arrows) {
+        if(!game.canSee(arrow))continue;
+        const a=pos(arrow);
+        ctx.save();ctx.translate(a.x,a.y);ctx.rotate(Math.atan2(arrow.vy,arrow.vx));
+        ctx.strokeStyle='#edc78a';ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(-t*.22,0);ctx.lineTo(t*.16,0);ctx.stroke();
+        ctx.fillStyle='#f2ead0';ctx.beginPath();ctx.moveTo(t*.25,0);ctx.lineTo(t*.09,-4);ctx.lineTo(t*.09,4);ctx.fill();
+        ctx.strokeStyle='#b29b79';ctx.beginPath();ctx.moveTo(-t*.22,-3);ctx.lineTo(-t*.14,0);ctx.lineTo(-t*.22,3);ctx.stroke();
+        ctx.restore();
+      }
+      ctx.globalAlpha=p.invulnerable>0&&Math.floor(time*14)%2?.45:1;
+      drawActor(ctx,q.x,q.y,t/34,SaveManager.data.skin,time,game.keys.size>0&&game.mode==='play');ctx.globalAlpha=1;
+        if(game.swing>0) {
+        ctx.strokeStyle='#eddb9f';ctx.lineWidth=3;ctx.beginPath();ctx.arc(q.x,q.y,t*1.25,p.face-.95,p.face+.95);ctx.stroke();
+      }
+      // Entities are never rendered from fog memory; no silhouette leaks.
+      for(const effect of game.effects) {
+        if(!game.canSee(effect))continue;
+        const ep=pos(effect);ctx.globalAlpha=Math.min(1,effect.life*2);ctx.fillStyle=effect.color;
+        ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.fillText(effect.text,ep.x,ep.y-20-(1.1-effect.life)*24);ctx.globalAlpha=1;
+      }
+      ctx.restore();
+      paintMinimap();
+    }
+    function paintMinimap() {
+      const r=game.run,c=$('minimap').getContext('2d'),scale=160/r.n;
+      c.fillStyle='#0a0e0b';c.fillRect(0,0,160,160);
+      for(let i=0;i<r.tiles.length;i++) if(r.seen[i]) {
+        c.fillStyle=r.tiles[i]?'#495341':'#93977a';
+        c.fillRect((i%r.n)*scale,Math.floor(i/r.n)*scale,Math.ceil(scale),Math.ceil(scale));
+      }
+      for(const nest of r.spawners) if(nest.discovered&&nest.hp>0) {c.fillStyle='#dcac69';c.fillRect(nest.x*scale-2,nest.y*scale-2,4,4);}
+      c.fillStyle='#e8f4c5';c.fillRect(r.player.x*scale-2,r.player.y*scale-2,4,4);
+    }
+
+    const UI = {
+      toastTimer: 0,
+      page(name) {
+        for(const id of ['home','shopPage','rulesPage','arena']) $(id).classList.toggle('hidden',id!==name);
+        if(name!=='arena') {game.mode='home';game.clearInput();}
+        window.scrollTo(0,0);
+      },
+      wallet() { $('wallet').textContent=SaveManager.data.credits.toLocaleString('en-US'); },
+      toast(message) {
+        clearTimeout(this.toastTimer);$('toast').textContent=message;$('toast').classList.remove('hidden');
+        this.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),2400);
+      },
+      closeOverlays() {for(const id of ['inventory','pause','result','confirm'])$(id).classList.add('hidden');},
+      home() {
+        this.closeOverlays();this.page('home');this.wallet();
+        $('continue').classList.toggle('hidden',!SaveManager.data.run);
+        const s=SaveManager.data.stats;
+        $('record').textContent=s.wins+' dungeons cleared · '+s.kills+' undead defeated';
+      },
+      difficulties() {
+        $('difficulties').replaceChildren();
+        for(const [id,cfg] of Object.entries(CONFIG)) {
+          const button=document.createElement('button');
+          button.className=SaveManager.data.difficulty===id?'selected':'';
+          button.innerHTML=cfg.name+'<small>'+cfg.sight+'m · C '+cfg.credits+'/kill</small>';
+          button.onclick=()=>{SaveManager.data.difficulty=id;SaveManager.save();this.difficulties();};
+          $('difficulties').append(button);
+        }
+      },
+      controls() {
+        const shown=SaveManager.data.controls ?? window.matchMedia('(pointer: coarse)').matches;
+        $('touch').classList.toggle('hidden',!shown);
+        $('controlsToggle').textContent=shown?'Hide Controls':'Show Controls';
+        $('gameControls').textContent=shown?'Hide Controls':'Show Controls';
+        $('controlsToggle').setAttribute('aria-pressed',String(shown));
+        $('gameControls').setAttribute('aria-pressed',String(shown));
+        return shown;
+      },
+      toggleControls() {SaveManager.data.controls=!this.controls();SaveManager.save();this.controls();},
+      shop() {
+        this.page('shopPage');$('skins').replaceChildren();
+        for(const skin of SKINS) {
+          const card=document.createElement('article');card.className='panel skin'+(skin.id===SaveManager.data.skin?' selected':'');
+          const preview=document.createElement('canvas');preview.width=240;preview.height=130;
+          drawActor(preview.getContext('2d'),120,76,3,skin.id,.5);
+          const title=document.createElement('h3');title.textContent=skin.name;
+          const description=document.createElement('p');description.textContent=skin.note;
+          const button=document.createElement('button');button.className='btn';
+          const owned=SaveManager.data.owned.includes(skin.id);
+          button.textContent=skin.id===SaveManager.data.skin?'Equipped':owned?'Equip':'C '+skin.price.toLocaleString('en-US');
+          button.disabled=skin.id===SaveManager.data.skin;
+          button.onclick=()=>{
+            if(!owned) {
+              if(SaveManager.data.credits<skin.price) {this.toast('Not enough credits.');return;}
+              SaveManager.data.credits-=skin.price;SaveManager.data.owned.push(skin.id);
+            }
+            SaveManager.data.skin=skin.id;SaveManager.save();this.wallet();this.shop();drawCover();
+          };
+          card.append(preview,title,description,button);$('skins').append(card);
+        }
+      },
+      inventory() {
+        if(!game.run||game.run.status!=='active')return;
+        game.mode='inventory';game.clearInput();game.checkpoint();
+        this.closeOverlays();$('inventory').classList.remove('hidden');
+        $('armorSummary').textContent='Damage reduction: '+game.defense()+'% · Sword: 24 damage · Health: '+Math.ceil(game.run.player.hp)+'/100';
+        $('armor').replaceChildren();$('backpack').replaceChildren();$('itemDetail').innerHTML='<p>Select an item to inspect it.</p>';
+        const slot=(item,label,select)=>{
+          const b=document.createElement('button');b.className='slot'+(!item?' empty':'');
+          const cv=document.createElement('canvas');cv.width=48;cv.height=48;
+          if(item)drawItem(cv.getContext('2d'),item,24,25,1.8);
+          const text=document.createElement('span');text.textContent=item?itemName(item):label;
+          const stat=document.createElement('small');stat.textContent=item?(item.type==='potion'?'+40 HP':item.defense+'% armor'):'Empty';
+          b.append(cv,text,stat);b.onclick=()=>{if(item)select();};return b;
+        };
+        EQUIPMENT.forEach(type=>$('armor').append(slot(game.run.armor[type],type,()=>this.itemDetail('armor',type))));
+        game.run.bag.forEach((item,i)=>$('backpack').append(slot(item,'Slot '+(i+1),()=>this.itemDetail('bag',i))));
+      },
+      itemDetail(source,key) {
+        const item=source==='bag'?game.run.bag[key]:game.run.armor[key];
+        const detail=$('itemDetail');detail.replaceChildren();
+        const p=document.createElement('p');p.textContent=itemName(item)+' · '+(item.type==='potion'?'Restores 40 health.':item.defense+'% damage reduction while equipped.');
+        const row=document.createElement('div');row.className='row';
+        const action=document.createElement('button');action.className='btn primary';
+        action.textContent=source==='armor'?'Unequip':item.type==='potion'?'Drink':'Equip / Swap';
+        action.onclick=()=>source==='armor'?game.unequip(key):game.equip(key);row.append(action);
+        if(source==='bag') {const drop=document.createElement('button');drop.className='btn';drop.textContent='Drop on floor';drop.onclick=()=>game.drop(key);row.append(drop);}
+        detail.append(p,row);
+      },
+      resume() {this.closeOverlays();game.clearInput();game.mode='play';game.reveal();game.hud();},
+      pause() {
+        if(!['play','inventory'].includes(game.mode))return;
+        game.mode='pause';game.clearInput();game.checkpoint();this.closeOverlays();$('pause').classList.remove('hidden');
+      }
+    };
+
+    function drawCover() {
+      const c=$('cover').getContext('2d');c.fillStyle='#121912';c.fillRect(0,0,480,480);
+      for(let y=0;y<12;y++)for(let x=0;x<12;x++) {
+        const border=x<2||x>9||y<2||y>9||((x===5||x===6)&&y<4);
+        c.fillStyle=border?'#444c3d':(x+y)%2?'#252f23':'#293427';c.fillRect(x*40+1,y*40+1,38,38);
+        if(border){c.fillStyle='#5e644f';c.fillRect(x*40+1,y*40+1,38,4);}
+      }
+      for(const x of [92,376]) {
+        const g=c.createRadialGradient(x,144,0,x,144,115);g.addColorStop(0,'#e5b96860');g.addColorStop(1,'#e5b96800');c.fillStyle=g;c.fillRect(x-115,29,230,230);
+        c.fillStyle='#745b36';c.fillRect(x-4,143,8,25);c.fillStyle='#e9b365';c.fillRect(x-6,127,12,16);c.fillStyle='#fae6a7';c.fillRect(x-3,132,6,10);
+      }
+      drawActor(c,239,284,4.2,SaveManager.data.skin,0);
+      drawActor(c,357,211,1.8,'skeleton');drawActor(c,125,334,1.8,'zombie');
+      c.fillStyle='#c4b381';c.font='12px monospace';c.textAlign='center';c.fillText('NO LIGHT BEYOND THE STONE',240,440);
+    }
+
+    function bindEvents() {
+      $('start').onclick=()=>{if(SaveManager.data.run)$('confirm').classList.remove('hidden');else game.start();};
+      $('confirmYes').onclick=()=>game.start();$('confirmNo').onclick=()=>$('confirm').classList.add('hidden');
+      $('continue').onclick=()=>{if(SaveManager.data.run){game.run=SaveManager.data.run;game.activate();}};
+      $('shopOpen').onclick=()=>UI.shop();$('rulesOpen').onclick=()=>UI.page('rulesPage');
+      document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>UI.home());
+      $('controlsToggle').onclick=$('gameControls').onclick=()=>UI.toggleControls();
+      $('soundToggle').onclick=()=>{SaveManager.data.sound=!SaveManager.data.sound;SaveManager.save();$('soundToggle').textContent=SaveManager.data.sound?'Sound: On':'Sound: Off';};
+      $('inventoryOpen').onclick=()=>UI.inventory();$('inventoryClose').onclick=()=>UI.resume();
+      $('pauseOpen').onclick=()=>UI.pause();$('resume').onclick=()=>UI.resume();
+      $('menu').onclick=()=>{game.checkpoint();UI.home();};$('resultMenu').onclick=()=>UI.home();$('again').onclick=()=>game.start();
+      const directions={KeyW:'up',ArrowUp:'up',KeyS:'down',ArrowDown:'down',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
+      window.addEventListener('keydown',e=>{
+        if(e.code==='Tab'&&['play','inventory'].includes(game.mode)) {e.preventDefault();if(!e.repeat)game.mode==='inventory'?UI.resume():UI.inventory();return;}
+        if(e.code==='Escape'&&['play','inventory','pause'].includes(game.mode)) {e.preventDefault();if(!e.repeat)game.mode==='play'?UI.pause():UI.resume();return;}
+        // Backpack inspection shortcuts do not consume an item accidentally.
+        if (game.mode === 'inventory' && /^Digit[1-5]$/.test(e.code)) {
+          e.preventDefault();
+          const index = Number(e.code.slice(-1)) - 1;
+          if (game.run.bag[index]) {
+            UI.itemDetail('bag', index);
+          }
+          return;
+        }
+        if(game.mode!=='play')return;
+        if(directions[e.code]) {e.preventDefault();game.keys.add(directions[e.code]);}
+        if(e.code==='Space') {e.preventDefault();game.attackHeld=true;}
+        if(e.code==='KeyE'&&!e.repeat) {e.preventDefault();game.interact();}
+      });
+      window.addEventListener('keyup',e=>{if(directions[e.code])game.keys.delete(directions[e.code]);if(e.code==='Space')game.attackHeld=false;});
+      canvas.addEventListener('pointermove',e=>{
+        if(game.mode!=='play'||e.pointerType!=='mouse')return;
+        const box=canvas.getBoundingClientRect();game.mouseAim=true;
+        game.run.player.face=Math.atan2(e.clientY-box.top-game.camera.h/2,e.clientX-box.left-game.camera.w/2);
+      });
+      canvas.addEventListener('pointerdown',e=>{
+        if(game.mode!=='play')return;e.preventDefault();
+        if(e.pointerType==='mouse') {game.attackHeld=true;game.attackPointer=e.pointerId;}
+      });
+      window.addEventListener('pointerup',e=>{
+        if(e.pointerId===game.attackPointer) {game.attackHeld=false;game.attackPointer=null;}
+      });
+      window.addEventListener('pointercancel',()=>game.clearInput());
+      canvas.addEventListener('contextmenu',e=>e.preventDefault());
+      document.querySelectorAll('[data-dir]').forEach(button=>{
+        const dir=button.dataset.dir;
+        button.addEventListener('pointerdown',e=>{e.preventDefault();if(game.mode!=='play')return;button.setPointerCapture(e.pointerId);game.mouseAim=false;game.keys.add(dir);});
+        const release=()=>game.keys.delete(dir);
+        button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
+      });
+      $('touchAttack').addEventListener('pointerdown',e=>{
+        e.preventDefault();
+        if(game.mode!=='play')return;
+        game.mouseAim=false;game.attackHeld=true;game.attackPointer=e.pointerId;game.attack(true);
+      });
+      $('touchUse').onclick=()=>game.interact();
+      window.addEventListener('blur',()=>{game.clearInput();UI.pause();});
+      document.addEventListener('visibilitychange',()=>{if(document.hidden)UI.pause();});
+      window.addEventListener('pagehide',()=>{if(game.run?.status==='active')game.checkpoint();});
+      window.addEventListener('resize',resize);
+    }
+
+    SaveManager.load();bindEvents();UI.difficulties();UI.controls();UI.home();drawCover();
+    $('soundToggle').textContent=SaveManager.data.sound?'Sound: On':'Sound: Off';
+    let lastTime=performance.now();
+    function frame(now) {
+      const dt=Math.min(.04,Math.max(0,(now-lastTime)/1000));lastTime=now;
+      game.update(dt);paintWorld(now/1000);requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

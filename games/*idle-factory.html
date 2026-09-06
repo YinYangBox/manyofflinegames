@@ -1,0 +1,4052 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f2f0e9">
+    <title>
+      Idle Factory
+    </title>
+    <style>
+    :root {
+      --paper: #f2f0e9;
+      --card: #fffefa;
+      --ink: #202b30;
+      --muted: #697577;
+      --line: #d9ddd5;
+      --orange: #e96b38;
+      --green: #397c61;
+      --blue: #527989;
+      --dark: #1e3037;
+      --gold: #aa741d;
+      --radius: 15px;
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      margin: 0;
+    }
+    button, input, select {
+      font: inherit;
+    }
+    button, select {
+      cursor: pointer;
+    }
+    button {
+      touch-action: manipulation;
+    }
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+      outline: 3px solid var(--orange);
+      outline-offset: 3px;
+    }
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      min-height: 100dvh;
+    }
+    aside {
+      background: #1e3037;
+      color: #e4e8df;
+      padding: 27px 18px;
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 9px 28px;
+    }
+    .brand-mark {
+      width: 37px;
+      height: 39px;
+      background: var(--orange);
+      clip-path: polygon(0 100%, 0 45%, 32% 24%, 32% 45%, 64% 24%, 64% 0, 82% 0, 82% 45%, 100% 45%, 100% 100%);
+      flex-shrink: 0;
+    }
+    .brand strong {
+      font-size: 21px;
+      letter-spacing: -.04em;
+      line-height: 1;
+    }
+    .brand small {
+      display: block;
+      color: #96adae;
+      font-size: 9px;
+      letter-spacing: .15em;
+      margin-top: 7px;
+    }
+    nav {
+      display: grid;
+      gap: 5px;
+    }
+    nav button {
+      border: 0;
+      background: transparent;
+      color: #abc0c1;
+      border-radius: 9px;
+      text-align: left;
+      padding: 13px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+    nav button b {
+      width: 22px;
+      font: 12px monospace;
+      color: #829b9d;
+    }
+    nav button.active {
+      background: #35474b;
+      color: #fff;
+    }
+    nav button.active b {
+      color: #f8b777;
+    }
+    nav button:hover {
+      background: #2a4046;
+    }
+    .side-note {
+      margin-top: auto;
+      padding: 20px 10px 0;
+      color: #8da5a5;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .side-note strong {
+      color: #d0d9ca;
+    }
+    .workspace {
+      min-width: 0;
+    }
+    header {
+      min-height: 77px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--line);
+      background: #f8f7f1;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .header-title {
+      font: 11px monospace;
+      letter-spacing: .09em;
+      color: var(--muted);
+    }
+    .header-wallet {
+      display: flex;
+      gap: 22px;
+      align-items: center;
+    }
+    .wallet-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--muted);
+      display: block;
+    }
+    .wallet-value {
+      font: bold 19px monospace;
+      display: block;
+      margin-top: 3px;
+    }
+    .credits-color {
+      color: var(--orange);
+    }
+    main {
+      padding: 30px 32px 55px;
+      max-width: 1580px;
+      margin: auto;
+    }
+    .page-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .eyebrow {
+      color: var(--orange);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font: bold 10px monospace;
+    }
+    h1 {
+      margin: 8px 0 7px;
+      font-size: clamp(30px, 3.5vw, 46px);
+      letter-spacing: -.055em;
+      line-height: 1.05;
+    }
+    h2 {
+      font-size: 19px;
+      letter-spacing: -.025em;
+      margin: 0 0 12px;
+    }
+    h3 {
+      font-size: 15px;
+      margin: 0 0 8px;
+    }
+    p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+      margin: 7px 0;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      padding: 10px 14px;
+      min-height: 42px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .btn:hover:not(:disabled) {
+      border-color: #8e9c94;
+      background: #f4f4ec;
+    }
+    .btn.primary {
+      background: var(--orange);
+      color: #fff;
+      border-color: var(--orange);
+    }
+    .btn.primary:hover:not(:disabled) {
+      background: #cc5627;
+    }
+    .btn.dark {
+      background: var(--dark);
+      color: #fff;
+      border-color: var(--dark);
+    }
+    .btn.danger {
+      color: #a03e29;
+    }
+    .btn.small {
+      padding: 7px 10px;
+      min-height: 34px;
+      font-size: 11px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 9px;
+    }
+    .between {
+      justify-content: space-between;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 21px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 13px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      padding: 18px;
+    }
+    .stat small {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: .07em;
+    }
+    .stat strong {
+      font: bold clamp(20px, 2.6vw, 29px) monospace;
+      display: block;
+      margin: 10px 0 4px;
+    }
+    .stat span {
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+      gap: 18px;
+    }
+    .campus-card {
+      padding: 0;
+      overflow: hidden;
+      background: #e8eddf;
+    }
+    .campus-head {
+      padding: 20px 21px 0;
+    }
+    #campus {
+      width: 100%;
+      height: 350px;
+      display: block;
+      touch-action: pan-y;
+    }
+    .campus-foot {
+      padding: 12px 20px;
+      border-top: 1px solid #d3dacb;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font: 10px monospace;
+    }
+    .stack {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+    .dark-card {
+      background: var(--dark);
+      border-color: var(--dark);
+      color: #eff0e7;
+    }
+    .dark-card p {
+      color: #abc1c0;
+    }
+    .dark-card .eyebrow {
+      color: #f5b477;
+    }
+    .large-number {
+      font: bold 43px monospace;
+      letter-spacing: -.06em;
+      margin: 13px 0;
+    }
+    .progress {
+      height: 7px;
+      background: #e2e6dc;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .progress > span {
+      display: block;
+      height: 100%;
+      background: var(--orange);
+      width: 0;
+      transition: width .3s;
+    }
+    .dark-card .progress {
+      background: #3a5157;
+    }
+    .metric-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .metric-row:last-child {
+      border: 0;
+    }
+    .metric-row span {
+      color: var(--muted);
+    }
+    .metric-row b {
+      font: bold 12px monospace;
+    }
+    .section-gap {
+      margin-top: 20px;
+    }
+    #revenueChart {
+      display: block;
+      width: 100%;
+      height: 155px;
+    }
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font: 10px monospace;
+    }
+    .ticker {
+      padding: 12px 16px;
+      background: #e6ecde;
+      border: 1px solid #d6decf;
+      border-radius: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 12px;
+    }
+    .ticker strong {
+      color: var(--green);
+    }
+    .ticker span {
+      color: var(--muted);
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 17px;
+    }
+    .filters button.active {
+      background: var(--dark);
+      color: #fff;
+    }
+    .factory-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .factory-card {
+      padding: 0;
+      overflow: hidden;
+    }
+    .factory-art {
+      display: block;
+      width: 100%;
+      height: 130px;
+      background: #edf0e6;
+    }
+    .factory-body {
+      padding: 18px;
+    }
+    .factory-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .factory-number {
+      font: 10px monospace;
+      color: var(--muted);
+    }
+    .badge {
+      padding: 4px 7px;
+      background: #e9eee3;
+      color: var(--green);
+      border-radius: 5px;
+      font: bold 9px monospace;
+      white-space: nowrap;
+    }
+    .badge.warning {
+      background: #fff0d7;
+      color: #946329;
+    }
+    .badge.off {
+      background: #edece8;
+      color: #78807b;
+    }
+    .recipe {
+      padding: 10px 0;
+      min-height: 52px;
+      font: 11px/1.7 monospace;
+      color: var(--muted);
+    }
+    .factory-card .progress {
+      margin: 8px 0;
+      height: 5px;
+    }
+    .factory-card.locked .factory-art {
+      filter: grayscale(.8);
+      opacity: .7;
+    }
+    .factory-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 14px;
+    }
+    .factory-actions .btn {
+      padding: 8px;
+    }
+    .factory-actions .wide {
+      grid-column: 1/-1;
+    }
+    .cost {
+      font-family: monospace;
+      color: var(--orange);
+      font-weight: bold;
+    }
+    .detail-hero {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 22px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .detail-hero canvas {
+      width: 100%;
+      height: 145px;
+      background: #e9eddf;
+      border-radius: 10px;
+    }
+    .upgrade-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .upgrade {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .upgrade .btn {
+      width: 100%;
+      margin-top: 9px;
+    }
+    label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    input[type=number] {
+      width: 100px;
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid #c4cec3;
+      border-radius: 6px;
+      padding: 9px;
+    }
+    input[type=range] {
+      accent-color: var(--orange);
+      width: 100%;
+    }
+    input[type=checkbox] {
+      accent-color: var(--orange);
+      width: 18px;
+      height: 18px;
+    }
+    select {
+      border: 1px solid #c4cec3;
+      background: white;
+      border-radius: 7px;
+      padding: 9px;
+      color: var(--ink);
+      max-width: 100%;
+    }
+    .warehouse-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .resource-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .resource-icon {
+      width: 37px;
+      height: 37px;
+      display: grid;
+      place-items: center;
+      background: #e8ecdf;
+      border-radius: 8px;
+      font: bold 12px monospace;
+    }
+    .resource-amount {
+      font: bold 26px monospace;
+      margin: 12px 0;
+    }
+    .resource-card .row {
+      margin-top: 13px;
+    }
+    .resource-card .btn {
+      flex: 1;
+    }
+    .orders {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .order-head {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .order-head b {
+      font: 11px monospace;
+    }
+    .order-list {
+      min-height: 118px;
+    }
+    .order-list .metric-row {
+      padding: 9px 0;
+    }
+    .order-reward {
+      border-top: 1px dashed var(--line);
+      padding: 15px 0;
+      font: bold 24px monospace;
+    }
+    .research-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 15px;
+    }
+    .research-card {
+      display: flex;
+      flex-direction: column;
+    }
+    .research-card p {
+      min-height: 62px;
+    }
+    .research-card .btn {
+      margin-top: auto;
+    }
+    .research-icon {
+      width: 39px;
+      height: 39px;
+      border-radius: 50%;
+      background: #e8ecdf;
+      color: var(--green);
+      display: grid;
+      place-items: center;
+      font: bold 13px monospace;
+      margin-bottom: 14px;
+    }
+    .credits-hero {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 22px;
+    }
+    .credits-hero .large-number {
+      font-size: 64px;
+    }
+    .keep-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .keep-list li {
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .keep-list b {
+      margin-right: 7px;
+      color: var(--green);
+    }
+    .record-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 13px;
+    }
+    .achievement {
+      position: relative;
+    }
+    .achievement.done {
+      border-color: #9dbca5;
+      background: #f0f5e9;
+    }
+    .achievement p {
+      min-height: 37px;
+    }
+    .log-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .log-list li {
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .log-list time {
+      color: var(--muted);
+      white-space: nowrap;
+      font: 10px monospace;
+    }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .setting {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .setting:last-child {
+      border: none;
+    }
+    .setting strong {
+      font-size: 12px;
+    }
+    .setting small {
+      display: block;
+      color: var(--muted);
+      margin-top: 3px;
+      font-size: 11px;
+    }
+    details {
+      border-bottom: 1px solid var(--line);
+      padding: 14px 0;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    details p {
+      max-width: 800px;
+    }
+    .help-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .chain {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 9px 0;
+      font: 11px monospace;
+    }
+    .chain span {
+      padding: 7px 9px;
+      background: #e9eddf;
+      border-radius: 5px;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: #13272fac;
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .modal {
+      background: var(--card);
+      width: min(760px, 100%);
+      max-height: calc(100dvh - 40px);
+      overflow: auto;
+      padding: 27px;
+      border-radius: 18px;
+      box-shadow: 0 30px 100px #07182055;
+    }
+    .modal.small {
+      width: min(470px, 100%);
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+    .modal-head h2 {
+      font-size: 24px;
+    }
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      z-index: 220;
+      background: var(--dark);
+      color: #fff;
+      border-radius: 10px;
+      padding: 13px 19px;
+      box-shadow: 0 6px 30px #0003;
+      max-width: 90vw;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    #saveWarning {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 250;
+      background: #a64329;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+    }
+    #busy {
+      z-index: 200;
+    }
+    #busy .progress {
+      margin-top: 16px;
+    }
+    .welcome-art {
+      background: #e9eddf;
+      border-radius: 10px;
+      width: 100%;
+      height: 180px;
+      display: block;
+      margin-bottom: 20px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+    }
+    .onboarding {
+      border-left: 4px solid var(--orange);
+    }
+    .paused-tag {
+      color: #ac643a;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+    @media(max-width:1200px) {
+      .layout {
+        grid-template-columns: 190px minmax(0, 1fr);
+      }
+      main {
+        padding: 24px;
+      }
+      header {
+        padding: 14px 24px;
+      }
+      .factory-grid, .warehouse-grid, .research-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .dashboard-grid {
+        grid-template-columns: minmax(0, 1.4fr) minmax(240px, 1fr);
+      }
+    }
+    @media(max-width:930px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      aside {
+        height: auto;
+        position: fixed;
+        inset: auto 0 0;
+        padding: 7px 9px max(7px, env(safe-area-inset-bottom));
+        z-index: 40;
+      }
+      aside .brand, .side-note {
+        display: none;
+      }
+      nav {
+        display: flex;
+        overflow-x: auto;
+        gap: 5px;
+        scrollbar-width: thin;
+      }
+      nav button {
+        flex: 0 0 auto;
+        padding: 10px 12px;
+        font-size: 11px;
+        display: grid;
+        gap: 4px;
+        text-align: center;
+        justify-items: center;
+        min-width: 70px;
+      }
+      nav button b {
+        width: auto;
+      }
+      main {
+        padding-bottom: 110px;
+      }
+      .orders {
+        grid-template-columns: 1fr 1fr;
+      }
+      #toast {
+        bottom: 95px;
+      }
+    }
+    @media(max-width:640px) {
+      header {
+        padding: 12px 15px;
+        min-height: 70px;
+      }
+      .header-title {
+        font-size: 9px;
+        max-width: 80px;
+      }
+      .header-wallet {
+        gap: 13px;
+      }
+      .wallet-value {
+        font-size: 16px;
+      }
+      .wallet-label {
+        font-size: 8px;
+      }
+      main {
+        padding: 20px 15px 115px;
+      }
+      .stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      .stat {
+        padding: 13px;
+      }
+      .dashboard-grid, .credits-hero, .settings-grid, .help-grid {
+        grid-template-columns: 1fr;
+      }
+      .factory-grid, .warehouse-grid, .orders, .research-grid {
+        grid-template-columns: 1fr;
+      }
+      .record-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      .record-grid .card {
+        padding: 14px;
+      }
+      .card {
+        padding: 17px;
+      }
+      .campus-card, .factory-card {
+        padding: 0;
+      }
+      #campus {
+        height: 300px;
+      }
+      .page-heading {
+        align-items: center;
+      }
+      .page-heading .btn {
+        max-width: 115px;
+      }
+      .modal {
+        padding: 19px;
+      }
+      .detail-hero {
+        grid-template-columns: 100px 1fr;
+        gap: 13px;
+      }
+      .detail-hero canvas {
+        height: 100px;
+      }
+      .upgrade-grid {
+        gap: 8px;
+      }
+      .upgrade {
+        padding: 11px;
+      }
+      .ticker {
+        flex-wrap: wrap;
+      }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      *, *::before, *::after {
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside>
+        <div class="brand">
+          <div class="brand-mark">
+          </div>
+          <div>
+            <strong>
+              Idle Factory
+            </strong>
+            <small>
+              BUILD. AUTOMATE. REPEAT.
+            </small>
+          </div>
+        </div>
+        <nav aria-label="Factory navigation">
+          <button data-page="overview" class="active">
+            <b>
+              01
+            </b>
+            Overview
+          </button>
+          <button data-page="factories">
+            <b>
+              02
+            </b>
+            Factories
+          </button>
+          <button data-page="warehouse">
+            <b>
+              03
+            </b>
+            Warehouse
+          </button>
+          <button data-page="orders">
+            <b>
+              04
+            </b>
+            Orders
+          </button>
+          <button data-page="research">
+            <b>
+              05
+            </b>
+            Research
+          </button>
+          <button data-page="prestige">
+            <b>
+              06
+            </b>
+            Prestige
+          </button>
+          <button data-page="records">
+            <b>
+              07
+            </b>
+            Records
+          </button>
+          <button data-page="settings">
+            <b>
+              08
+            </b>
+            Settings
+          </button>
+          <button data-page="guide">
+            <b>
+              ?
+            </b>
+            Guide
+          </button>
+        </nav>
+        <div class="side-note">
+          <strong id="sideCampaign">
+            Campaign 01
+          </strong>
+          <br>
+          <span id="saveStatus">
+            Autosave ready
+          </span>
+          <br>
+          Local production. Lasting progress.
+        </div>
+      </aside>
+      <div class="workspace">
+        <header>
+          <div class="header-title" id="headerState">
+            PRODUCTION ONLINE
+          </div>
+          <div class="header-wallet">
+            <div>
+              <span class="wallet-label">
+                Run revenue
+              </span>
+              <span class="wallet-value" id="headerRevenue">
+                $0
+              </span>
+            </div>
+            <div>
+              <span class="wallet-label">
+                Credits
+              </span>
+              <span class="wallet-value prestige-color" id="headerPrestige">
+                C 0
+              </span>
+            </div>
+          </div>
+        </header>
+        <main>
+          <section id="overview" class="page">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  Operations center
+                </span>
+                <h1>
+                  A small start.
+                  <br>
+                  A bigger tomorrow.
+                </h1>
+                <p id="overviewSubtitle">
+                  Your timber yard is already working.
+                </p>
+              </div>
+              <button id="boostButton" class="btn primary">
+                Overclock · 20s
+              </button>
+            </div>
+            <div class="ticker">
+              <strong id="marketName">
+                Standard trading
+              </strong>
+              <span id="marketDescription">
+                Stable demand across the industry.
+              </span>
+              <span id="marketTimer">
+              </span>
+            </div>
+            <div class="stats">
+              <div class="card stat">
+                <small>
+                  Revenue / min
+                </small>
+                <strong id="rateValue">
+                  $0
+                </strong>
+                <span>
+                  Actual trailing 60 seconds
+                </span>
+              </div>
+              <div class="card stat">
+                <small>
+                  Active sites
+                </small>
+                <strong id="siteValue">
+                  1 / 9
+                </strong>
+                <span id="unitValue">
+                  1 production line
+                </span>
+              </div>
+              <div class="card stat">
+                <small>
+                  Grid efficiency
+                </small>
+                <strong id="powerValue">
+                  100%
+                </strong>
+                <span id="powerCaption">
+                  Power available
+                </span>
+              </div>
+              <div class="card stat">
+                <small>
+                  Next prestige
+                </small>
+                <strong id="potentialValue">
+                  C 0
+                </strong>
+                <span id="potentialCaption">
+                  Grow your run revenue
+                </span>
+              </div>
+            </div>
+            <div class="dashboard-grid">
+              <div class="stack">
+                <div class="card campus-card">
+                  <div class="campus-head row between">
+                    <h2>
+                      Your industrial campus
+                    </h2>
+                    <span class="badge" id="campusBadge">
+                      LIVE
+                    </span>
+                  </div>
+                  <canvas id="campus" width="840" height="420" aria-label="Animated industrial campus. Open Factories to manage each site.">
+                  </canvas>
+                  <div class="campus-foot">
+                    <span id="campusOutput">
+                      0 items produced
+                    </span>
+                    <span>
+                      NINE INDUSTRIES · ONE SYSTEM
+                    </span>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="row between">
+                    <h2>
+                      Revenue history
+                    </h2>
+                    <span class="eyebrow">
+                      Last 60 seconds
+                    </span>
+                  </div>
+                  <canvas id="revenueChart" width="800" height="155" aria-label="Recent revenue chart">
+                  </canvas>
+                  <div class="chart-labels">
+                    <span>
+                      60 seconds ago
+                    </span>
+                    <span>
+                      Now
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="stack">
+                <div class="card dark-card">
+                  <span class="eyebrow">
+                    A fresh beginning
+                  </span>
+                  <h2 style="margin-top:10px">
+                    Build your legacy
+                  </h2>
+                  <div id="overviewPrestige" class="large-number">
+                    C 0
+                  </div>
+                  <p id="prestigeProgressText">
+                    Reach $1,200 run revenue to earn your first reset credit.
+                  </p>
+                  <div class="progress">
+                    <span id="prestigeProgress">
+                    </span>
+                  </div>
+                  <button class="btn primary section-gap" data-page="prestige">
+                    Review prestige
+                  </button>
+                </div>
+                <div class="card onboarding">
+                  <span class="eyebrow">
+                    Your next move
+                  </span>
+                  <h2 id="nextTitle" style="margin-top:10px">
+                    Let production begin
+                  </h2>
+                  <p id="nextText">
+                  </p>
+                  <button id="nextButton" class="btn small section-gap">
+                    Open Factories
+                  </button>
+                </div>
+                <div class="card">
+                  <h2>
+                    Floor report
+                  </h2>
+                  <div id="floorReport">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="factories" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  Production network
+                </span>
+                <h1>
+                  Factories
+                </h1>
+                <p>
+                  Every unlock and upgrade is permanent. All purchases cost credits.
+                </p>
+              </div>
+            </div>
+            <div class="filters" id="factoryFilters">
+              <button class="btn small active" data-filter="all">
+                All sites
+              </button>
+              <button class="btn small" data-filter="owned">
+                Owned
+              </button>
+              <button class="btn small" data-filter="locked">
+                Locked
+              </button>
+            </div>
+            <div id="factoryGrid" class="factory-grid">
+            </div>
+          </section>
+          <section id="warehouse" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  Stock & dispatch
+                </span>
+                <h1>
+                  Warehouse
+                </h1>
+                <p>
+                  Reserves protect your supply chain. Auto-export sells only the surplus.
+                </p>
+              </div>
+              <button id="sellSurplus" class="btn dark">
+                Sell all surplus
+              </button>
+            </div>
+            <div id="warehouseGrid" class="warehouse-grid">
+            </div>
+          </section>
+          <section id="orders" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  Client contracts
+                </span>
+                <h1>
+                  Order board
+                </h1>
+                <p>
+                  Deliver stocked goods for premium revenue. No credit entry fees.
+                </p>
+              </div>
+            </div>
+            <div id="orderBoard" class="orders">
+            </div>
+            <div class="card section-gap">
+              <h2>
+                Making room for a contract
+              </h2>
+              <p>
+                Order quantities are not reserved automatically. Raise the matching export reserves in Warehouse to accumulate the requested goods. Deliveries consume only the quantities shown. Skipping a contract refreshes that slot after 60 seconds; expired contracts are replaced automatically.
+              </p>
+            </div>
+          </section>
+          <section id="research" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  Permanent advantages
+                </span>
+                <h1>
+                  Research
+                </h1>
+                <p>
+                  Make each campaign faster, larger, and more valuable.
+                </p>
+              </div>
+            </div>
+            <div id="researchGrid" class="research-grid">
+            </div>
+          </section>
+          <section id="prestige" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  Long-term thinking
+                </span>
+                <h1>
+                  Prestige
+                </h1>
+                <p>
+                  Turn this campaign's revenue into permanent buying power.
+                </p>
+              </div>
+            </div>
+            <div class="prestige-hero">
+              <div class="card dark-card">
+                <span class="eyebrow">
+                  Ready to claim
+                </span>
+                <div id="prestigeClaim" class="large-number">
+                  C 0
+                </div>
+                <p id="prestigeFormula">
+                </p>
+                <div class="progress">
+                  <span id="prestigeBar">
+                  </span>
+                </div>
+                <p id="prestigeNext">
+                </p>
+                <button id="prestigeButton" class="btn primary section-gap">
+                  Start a new campaign
+                </button>
+              </div>
+              <div class="card">
+                <h2>
+                  What carries forward
+                </h2>
+                <ul class="keep-list">
+                  <li>
+                    <b>
+                      ✓
+                    </b>
+                    Unspent credits
+                  </li>
+                  <li>
+                    <b>
+                      ✓
+                    </b>
+                    Every factory, production line, and upgrade
+                  </li>
+                  <li>
+                    <b>
+                      ✓
+                    </b>
+                    Research, achievements, and lifetime records
+                  </li>
+                  <li>
+                    <b>
+                      ✓
+                    </b>
+                    Export settings and factory pause choices
+                  </li>
+                  <li>
+                    <b>
+                      ↺
+                    </b>
+                    Revenue, inventory, and cycle progress reset
+                  </li>
+                  <li>
+                    <b>
+                      ↺
+                    </b>
+                    Orders and temporary boosts reset
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="stats section-gap">
+              <div class="card stat">
+                <small>
+                  Lifetime credits earned
+                </small>
+                <strong id="lifetimePrestige">
+                  0
+                </strong>
+                <span>
+                  Includes achievement rewards
+                </span>
+              </div>
+              <div class="card stat">
+                <small>
+                  Campaigns completed
+                </small>
+                <strong id="resetCount">
+                  0
+                </strong>
+                <span>
+                  Every restart builds momentum
+                </span>
+              </div>
+              <div class="card stat">
+                <small>
+                  Legacy production
+                </small>
+                <strong id="legacyBonus">
+                  +0%
+                </strong>
+                <span>
+                  From lifetime credits earned
+                </span>
+              </div>
+              <div class="card stat">
+                <small>
+                  Best campaign
+                </small>
+                <strong id="bestCampaign">
+                  $0
+                </strong>
+                <span>
+                  Highest settled run revenue
+                </span>
+              </div>
+            </div>
+            <div class="card">
+              <h2>
+                Recent campaigns
+              </h2>
+              <ul id="campaignHistory" class="log-list">
+              </ul>
+            </div>
+          </section>
+          <section id="records" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  Milestones matter
+                </span>
+                <h1>
+                  Records
+                </h1>
+                <p>
+                  Achievements award credits once, immediately. No manual claiming.
+                </p>
+              </div>
+            </div>
+            <div id="lifetimeStats" class="stats">
+            </div>
+            <div id="achievementGrid" class="record-grid">
+            </div>
+            <div class="card section-gap">
+              <h2>
+                Operations log
+              </h2>
+              <ul id="activityLog" class="log-list">
+              </ul>
+            </div>
+          </section>
+          <section id="settings" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  Your workspace
+                </span>
+                <h1>
+                  Settings
+                </h1>
+                <p>
+                  Offline by design. No accounts, ads, or external downloads.
+                </p>
+              </div>
+            </div>
+            <div class="settings-grid">
+              <div class="card">
+                <h2>
+                  Preferences
+                </h2>
+                <div class="setting">
+                  <label for="soundSetting">
+                    <strong>
+                      Interface sounds
+                    </strong>
+                    <small>
+                      Locally synthesized feedback
+                    </small>
+                  </label>
+                  <input id="soundSetting" type="checkbox">
+                </div>
+                <div class="setting">
+                  <label for="motionSetting">
+                    <strong>
+                      Factory animation
+                    </strong>
+                    <small>
+                      Disable for a quieter workspace
+                    </small>
+                  </label>
+                  <input id="motionSetting" type="checkbox">
+                </div>
+                <div class="setting">
+                  <label for="offlineSetting">
+                    <strong>
+                      Offline production
+                    </strong>
+                    <small>
+                      Simulate your saved production setup
+                    </small>
+                  </label>
+                  <input id="offlineSetting" type="checkbox">
+                </div>
+                <div class="setting">
+                  <div>
+                    <strong>
+                      Production
+                    </strong>
+                    <small>
+                      Pause stops live and offline work
+                    </small>
+                  </div>
+                  <button id="pauseProduction" class="btn small">
+                    Pause
+                  </button>
+                </div>
+              </div>
+              <div class="card">
+                <h2>
+                  Your save
+                </h2>
+                <p id="saveDetails">
+                </p>
+                <div class="row section-gap">
+                  <button id="saveNow" class="btn">
+                    Save now
+                  </button>
+                  <button id="exportSave" class="btn dark">
+                    Export backup
+                  </button>
+                  <button id="importSave" class="btn">
+                    Import backup
+                  </button>
+                </div>
+                <input id="backupFile" type="file" accept="application/json,.json" class="hidden">
+                <p class="section-gap">
+                  Importing replaces only Idle Factory. Other games in your arcade keep their own data. Export a backup before changing browsers or devices.
+                </p>
+              </div>
+            </div>
+          </section>
+          <section id="guide" class="page hidden">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">
+                  The operating manual
+                </span>
+                <h1>
+                  Guide
+                </h1>
+                <p>
+                  Simple controls. A connected economy.
+                </p>
+              </div>
+            </div>
+            <div class="help-grid">
+              <div class="card">
+                <h2>
+                  1. Produce and sell
+                </h2>
+                <p>
+                  The free Timber Yard starts immediately. Each finished cycle creates real stock. Downstream factories consume that stock before auto-export runs. Revenue comes from exports, manual sales, and delivered orders.
+                </p>
+              </div>
+              <div class="card">
+                <h2>
+                  2. Earn credits
+                </h2>
+                <p>
+                  Early achievements grant your first credits. You also earn credits by completing a prestige reset. Revenue is a reset score, not a second purchasing currency. Factories, lines, upgrades, and research are bought with credits.
+                </p>
+              </div>
+              <div class="card">
+                <h2>
+                  3. Build a chain
+                </h2>
+                <p>
+                  Factories require upstream sites. A missing ingredient pauses a cycle without consuming partial inputs. Keep some raw materials in reserve rather than selling everything. Pausing a factory also removes its power demand.
+                </p>
+              </div>
+              <div class="card">
+                <h2>
+                  4. Begin again, stronger
+                </h2>
+                <p>
+                  Prestige keeps every permanent purchase and your spending balance. Your campaign revenue, stored goods, active orders, and production progress reset. Lifetime credits earned improve production even after you spend them.
+                </p>
+              </div>
+            </div>
+            <div class="card section-gap">
+              <h2>
+                Production chains
+              </h2>
+              <div id="guideChains">
+              </div>
+            </div>
+            <div class="card section-gap">
+              <details open>
+                <summary>
+                  Power, capacity, and bottlenecks
+                </summary>
+                <p>
+                  The grid provides 14 power initially. If enabled lines demand more, all production slows in proportion to available power. Research Grid Engineering to expand supply. Each product has its own capacity; full storage stops that factory. Warehouse Expansion and local Storage upgrades add room. Reserve settings affect sales only, so downstream factories may always consume those goods.
+                </p>
+              </details>
+              <details>
+                <summary>
+                  How orders and prices work
+                </summary>
+                <p>
+                  Contracts quote their payout when generated. Market shifts affect future sales and new quotes, never an accepted quote. Contracts expire after ten minutes of production time. Delivering consumes the listed goods and adds the quoted revenue. Skipping has no currency penalty, but a 60-second cooldown prevents instant rerolling.
+                </p>
+              </details>
+              <details>
+                <summary>
+                  Offline work and time limits
+                </summary>
+                <p>
+                  Closing the game simulates up to 8 hours of production when you return, extended by Offline Logistics to 24 hours. The simulation uses the same one-second steps, inputs, reserves, power limits, and markets as live play. Orders can expire offline, but are never automatically delivered. Production must be enabled. Clock rollback awards no extra time. Keep one active tab per save.
+                </p>
+              </details>
+              <details>
+                <summary>
+                  Prestige calculation
+                </summary>
+                <p>
+                  Reset credits equal floor((campaign revenue ÷ 1,200)^0.65 × (1 + 0.06 × Legacy Accounting level)). Reset becomes available at one credit. The preview shows exactly what you will receive. Early milestone credits are awarded once per save, so repeating a new campaign cannot farm them.
+                </p>
+              </details>
+              <details>
+                <summary>
+                  Overclock and research
+                </summary>
+                <p>
+                  Overclock doubles production for 20 seconds, followed by an 80-second recovery. Research extends its duration and shortens recovery. It also increases demand while active, so adequate power matters. The button works with mouse, touch, or Enter while focused. No tapping is required for normal production.
+                </p>
+              </details>
+              <details>
+                <summary>
+                  Saving and backups
+                </summary>
+                <p>
+                  Progress is saved automatically and after purchases or deliveries. If storage is unavailable, a warning appears and you can export a JSON backup. Imported backups are validated before replacing the game. All save data is contained in one Idle Factory object in your arcade's shared save.
+                </p>
+              </details>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <div id="dialog" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="modal">
+        <div class="modal-head">
+          <h2 id="dialogTitle">
+            Factory
+          </h2>
+          <button id="closeDialog" class="btn small" aria-label="Close dialog">
+            Close
+          </button>
+        </div>
+        <div id="dialogBody">
+        </div>
+      </div>
+    </div>
+    <div id="confirm" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="modal small">
+        <h2 id="confirmTitle">
+          Confirm
+        </h2>
+        <p id="confirmText">
+        </p>
+        <div class="row section-gap">
+          <button id="confirmAccept" class="btn primary">
+            Confirm
+          </button>
+          <button id="confirmCancel" class="btn">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="busy" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="busyTitle">
+      <div class="modal small">
+        <span class="eyebrow">
+          Welcome back
+        </span>
+        <h2 id="busyTitle">
+          Your factories kept working
+        </h2>
+        <p id="busyText">
+          Calculating offline production…
+        </p>
+        <div class="progress">
+          <span id="busyProgress">
+          </span>
+        </div>
+      </div>
+    </div>
+    <div id="toast" class="hidden" role="status">
+    </div>
+    <div id="saveWarning" class="hidden" role="alert">
+      Saving failed. Export a backup in Settings before closing this game.
+    </div>
+    <script>
+    'use strict';
+    /*
+    * IDLE FACTORY
+    * Standalone, offline, deterministic production simulation.
+    * Permanent economy: credits. Prestige resets award credits. Campaign score: sales revenue.
+    * Source sections: catalog, save schema, simulation, artwork, interface.
+    */
+    const $ = id => document.getElementById(id);
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const number = (value, fallback = 0, max = 1e15) => Number.isFinite(value) ? clamp(value, 0, max) : fallback;
+    const integer = (value, fallback = 0, max = 1e9) => Math.floor(number(value, fallback, max));
+    const money = value => '$' + format(value);
+    const points = value => 'C ' + format(value);
+    function format(value) {
+      const n = number(value);
+      const scales = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+      for (const [base, suffix] of scales) {
+        if (n >= base) return (n / base).toFixed(n / base >= 100 ? 0 : 1) + suffix;
+      }
+      return Math.floor(n).toLocaleString('en-US');
+    }
+    function duration(seconds) {
+      const n = Math.max(0, Math.floor(seconds));
+      if (n >= 3600) return Math.floor(n / 3600) + 'h ' + Math.floor(n % 3600 / 60) + 'm';
+      if (n >= 60) return Math.floor(n / 60) + 'm ' + n % 60 + 's';
+      return n + 's';
+    }
+    const RESOURCES = [
+    {
+      id: 'timber',
+      name: 'Timber',
+      short: 'TM',
+      price: 8,
+      color: '#a8784d'
+    },
+    {
+      id: 'ore',
+      name: 'Iron Ore',
+      short: 'OR',
+      price: 14,
+      color: '#738a92'
+    },
+    {
+      id: 'planks',
+      name: 'Planks',
+      short: 'PL',
+      price: 28,
+      color: '#c29355'
+    },
+    {
+      id: 'ingots',
+      name: 'Iron Ingots',
+      short: 'FE',
+      price: 48,
+      color: '#7a969c'
+    },
+    {
+      id: 'gears',
+      name: 'Gears',
+      short: 'GR',
+      price: 105,
+      color: '#67818b'
+    },
+    {
+      id: 'circuits',
+      name: 'Circuits',
+      short: 'IC',
+      price: 480,
+      color: '#4e8e74'
+    },
+    {
+      id: 'batteries',
+      name: 'Batteries',
+      short: 'BT',
+      price: 1050,
+      color: '#b7984b'
+    },
+    {
+      id: 'drones',
+      name: 'Drones',
+      short: 'DR',
+      price: 4400,
+      color: '#6d88a1'
+    },
+    {
+      id: 'satellites',
+      name: 'Satellites',
+      short: 'ST',
+      price: 22000,
+      color: '#8b8199'
+    }
+    ];
+    const FACTORIES = [
+    {
+      id: 'timber-yard',
+      name: 'Timber Yard',
+      sector: 'Extraction',
+      output: 'timber',
+      batch: 4,
+      cycle: 4,
+      power: 2,
+      cost: 0,
+      inputs: {
+      },
+      requires: [],
+      color: '#749a77',
+      description: 'Cut and prepare renewable timber for export or processing.',
+      machine: 'harvester',
+      unitCost: 3,
+      upgradeCost: 2
+    },
+    {
+      id: 'iron-mine',
+      name: 'Iron Mine',
+      sector: 'Extraction',
+      output: 'ore',
+      batch: 3,
+      cycle: 5,
+      power: 3,
+      cost: 6,
+      inputs: {
+      },
+      requires: ['timber-yard'],
+      color: '#86969a',
+      description: 'Extract ore from deep seams. The beginning of heavy industry.',
+      machine: 'drill',
+      unitCost: 5,
+      upgradeCost: 3
+    },
+    {
+      id: 'sawmill',
+      name: 'Sawmill',
+      sector: 'Processing',
+      output: 'planks',
+      batch: 2,
+      cycle: 6,
+      power: 3,
+      cost: 12,
+      inputs: {
+        timber: 4
+      },
+      requires: ['timber-yard'],
+      color: '#bb9a6b',
+      description: 'Turn raw timber into precision-cut construction planks.',
+      machine: 'saw',
+      unitCost: 8,
+      upgradeCost: 4
+    },
+    {
+      id: 'foundry',
+      name: 'Foundry',
+      sector: 'Processing',
+      output: 'ingots',
+      batch: 2,
+      cycle: 7,
+      power: 5,
+      cost: 28,
+      inputs: {
+        ore: 3
+      },
+      requires: ['iron-mine'],
+      color: '#c28560',
+      description: 'Smelt iron ore into strong, consistent metal ingots.',
+      machine: 'furnace',
+      unitCost: 15,
+      upgradeCost: 7
+    },
+    {
+      id: 'machine-works',
+      name: 'Machine Works',
+      sector: 'Manufacturing',
+      output: 'gears',
+      batch: 2,
+      cycle: 9,
+      power: 6,
+      cost: 65,
+      inputs: {
+        ingots: 2,
+        planks: 1
+      },
+      requires: ['foundry', 'sawmill'],
+      color: '#7a9b9d',
+      description: 'Shape metal into the moving parts that drive your network.',
+      machine: 'press',
+      unitCost: 30,
+      upgradeCost: 12
+    },
+    {
+      id: 'electronics',
+      name: 'Electronics Lab',
+      sector: 'Technology',
+      output: 'circuits',
+      batch: 1,
+      cycle: 12,
+      power: 8,
+      cost: 140,
+      inputs: {
+        gears: 2,
+        planks: 2
+      },
+      requires: ['machine-works'],
+      color: '#679581',
+      description: 'Assemble control boards for the next generation of products.',
+      machine: 'assembler',
+      unitCost: 65,
+      upgradeCost: 22
+    },
+    {
+      id: 'battery-plant',
+      name: 'Battery Plant',
+      sector: 'Technology',
+      output: 'batteries',
+      batch: 1,
+      cycle: 16,
+      power: 10,
+      cost: 320,
+      inputs: {
+        ingots: 2,
+        circuits: 1
+      },
+      requires: ['electronics', 'foundry'],
+      color: '#b2a063',
+      description: 'Build intelligent power cells for autonomous machines.',
+      machine: 'cell',
+      unitCost: 130,
+      upgradeCost: 40
+    },
+    {
+      id: 'robotics',
+      name: 'Robotics Factory',
+      sector: 'Advanced',
+      output: 'drones',
+      batch: 1,
+      cycle: 25,
+      power: 12,
+      cost: 800,
+      inputs: {
+        gears: 3,
+        circuits: 2,
+        batteries: 1
+      },
+      requires: ['battery-plant', 'machine-works'],
+      color: '#7b92b5',
+      description: 'Combine mechanics, computing, and power into delivery drones.',
+      machine: 'robot',
+      unitCost: 300,
+      upgradeCost: 80
+    },
+    {
+      id: 'orbital-works',
+      name: 'Orbital Works',
+      sector: 'Advanced',
+      output: 'satellites',
+      batch: 1,
+      cycle: 45,
+      power: 16,
+      cost: 2000,
+      inputs: {
+        drones: 2,
+        circuits: 4,
+        ingots: 6
+      },
+      requires: ['robotics'],
+      color: '#968da9',
+      description: 'Launch a new era of industry with orbital communication systems.',
+      machine: 'orbital',
+      unitCost: 650,
+      upgradeCost: 160
+    }
+    ];
+    const RESEARCH = [
+    {
+      id: 'engineering',
+      name: 'Industrial Engineering',
+      icon: 'IE',
+      max: 20,
+      base: 4,
+      growth: 1.55,
+      required: 1,
+      description: 'Increase the cycle speed of every factory by 12% per level.',
+      effect: level => '+' + level * 12 + '% global cycle speed'
+    },
+    {
+      id: 'grid',
+      name: 'Grid Engineering',
+      icon: 'GW',
+      max: 30,
+      base: 3,
+      growth: 1.42,
+      required: 1,
+      description: 'Add 12 power capacity per level. Restore speed during brownouts.',
+      effect: level => 14 + level * 12 + ' power capacity'
+    },
+    {
+      id: 'warehousing',
+      name: 'Warehouse Expansion',
+      icon: 'WH',
+      max: 20,
+      base: 3,
+      growth: 1.5,
+      required: 1,
+      description: 'Add 80 storage units for every material per level.',
+      effect: level => '+' + level * 80 + ' capacity per product'
+    },
+    {
+      id: 'marketing',
+      name: 'Market Relations',
+      icon: 'MR',
+      max: 20,
+      base: 5,
+      growth: 1.55,
+      required: 2,
+      description: 'Increase all export and new contract prices by 10% per level.',
+      effect: level => '+' + level * 10 + '% sale value'
+    },
+    {
+      id: 'contracts',
+      name: 'Contract Negotiation',
+      icon: 'CN',
+      max: 15,
+      base: 6,
+      growth: 1.6,
+      required: 2,
+      description: 'Add 12% to the value of newly generated contracts per level.',
+      effect: level => '+' + level * 12 + '% future contract value'
+    },
+    {
+      id: 'offline',
+      name: 'Offline Logistics',
+      icon: 'OL',
+      max: 8,
+      base: 8,
+      growth: 1.65,
+      required: 2,
+      description: 'Extend offline production by 2 hours per level, up to 24 hours.',
+      effect: level => 8 + level * 2 + ' hours offline limit'
+    },
+    {
+      id: 'overclock',
+      name: 'Thermal Management',
+      icon: 'TM',
+      max: 10,
+      base: 6,
+      growth: 1.6,
+      required: 2,
+      description: 'Add 2 seconds to overclock and reduce its recovery by 3 seconds per level.',
+      effect: level => 20 + level * 2 + 's boost / ' + (80 - level * 3) + 's recovery'
+    },
+    {
+      id: 'legacy',
+      name: 'Legacy Accounting',
+      icon: 'LA',
+      max: 15,
+      base: 12,
+      growth: 1.7,
+      required: 3,
+      description: 'Increase credits earned from each reset by 6% per level.',
+      effect: level => '+' + level * 6 + '% reset credits'
+    },
+    {
+      id: 'efficiency',
+      name: 'Power Recovery',
+      icon: 'PR',
+      max: 15,
+      base: 7,
+      growth: 1.6,
+      required: 3,
+      description: 'Reduce production-line power draw using 4% compounding savings per level.',
+      effect: level => Math.round((1 - Math.pow(.96, level))*100) + '% less power draw'
+    }
+    ];
+    const MARKETS = [
+    {
+      id: 'normal',
+      name: 'Standard trading',
+      note: 'Stable demand across the industry.',
+      resource: null,
+      multiplier: 1,
+      production: 1
+    },
+    {
+      id: 'construction',
+      name: 'Construction boom',
+      note: 'Timber and plank export values +35%.',
+      resource: ['timber', 'planks'],
+      multiplier: 1.35,
+      production: 1
+    },
+    {
+      id: 'infrastructure',
+      name: 'Infrastructure contracts',
+      note: 'Ore, ingot, and gear export values +30%.',
+      resource: ['ore', 'ingots', 'gears'],
+      multiplier: 1.3,
+      production: 1
+    },
+    {
+      id: 'technology',
+      name: 'Technology expo',
+      note: 'Circuit and battery export values +40%.',
+      resource: ['circuits', 'batteries'],
+      multiplier: 1.4,
+      production: 1
+    },
+    {
+      id: 'orbital',
+      name: 'Frontier demand',
+      note: 'Drone and satellite export values +45%.',
+      resource: ['drones', 'satellites'],
+      multiplier: 1.45,
+      production: 1
+    },
+    {
+      id: 'maintenance',
+      name: 'Preventive maintenance',
+      note: 'Cycle speed −15% for this shift. No stock is lost.',
+      resource: null,
+      multiplier: 1,
+      production: .85
+    },
+    {
+      id: 'green',
+      name: 'Green energy surplus',
+      note: 'Cycle speed +20% across your production network.',
+      resource: null,
+      multiplier: 1,
+      production: 1.2
+    }
+    ];
+    const ACHIEVEMENTS = [
+    {
+      id: 'first-sale',
+      name: 'Open for business',
+      note: 'Earn $100 lifetime revenue.',
+      type: 'revenue',
+      target: 100,
+      reward: 3
+    },
+    {
+      id: 'steady',
+      name: 'Steady income',
+      note: 'Earn $500 lifetime revenue.',
+      type: 'revenue',
+      target: 500,
+      reward: 5
+    },
+    {
+      id: 'first-thousand',
+      name: 'First thousand',
+      note: 'Earn $1,000 lifetime revenue.',
+      type: 'revenue',
+      target: 1000,
+      reward: 5
+    },
+    {
+      id: 'ten-thousand',
+      name: 'Growing business',
+      note: 'Earn $10,000 lifetime revenue.',
+      type: 'revenue',
+      target: 10000,
+      reward: 12
+    },
+    {
+      id: 'six-figures',
+      name: 'Six figures',
+      note: 'Earn $100,000 lifetime revenue.',
+      type: 'revenue',
+      target: 100000,
+      reward: 30
+    },
+    {
+      id: 'million',
+      name: 'Industrial scale',
+      note: 'Earn $1 million lifetime revenue.',
+      type: 'revenue',
+      target: 1000000,
+      reward: 80
+    },
+    {
+      id: 'ten-million',
+      name: 'Major enterprise',
+      note: 'Earn $10 million lifetime revenue.',
+      type: 'revenue',
+      target: 10000000,
+      reward: 200
+    },
+    {
+      id: 'hundred-million',
+      name: 'Industry leader',
+      note: 'Earn $100 million lifetime revenue.',
+      type: 'revenue',
+      target: 100000000,
+      reward: 500
+    },
+    {
+      id: 'second-site',
+      name: 'Breaking ground',
+      note: 'Own two factories.',
+      type: 'sites',
+      target: 2,
+      reward: 3
+    },
+    {
+      id: 'four-sites',
+      name: 'Connected industry',
+      note: 'Own four factories.',
+      type: 'sites',
+      target: 4,
+      reward: 12
+    },
+    {
+      id: 'six-sites',
+      name: 'Technology district',
+      note: 'Own six factories.',
+      type: 'sites',
+      target: 6,
+      reward: 40
+    },
+    {
+      id: 'nine-sites',
+      name: 'Complete campus',
+      note: 'Own all nine factories.',
+      type: 'sites',
+      target: 9,
+      reward: 400
+    },
+    {
+      id: 'first-order',
+      name: 'First delivery',
+      note: 'Complete one client order.',
+      type: 'orders',
+      target: 1,
+      reward: 3
+    },
+    {
+      id: 'ten-orders',
+      name: 'Reliable supplier',
+      note: 'Complete ten client orders.',
+      type: 'orders',
+      target: 10,
+      reward: 15
+    },
+    {
+      id: 'fifty-orders',
+      name: 'Preferred partner',
+      note: 'Complete fifty client orders.',
+      type: 'orders',
+      target: 50,
+      reward: 60
+    },
+    {
+      id: 'first-reset',
+      name: 'A fresh start',
+      note: 'Complete your first prestige reset.',
+      type: 'resets',
+      target: 1,
+      reward: 4
+    },
+    {
+      id: 'five-resets',
+      name: 'Long-term vision',
+      note: 'Complete five prestige resets.',
+      type: 'resets',
+      target: 5,
+      reward: 25
+    },
+    {
+      id: 'twenty-resets',
+      name: 'Built to last',
+      note: 'Complete twenty prestige resets.',
+      type: 'resets',
+      target: 20,
+      reward: 100
+    },
+    {
+      id: 'hundred-items',
+      name: 'First batch',
+      note: 'Produce 100 goods.',
+      type: 'items',
+      target: 100,
+      reward: 2
+    },
+    {
+      id: 'ten-k-items',
+      name: 'Busy conveyors',
+      note: 'Produce 10,000 goods.',
+      type: 'items',
+      target: 10000,
+      reward: 20
+    },
+    {
+      id: 'million-items',
+      name: 'Mass production',
+      note: 'Produce one million goods.',
+      type: 'items',
+      target: 1000000,
+      reward: 150
+    },
+    {
+      id: 'research-five',
+      name: 'Better methods',
+      note: 'Purchase five research levels.',
+      type: 'research',
+      target: 5,
+      reward: 10
+    },
+    {
+      id: 'research-fifty',
+      name: 'Knowledge economy',
+      note: 'Purchase fifty research levels.',
+      type: 'research',
+      target: 50,
+      reward: 80
+    },
+    {
+      id: 'ten-lines',
+      name: 'Parallel thinking',
+      note: 'Own ten production lines.',
+      type: 'lines',
+      target: 10,
+      reward: 15
+    }
+    ];
+    const UPGRADE_TYPES = [
+    {
+      id: 'units',
+      name: 'Production lines',
+      max: 12,
+      note: 'Another parallel line. Adds output capacity and power demand.',
+      effect: level => level + ' parallel lines'
+    },
+    {
+      id: 'speed',
+      name: 'Precision machinery',
+      max: 25,
+      note: 'Each level adds 18% cycle speed to this factory.',
+      effect: level => '+' + level * 18 + '% cycle speed'
+    },
+    {
+      id: 'quality',
+      name: 'Quality control',
+      max: 15,
+      note: 'Each level adds 12% sale value to this factory’s product.',
+      effect: level => '+' + level * 12 + '% product value'
+    },
+    {
+      id: 'storage',
+      name: 'Local storage',
+      max: 15,
+      note: 'Each level adds 100 capacity for this product.',
+      effect: level => '+' + level * 100 + ' product capacity'
+    }
+    ];
+    const RESOURCE = Object.fromEntries(RESOURCES.map(r => [r.id, r]));
+    const FACTORY = Object.fromEntries(FACTORIES.map(f => [f.id, f]));
+    const PRODUCER = Object.fromEntries(FACTORIES.map(f => [f.output, f]));
+    const STUDY = Object.fromEntries(RESEARCH.map(r => [r.id, r]));
+    class Random {
+      constructor(seed) {
+        this.state = seed >>> 0 || 8472531;
+      }
+      next() {
+        let value = this.state += 0x6D2B79F5;
+        value = Math.imul(value ^ value >>> 15, value | 1);
+        value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+        this.state >>>= 0;
+        return ((value ^ value >>> 14) >>> 0) / 4294967296;
+      }
+      int(min, max) {
+        return Math.floor(this.next()*(max-min+1))+min;
+      }
+      pick(list) {
+        return list[this.int(0, list.length-1)];
+      }
+    }
+    class SaveManager {
+      static STORAGE_KEY = 'ARCADE_GAMES';
+      static GAME_KEY = 'idle-factory';
+      static VERSION = 2;
+      static data = null;
+      static blocked = false;
+      static defaults(now = Date.now()) {
+        const factories = {
+        };
+        const stock = {
+        };
+        const totals = {
+        };
+        const policies = {
+        };
+        for (const factory of FACTORIES) {
+          factories[factory.id] = {
+            owned: factory.cost === 0,
+            units: 1,
+            speed: 0,
+            quality: 0,
+            storage: 0,
+            enabled: true,
+            progress: 0
+          };
+          stock[factory.output] = 0;
+          totals[factory.output] = 0;
+          policies[factory.output] = {
+            auto: true,
+            reserve: 12
+          };
+        }
+        return {
+          version: this.VERSION,
+          credits: 0,
+          creditsEarned: 0,
+          factories,
+          stock,
+          totals,
+          policies,
+          research: Object.fromEntries(RESEARCH.map(r => [r.id, 0])),
+          achievements: [],
+          settings: {
+            sound: false,
+            motion: true,
+            offline: true
+          },
+          stats: {
+            revenue: 0,
+            items: 0,
+            orders: 0,
+            resets: 0,
+            seconds: 0,
+            bestRun: 0
+          },
+          run: {
+            revenue: 0,
+            seconds: 0,
+            orders: 0,
+            boost: 0,
+            recovery: 0,
+            market: 0,
+            marketLeft: 300,
+            seed: (now ^ 0x1234567) >>> 0,
+            paused: false
+          },
+          contracts: [null, null, null],
+          orderCooldowns: [0, 0, 0],
+          nextOrderId: 1,
+          history: [],
+          log: [],
+          welcomed: false,
+          lastSaved: now
+        };
+      }
+      static root() {
+        const raw = localStorage.getItem(this.STORAGE_KEY);
+        if (!raw) return {
+        };
+        const root = JSON.parse(raw);
+        if (!root || typeof root !== 'object' || Array.isArray(root)) throw new Error('Invalid arcade save');
+        return root;
+      }
+      static sanitize(raw) {
+        const d = this.defaults();
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return d;
+        // Version 1 used prestige as the spending balance. Convert it once.
+        // An existing credits field, including zero, always takes precedence.
+        d.credits = integer(raw.credits ?? raw.prestige);
+        d.creditsEarned = Math.max(d.credits, integer(raw.creditsEarned ?? raw.prestigeEarned));
+        for (const f of FACTORIES) {
+          const s = raw.factories?.[f.id] || {
+          };
+          d.factories[f.id] = {
+            owned: f.cost === 0 || s.owned === true,
+            units: clamp(integer(s.units, 1), 1, 12),
+            speed: integer(s.speed, 0, 25),
+            quality: integer(s.quality, 0, 15),
+            storage: integer(s.storage, 0, 15),
+            enabled: s.enabled !== false,
+            progress: number(s.progress, 0, f.cycle)
+          };
+          d.stock[f.output] = integer(raw.stock?.[f.output], 0, 100000);
+          d.totals[f.output] = integer(raw.totals?.[f.output], 0, 1e15);
+          d.policies[f.output] = {
+            auto: raw.policies?.[f.output]?.auto !== false,
+            reserve: integer(raw.policies?.[f.output]?.reserve, 12, 100000)
+          };
+        }
+        for (const r of RESEARCH) d.research[r.id] = integer(raw.research?.[r.id], 0, r.max);
+        d.achievements = ACHIEVEMENTS.filter(a => Array.isArray(raw.achievements) && raw.achievements.includes(a.id)).map(a => a.id);
+        for (const key of Object.keys(d.stats)) d.stats[key] = number(raw.stats?.[key]);
+        for (const key of ['sound', 'motion', 'offline']) {
+          if (typeof raw.settings?.[key] === 'boolean') d.settings[key] = raw.settings[key];
+        }
+        for (const key of ['revenue', 'seconds', 'orders']) d.run[key] = number(raw.run?.[key]);
+        d.run.boost = number(raw.run?.boost, 0, 40);
+        d.run.recovery = number(raw.run?.recovery, 0, 100);
+        d.run.market = integer(raw.run?.market, 0, MARKETS.length-1);
+        d.run.marketLeft = number(raw.run?.marketLeft, 300, 300);
+        d.run.seed = integer(raw.run?.seed, 8472531, 0xffffffff);
+        d.run.paused = raw.run?.paused === true;
+        d.orderCooldowns = [0, 1, 2].map(i => number(raw.orderCooldowns?.[i], 0, 60));
+        d.contracts = [0, 1, 2].map(i => {
+          const c = raw.contracts?.[i];
+          if (!c || typeof c !== 'object' || !c.goods || typeof c.goods !== 'object') return null;
+          const goods = Object.entries(c.goods);
+          if (!goods.length || goods.length > 3 || goods.some(([id, qty]) => !RESOURCE[id] || !Number.isInteger(qty) || qty < 1 || qty > 5000)) return null;
+          return {
+            id: integer(c.id, 1),
+            client: typeof c.client === 'string' ? c.client.slice(0, 35) : 'Local client',
+            goods: Object.fromEntries(goods),
+            payout: number(c.payout),
+            left: number(c.left, 600, 600)
+          };
+        });
+        d.nextOrderId = Math.max(integer(raw.nextOrderId, 1), ...d.contracts.filter(Boolean).map(c=>c.id+1));
+        d.history = Array.isArray(raw.history) ? raw.history.slice(-20).map(h=>( {
+          revenue:number(h.revenue),
+          points:integer(h.points),
+          seconds:number(h.seconds),
+          campaign:integer(h.campaign, 1)
+        })) : [];
+        d.log = Array.isArray(raw.log) ? raw.log.slice(-35).filter(l=>l && typeof l.text === 'string').map(l=>( {
+          text:l.text.slice(0, 160),
+          time:number(l.time)
+        })) : [];
+        d.welcomed = raw.welcomed === true;
+        d.lastSaved = number(raw.lastSaved, Date.now(), 9e15);
+        return d;
+      }
+      static load() {
+        try {
+          let saved = this.root()[this.GAME_KEY];
+          if (saved == null) {
+            // Read the previous release only if the canonical save is absent.
+            // Never write to the old key or replace any other arcade game.
+            const previous = localStorage.getItem('arcade-games');
+            if (previous) {
+              try {
+                saved = JSON.parse(previous)?.[this.GAME_KEY];
+              } catch (error) {
+                // An invalid old save must not block a new canonical save.
+              }
+            }
+          }
+          this.data = this.sanitize(saved);
+        }
+        catch (error) {
+          this.data = this.defaults();
+          this.warning(true);
+        }
+      }
+      static warning(value) {
+        this.blocked = value;
+        $('saveWarning').classList.toggle('hidden', !value);
+      }
+      static save() {
+        try {
+          const root = this.root();
+          this.data.lastSaved = Date.now();
+          root[this.GAME_KEY] = this.data;
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(root));
+          this.warning(false);
+          $('saveStatus').textContent = 'Saved on this device';
+          return true;
+        }
+        catch (error) {
+          this.warning(true);
+          $('saveStatus').textContent = 'Export a backup';
+          return false;
+        }
+      }
+    }
+    class FactoryEngine {
+      constructor(data) {
+        this.data = data;
+        this.status = {
+        };
+        this.revenueTrail = Array(60).fill(0);
+        this.lastTickRevenue = 0;
+        this.busy = false;
+        this.notices = [];
+        this.revision = 0;
+        this.recount();
+      }
+      recount() {
+        for (const f of FACTORIES) {
+          const capacity = this.capacity(f.output);
+          this.data.stock[f.output] = clamp(this.data.stock[f.output], 0, capacity);
+          this.data.policies[f.output].reserve = clamp(this.data.policies[f.output].reserve, 0, capacity);
+        }
+      }
+      ownedCount() {
+        return FACTORIES.filter(f => this.data.factories[f.id].owned).length;
+      }
+      lineCount() {
+        return FACTORIES.reduce((sum, f) => sum + (this.data.factories[f.id].owned ? this.data.factories[f.id].units : 0), 0);
+      }
+      capacity(id) {
+        return 120 + this.data.research.warehousing * 80 + this.data.factories[PRODUCER[id].id].storage * 100;
+      }
+      legacyMultiplier() {
+        return 1 + Math.log2(1 + this.data.creditsEarned) * .06;
+      }
+      gridCapacity() {
+        return 14 + this.data.research.grid * 12;
+      }
+      powerDemand() {
+        return FACTORIES.reduce((sum, f) => {
+          const state = this.data.factories[f.id];
+          if (!state.owned || !state.enabled) return sum;
+          return sum + f.power * state.units;
+        }, 0) * Math.pow(.96, this.data.research.efficiency) * (this.data.run.boost > 0 ? 1.4 : 1);
+      }
+      gridEfficiency() {
+        return Math.min(1, this.gridCapacity() / Math.max(1, this.powerDemand()));
+      }
+      market() {
+        return MARKETS[this.data.run.market];
+      }
+      cycleSpeed(factory) {
+        const s = this.data.factories[factory.id];
+        return (1+s.speed*.18) * (1+this.data.research.engineering*.12) * this.legacyMultiplier()
+        * this.gridEfficiency() * this.market().production * (this.data.run.boost > 0 ? 2 : 1);
+      }
+      price(id) {
+        const state = this.data.factories[PRODUCER[id].id];
+        const market = this.market();
+        const demand = market.resource?.includes(id) ? market.multiplier : 1;
+        return RESOURCE[id].price * (1+state.quality*.12) * (1+this.data.research.marketing*.1) * demand;
+      }
+      potential() {
+        return Math.floor(Math.pow(this.data.run.revenue/1200, .65) * (1+this.data.research.legacy*.06));
+      }
+      nextPrestigeRevenue() {
+        return 1200 * Math.pow((this.potential()+1)/(1+this.data.research.legacy*.06), 1/.65);
+      }
+      offlineLimit() {
+        return (8+this.data.research.offline*2)*3600;
+      }
+      upgradeCost(id, type) {
+        const f=FACTORY[id],
+        s=this.data.factories[id];
+        if(type==='units') return Math.ceil(f.unitCost*Math.pow(1.75, s.units-1));
+        const scale=type==='quality'?1.45:type==='storage'?1.35:1.4;
+        return Math.ceil(f.upgradeCost*Math.pow(scale, s[type]));
+      }
+      researchCost(id) {
+        const r=STUDY[id];
+        return Math.ceil(r.base*Math.pow(r.growth, this.data.research[id]));
+      }
+      award(points, reason) {
+        const n=Math.max(0, Math.floor(points));
+        this.data.credits+=n;
+        this.data.creditsEarned+=n;
+        this.log(reason+' · +C '+n);
+      }
+      log(text) {
+        this.data.log.push( {
+          text,
+          time:this.data.stats.seconds
+        });
+        if(this.data.log.length>35)this.data.log.shift();
+      }
+      addRevenue(amount) {
+        if(!Number.isFinite(amount)||amount<=0)return;
+        this.data.run.revenue+=amount;
+        this.data.stats.revenue+=amount;
+        this.lastTickRevenue+=amount;
+      }
+      sell(id, quantity) {
+        const qty=Math.min(Math.floor(quantity), this.data.stock[id]);
+        if(qty<=0)return 0;
+        const amount=qty*this.price(id);
+        this.data.stock[id]-=qty;
+        this.addRevenue(amount);
+        return amount;
+      }
+      sellSurplus() {
+        let total=0;
+        for(const r of RESOURCES) total+=this.sell(r.id, Math.max(0, this.data.stock[r.id]-this.data.policies[r.id].reserve));
+        this.checkAchievements();
+        return total;
+      }
+      tick() {
+        const d=this.data;
+        if(d.run.paused)return;
+        d.run.seconds++;
+        d.stats.seconds++;
+        d.run.marketLeft--;
+        if(d.run.marketLeft<=0) {
+          const rng=new Random(d.run.seed);
+          d.run.market=(d.run.market+1+rng.int(0, MARKETS.length-2))%MARKETS.length;
+          d.run.seed=rng.state;
+          d.run.marketLeft=300;
+          this.log(this.market().name);
+          this.revision++;
+        }
+        // Topological catalog order makes upstream output available downstream.
+        // Inputs and output space are checked before any goods are consumed.
+        for(const f of FACTORIES) {
+          const s=d.factories[f.id];
+          if(!s.owned) {
+            this.status[f.id]='Locked';
+            continue;
+          }
+          if(!s.enabled) {
+            this.status[f.id]='Paused';
+            continue;
+          }
+          s.progress+=this.cycleSpeed(f)*s.units;
+          let cycles=Math.floor(s.progress/f.cycle);
+          let reason='Producing';
+          for(const [resource, qty] of Object.entries(f.inputs)) {
+            const available=Math.floor(d.stock[resource]/qty);
+            if(available<cycles) {
+              cycles=available;
+              reason='Needs '+RESOURCE[resource].name;
+            }
+          }
+          const room=Math.floor((this.capacity(f.output)-d.stock[f.output])/f.batch);
+          if(room<cycles) {
+            cycles=room;
+            reason='Storage full';
+          }
+          cycles=Math.max(0, cycles);
+          if(cycles>0) {
+            for(const [resource, qty] of Object.entries(f.inputs)) d.stock[resource]-=cycles*qty;
+            const made=cycles*f.batch;
+            d.stock[f.output]+=made;
+            d.totals[f.output]+=made;
+            d.stats.items+=made;
+            s.progress-=cycles*f.cycle;
+          }
+          // Blocked machines cannot bank hours of future production.
+          s.progress=Math.min(s.progress, f.cycle);
+          this.status[f.id]=reason;
+        }
+        for(const r of RESOURCES) {
+          const policy=d.policies[r.id];
+          if(policy.auto) this.sell(r.id, Math.max(0, d.stock[r.id]-policy.reserve));
+        }
+        for(let slot=0; slot<3; slot++) {
+          if(d.orderCooldowns[slot]>0)d.orderCooldowns[slot]--;
+          const order=d.contracts[slot];
+          if(order) {
+            order.left--;
+            if(order.left<=0) {
+              d.contracts[slot]=null;
+              this.revision++;
+            }
+          }
+          if(!d.contracts[slot]&&d.orderCooldowns[slot]<=0) this.makeOrder(slot);
+        }
+        if(d.run.boost>0)d.run.boost--;
+        else if(d.run.recovery>0)d.run.recovery--;
+        this.checkAchievements();
+        this.revenueTrail.push(this.lastTickRevenue);
+        this.revenueTrail.shift();
+        this.lastTickRevenue=0;
+      }
+      checkAchievements() {
+        const d=this.data;
+        const values= {
+          revenue:d.stats.revenue,
+          sites:this.ownedCount(),
+          orders:d.stats.orders,
+          resets:d.stats.resets,
+          items:d.stats.items,
+          research:Object.values(d.research).reduce((a, b)=>a+b, 0),
+          lines:this.lineCount()
+        };
+        for(const a of ACHIEVEMENTS) {
+          if(!d.achievements.includes(a.id)&&values[a.type]>=a.target) {
+            d.achievements.push(a.id);
+            this.award(a.reward, a.name);
+            this.notices.push(a.name+' · +C '+a.reward);
+            this.revision++;
+          }
+        }
+      }
+      makeOrder(slot) {
+        const d=this.data,
+        rng=new Random(d.run.seed);
+        const available=FACTORIES.filter(f=>d.factories[f.id].owned);
+        const clients=['Northline Supply', 'Cedar & Co.', 'Harbor Logistics', 'Atlas Engineering', 'Daybreak Retail', 'Fieldwork Systems', 'Metro Builders', 'Summit Trading'];
+        const f=rng.pick(available);
+        const stockCap=this.capacity(f.output);
+        const qty=Math.min(stockCap, Math.max(6, Math.round((12+rng.int(0, 12))*Math.sqrt(d.factories[f.id].units))));
+        const goods= {
+          [f.output]:qty
+        };
+        if(available.length>=4&&rng.next()<.35) {
+          const second=rng.pick(available.filter(other=>other.id!==f.id));
+          goods[second.output]=rng.int(6, 14);
+        }
+        const base=Object.entries(goods).reduce((sum, [id, n])=>sum+n*this.price(id), 0);
+        const payout=Math.round(base*(1.7+slot*.15)*(1+d.research.contracts*.12));
+        d.contracts[slot]= {
+          id:d.nextOrderId++,
+          client:rng.pick(clients),
+          goods,
+          payout,
+          left:600
+        };
+        d.run.seed=rng.state;
+        this.revision++;
+      }
+      deliver(slot, expectedId) {
+        const order=this.data.contracts[slot];
+        if(!order||order.id!==expectedId)return false;
+        if(Object.entries(order.goods).some(([id, n])=>this.data.stock[id]<n))return false;
+        for(const [id, n] of Object.entries(order.goods))this.data.stock[id]-=n;
+        this.addRevenue(order.payout);
+        this.data.stats.orders++;
+        this.data.run.orders++;
+        this.log(order.client+' delivery · '+money(order.payout));
+        this.data.contracts[slot]=null;
+        this.data.orderCooldowns[slot]=8;
+        this.checkAchievements();
+        this.revision++;
+        return true;
+      }
+      skip(slot, expectedId) {
+        const order=this.data.contracts[slot];
+        if(!order||order.id!==expectedId)return false;
+        this.data.contracts[slot]=null;
+        this.data.orderCooldowns[slot]=60;
+        this.revision++;
+        return true;
+      }
+      unlock(id) {
+        const f=FACTORY[id],
+        d=this.data;
+        if(!f||d.factories[id].owned||f.requires.some(req=>!d.factories[req].owned)||d.credits<f.cost)return false;
+        d.credits-=f.cost;
+        d.factories[id].owned=true;
+        this.log(f.name+' opened');
+        this.checkAchievements();
+        this.revision++;
+        return true;
+      }
+      upgrade(id, type) {
+        const f=FACTORY[id],
+        s=this.data.factories[id],
+        definition=UPGRADE_TYPES.find(u=>u.id===type);
+        if(!f||!s.owned||!definition||s[type]>=definition.max)return false;
+        const cost=this.upgradeCost(id, type);
+        if(this.data.credits<cost)return false;
+        this.data.credits-=cost;
+        s[type]++;
+        this.log(f.name+' · '+definition.name+' '+s[type]);
+        this.checkAchievements();
+        this.revision++;
+        return true;
+      }
+      research(id) {
+        const r=STUDY[id];
+        if(!r||this.ownedCount()<r.required||this.data.research[id]>=r.max)return false;
+        const cost=this.researchCost(id);
+        if(this.data.credits<cost)return false;
+        this.data.credits-=cost;
+        this.data.research[id]++;
+        this.log(r.name+' · level '+this.data.research[id]);
+        this.checkAchievements();
+        this.revision++;
+        return true;
+      }
+      boost() {
+        const r=this.data.run;
+        if(r.boost>0||r.recovery>0||r.paused)return false;
+        r.boost=20+this.data.research.overclock*2;
+        r.recovery=80-this.data.research.overclock*3;
+        this.revision++;
+        return true;
+      }
+      prestige() {
+        const reward=this.potential();
+        if(reward<1)return false;
+        const d=this.data;
+        d.stats.bestRun=Math.max(d.stats.bestRun, d.run.revenue);
+        d.stats.resets++;
+        d.history.push( {
+          revenue:d.run.revenue,
+          points:reward,
+          seconds:d.run.seconds,
+          campaign:d.stats.resets
+        });
+        d.history=d.history.slice(-20);
+        this.award(reward, 'Campaign '+d.stats.resets+' settled');
+        for(const f of FACTORIES) {
+          d.stock[f.output]=0;
+          d.factories[f.id].progress=0;
+        }
+        d.run= {
+          revenue:0,
+          seconds:0,
+          orders:0,
+          boost:0,
+          recovery:0,
+          market:0,
+          marketLeft:300,
+          seed:d.run.seed,
+          paused:d.run.paused
+        };
+        d.contracts=[null, null, null];
+        d.orderCooldowns=[0, 0, 0];
+        this.revenueTrail=Array(60).fill(0);
+        this.lastTickRevenue=0;
+        this.checkAchievements();
+        this.revision++;
+        return reward;
+      }
+      async advance(seconds, progress=()=> {
+      }) {
+        const total=Math.max(0, Math.floor(seconds));
+        this.busy=true;
+        try {
+          for(let start=0; start<total; start+=1200) {
+            const end=Math.min(total, start+1200);
+            for(let i=start; i<end; i++)this.tick();
+            progress(end/Math.max(1, total));
+            await new Promise(resolve=>setTimeout(resolve, 0));
+          }
+        }
+        finally {
+          this.busy=false;
+        }
+      }
+    }
+    // Geometry-only artwork: buildings, conveyors, and machinery remain offline.
+    const Art = {
+      rect(ctx, x, y, w, h, color) {
+        ctx.fillStyle=color;
+        ctx.fillRect(x, y, w, h);
+      },
+      poly(ctx, points, color) {
+        ctx.fillStyle=color;
+        ctx.beginPath();
+        points.forEach(([x, y], i)=>i?ctx.lineTo(x, y):ctx.moveTo(x, y));
+        ctx.closePath();
+        ctx.fill();
+      },
+      gear(ctx, x, y, r, time, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(time);
+        ctx.fillStyle=color;
+        for(let i=0; i<8; i++) {
+          ctx.rotate(Math.PI/4);
+          ctx.fillRect(-r*.2, -r*1.15, r*.4, r*.7);
+        }
+        ctx.beginPath();
+        ctx.arc(0, 0, r*.82, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle='#dfe6d5';
+        ctx.beginPath();
+        ctx.arc(0, 0, r*.3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      },
+      building(ctx, x, y, scale, factory, time=0, active=true) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        const r=(x, y, w, h, c)=>this.rect(ctx, x, y, w, h, c);
+        const color=factory.color;
+        this.poly(ctx, [[-68, 32], [26, 58], [77, 26], [-15, 0]], '#b8c4b4');
+        this.poly(ctx, [[-52, -5], [22, 14], [22, 49], [-52, 29]], active?'#dde1d5':'#c3c9bf');
+        this.poly(ctx, [[22, 14], [64, -9], [64, 24], [22, 49]], '#a9bbb0');
+        this.poly(ctx, [[-52, -5], [-10, -29], [64, -9], [22, 14]], color);
+        r(-42, 8, 12, 15, '#7c9594');
+        r(-23, 13, 12, 15, '#7c9594');
+        r(-39, 10, 3, 10, '#cbd9ce');
+        this.poly(ctx, [[33, 13], [52, 3], [52, 26], [33, 36]], '#526e72');
+        r(-4, 19, 17, 23, '#557477');
+        r(-2, 22, 13, 2, '#bbcdc3');
+        r(-2, 27, 13, 2, '#bbcdc3');
+        r(-2, 32, 13, 2, '#bbcdc3');
+        if(factory.machine==='harvester') {
+          r(-27, -47, 5, 29, '#a08660');
+          this.poly(ctx, [[-43, -31], [-25, -65], [-8, -29]], '#4f8169');
+          this.poly(ctx, [[-41, -20], [-25, -49], [-9, -20]], '#70967b');
+          for(let i=0; i<3; i++) {
+            r(31+i*7, -20+i*3, 5, 13, '#b99967');
+          }
+        }
+        else if(factory.machine==='drill') {
+          r(-5, -67, 6, 51, '#526970');
+          r(25, -59, 6, 51, '#526970');
+          r(-5, -66, 36, 5, '#73838a');
+          this.poly(ctx, [[-5, -61], [25, -36], [25, -30], [-5, -55]], '#879b9b');
+          r(9, -43, 5, 30+Math.sin(time*3)*3, '#d6ae5f');
+          r(5, -18, 13, 5, '#7e8277');
+        }
+        else if(factory.machine==='saw') {
+          r(-7, -31, 48, 13, '#a8895c');
+          this.gear(ctx, 17, -29, 17, time*2, '#6e8588');
+          r(-11, -12, 54, 4, '#5c756e');
+        }
+        else if(factory.machine==='furnace') {
+          r(-24, -56, 15, 41, '#ac765c');
+          r(-27, -59, 21, 6, '#846b59');
+          r(8, -46, 18, 35, '#bc8464');
+          r(5, -49, 24, 6, '#886f5e');
+          r(-21, -24, 9, 10, active?'#f0b665':'#857b67');
+          if(active)for(let i=0; i<3; i++) {
+            ctx.globalAlpha=.12;
+            ctx.fillStyle='#708381';
+            ctx.beginPath();
+            ctx.arc(-16-i*3, -65-i*12-(time*7%12), 7+i*3, 0, Math.PI*2);
+            ctx.fill();
+            ctx.globalAlpha=1;
+          }
+        }
+        else if(factory.machine==='press') {
+          r(-22, -48, 7, 31, '#567c82');
+          r(30, -35, 7, 30, '#567c82');
+          r(-22, -49, 59, 8, '#708e92');
+          this.gear(ctx, 7, -29, 14, time*1.7, '#4b6f76');
+          r(-6, -9, 29, 5, '#d2b06d');
+        }
+        else if(factory.machine==='assembler') {
+          this.poly(ctx, [[-23, -33], [10, -51], [47, -39], [12, -21]], '#477c69');
+          for(let i=0; i<4; i++)r(-5+i*8, -38+i*2, 4, 6, '#b7c686');
+          r(8, -28, 12, 7, '#263f40');
+          r(12, -56, 4, 20, '#aeb69b');
+        }
+        else if(factory.machine==='cell') {
+          for(let i=0; i<3; i++) {
+            const x=-18+i*19,
+            y=-38+i*4;
+            r(x, y, 14, 27, '#b4a157');
+            r(x+4, y-4, 6, 4, '#617976');
+            r(x+3, y+6, 8, 12, '#e0d89a');
+          }
+        }
+        else if(factory.machine==='robot') {
+          r(3, -30, 18, 12, '#849daf');
+          for(const [dx, dy] of [[-12, -14], [30, -9], [-8, 13], [30, 16]]) {
+            ctx.strokeStyle='#5c7684';
+            ctx.lineWidth=3;
+            ctx.beginPath();
+            ctx.moveTo(12, -25);
+            ctx.lineTo(dx, -25+dy);
+            ctx.stroke();
+            ctx.save();
+            ctx.translate(dx, -25+dy);
+            ctx.rotate(time*5);
+            r(-12, -2, 24, 4, '#3d5f6c');
+            ctx.restore();
+          }
+          r(8, -28, 8, 4, '#d9c578');
+        }
+        else {
+          r(5, -43, 16, 25, '#d7d9ce');
+          this.poly(ctx, [[-35, -39], [-8, -45], [-8, -18], [-35, -12]], '#4d7790');
+          this.poly(ctx, [[30, -41], [56, -32], [56, -6], [30, -15]], '#4d7790');
+          for(let i=0; i<4; i++) {
+            r(-32, -33+i*5, 21, 1, '#8ca6a3');
+            r(33, -29+i*5, 20, 1, '#8ca6a3');
+          }
+          ctx.strokeStyle='#a5ad9d';
+          ctx.lineWidth=3;
+          ctx.beginPath();
+          ctx.arc(12, -47, 12, Math.PI, Math.PI*2);
+          ctx.stroke();
+        }
+        if(active) {
+          ctx.fillStyle='#df9e55';
+          ctx.beginPath();
+          ctx.arc(55, 20, 3, 0, Math.PI*2);
+          ctx.fill();
+        }
+        ctx.restore();
+      },
+      preview(canvas, factory) {
+        const c=canvas.getContext('2d'),
+        w=canvas.width,
+        h=canvas.height;
+        c.clearRect(0, 0, w, h);
+        c.fillStyle='#e8eddf';
+        c.fillRect(0, 0, w, h);
+        this.building(c, w/2, h*.59, Math.min(w/180, h/140), factory, 0, true);
+      },
+      campus(canvas, engine, time) {
+        const c=canvas.getContext('2d'),
+        w=canvas.width,
+        h=canvas.height;
+        c.fillStyle='#e8eddf';
+        c.fillRect(0, 0, w, h);
+        c.strokeStyle='#d4ddce';
+        c.lineWidth=1;
+        for(let x=-h; x<w; x+=45) {
+          c.beginPath();
+          c.moveTo(x, 0);
+          c.lineTo(x+h, h);
+          c.stroke();
+        }
+        for(let x=0; x<w+h; x+=45) {
+          c.beginPath();
+          c.moveTo(x, 0);
+          c.lineTo(x-h, h);
+          c.stroke();
+        }
+        const positions=FACTORIES.map((f, i)=>( {
+          x:w*.19+(i%3)*w*.30,
+          y:h*.24+Math.floor(i/3)*h*.30
+        }));
+        c.lineWidth=8;
+        c.strokeStyle='#c0cdbb';
+        for(let i=1; i<positions.length; i++) {
+          const a=positions[i-1],
+          b=positions[i];
+          c.beginPath();
+          c.moveTo(a.x, a.y+20);
+          c.lineTo(b.x, b.y+20);
+          c.stroke();
+        }
+        positions.forEach((p, i)=> {
+          const f=FACTORIES[i],
+          s=engine.data.factories[f.id],
+          active=s.owned&&s.enabled&&!engine.data.run.paused;
+          if(s.owned) {
+            this.building(c, p.x, p.y, w/1000, f, active?time:0, active);
+          }
+          else {
+            c.save();
+            c.globalAlpha=.5;
+            this.poly(c, [[p.x-40, p.y+15], [p.x, p.y-7], [p.x+40, p.y+15], [p.x, p.y+37]], '#c7d1bf');
+            c.strokeStyle='#819786';
+            c.setLineDash([4, 4]);
+            c.stroke();
+            c.restore();
+          }
+          c.fillStyle=s.owned?'#405a51':'#899b88';
+          c.textAlign='center';
+          c.font='11px system-ui';
+          c.fillText(f.name, p.x, p.y+h*.145);
+        });
+      },
+      chart(canvas, values) {
+        const c=canvas.getContext('2d'),
+        w=canvas.width,
+        h=canvas.height;
+        c.clearRect(0, 0, w, h);
+        const max=Math.max(1, ...values);
+        c.strokeStyle='#e3e7dd';
+        c.lineWidth=1;
+        for(let y=20; y<h; y+=35) {
+          c.beginPath();
+          c.moveTo(0, y);
+          c.lineTo(w, y);
+          c.stroke();
+        }
+        const bar=w/values.length;
+        values.forEach((v, i)=> {
+          const height=(h-15)*v/max;
+          c.fillStyle='#679084';
+          c.fillRect(i*bar, h-height, Math.max(1, bar-3), height);
+        });
+      }
+    };
+    class Sounds {
+      static context = null;
+      static play(type='buy') {
+        if(!SaveManager.data.settings.sound)return;
+        try {
+          const C=window.AudioContext||window.webkitAudioContext;
+          if(!C)return;
+          this.context ||= new C();
+          if(this.context.state==='suspended')this.context.resume().catch(()=> {
+          });
+          const t=this.context.currentTime;
+          const oscillator=this.context.createOscillator(),
+          gain=this.context.createGain();
+          oscillator.type='sine';
+          oscillator.frequency.setValueAtTime(type==='prestige'?330:540, t);
+          oscillator.frequency.exponentialRampToValueAtTime(type==='prestige'?880:760, t+.16);
+          gain.gain.setValueAtTime(.035, t);
+          gain.gain.exponentialRampToValueAtTime(.001, t+.2);
+          oscillator.connect(gain);
+          gain.connect(this.context.destination);
+          oscillator.start(t);
+          oscillator.stop(t+.21);
+        }
+        catch(error) {
+          /* Sound availability must never block a transaction. */
+        }
+      }
+    }
+    let engine;
+    const UI = {
+      page: 'overview',
+      filter: 'all',
+      dialogFactory: null,
+      confirmAction: null,
+      toastTimer: 0,
+      focusReturn: null,
+      renderedRevision: -1,
+      text(id, value) {
+        $(id).textContent=value;
+      },
+      toast(message) {
+        clearTimeout(this.toastTimer);
+        this.text('toast', message);
+        $('toast').classList.remove('hidden');
+        this.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'), 3200);
+      },
+      showPage(name) {
+        if(!['overview', 'factories', 'warehouse', 'orders', 'research', 'prestige', 'records', 'settings', 'guide'].includes(name))return;
+        this.page=name;
+        document.querySelectorAll('.page').forEach(el=>el.classList.toggle('hidden', el.id!==name));
+        document.querySelectorAll('nav [data-page]').forEach(el=>el.classList.toggle('active', el.dataset.page===name));
+        this.renderPage();
+        window.scrollTo(0, 0);
+      },
+      commit(message) {
+        SaveManager.save();
+        this.renderPage();
+        this.refresh();
+        if(message)this.toast(message);
+      },
+      button(text, action, style='btn') {
+        const button=document.createElement('button');
+        button.className=style;
+        button.textContent=text;
+        button.onclick=()=> {
+          if(!engine.busy&&!Runtime.follower)action();
+        };
+        return button;
+      },
+      tag(name, className, text) {
+        const el=document.createElement(name);
+        el.className=className||'';
+        if(text!==undefined)el.textContent=text;
+        return el;
+      },
+      openDialog(title) {
+        this.focusReturn=document.activeElement;
+        this.text('dialogTitle', title);
+        $('dialogBody').replaceChildren();
+        $('dialog').classList.remove('hidden');
+        $('closeDialog').focus();
+      },
+      closeDialog() {
+        $('dialog').classList.add('hidden');
+        this.dialogFactory=null;
+        this.focusReturn?.focus?.();
+      },
+      confirm(title, text, action) {
+        this.confirmAction=action;
+        this.text('confirmTitle', title);
+        this.text('confirmText', text);
+        $('confirm').classList.remove('hidden');
+        $('confirmCancel').focus();
+      },
+      closeConfirm() {
+        $('confirm').classList.add('hidden');
+        this.confirmAction=null;
+      },
+      refresh() {
+        const d=engine.data;
+        this.text('headerRevenue', money(d.run.revenue));
+        this.text('headerPrestige', points(d.credits));
+        this.text('headerState', Runtime.follower?'OPEN IN ANOTHER TAB':d.run.paused?'PRODUCTION PAUSED':'PRODUCTION ONLINE');
+        this.text('sideCampaign', 'Campaign '+String(d.stats.resets+1).padStart(2, '0'));
+        if(this.page==='overview')this.refreshOverview();
+        if(this.page==='factories')this.refreshFactories();
+        if(this.page==='warehouse')this.refreshWarehouse();
+        if(this.page==='orders')this.refreshOrders();
+        if(this.page==='prestige')this.refreshPrestige();
+        if(this.page==='research')this.refreshResearch();
+        if(this.page==='records')this.refreshRecordStats();
+        if(this.dialogFactory)this.refreshFactoryDialog();
+        if(engine.revision!==this.renderedRevision) {
+          if(['orders', 'records'].includes(this.page))this.renderPage();
+          this.renderedRevision=engine.revision;
+        }
+        if(!engine.busy&&engine.notices.length) {
+          const notices=engine.notices.splice(0);
+          this.toast(notices.length>1?notices[0]+' · '+(notices.length-1)+' more milestones':notices[0]);
+          SaveManager.save();
+        }
+      },
+      refreshOverview() {
+        const d=engine.data,
+        potential=engine.potential(),
+        target=engine.nextPrestigeRevenue();
+        const rate=engine.revenueTrail.reduce((a, b)=>a+b, 0);
+        this.text('rateValue', money(rate));
+        this.text('siteValue', engine.ownedCount()+' / 9');
+        this.text('unitValue', engine.lineCount()+' production lines');
+        this.text('powerValue', Math.round(engine.gridEfficiency()*100)+'%');
+        this.text('powerCaption', engine.powerDemand().toFixed(1)+' / '+engine.gridCapacity()+' power');
+        this.text('potentialValue', points(potential));
+        this.text('potentialCaption', 'Next point at '+money(target));
+        this.text('overviewPrestige', points(potential));
+        this.text('prestigeProgressText', potential?money(Math.max(0, target-d.run.revenue))+' to the next reset credit.': 'Reach '+money(target)+' to earn your first reset credit.');
+        $('prestigeProgress').style.width=Math.min(100, d.run.revenue/target*100)+'%';
+        this.text('marketName', engine.market().name);
+        this.text('marketDescription', engine.market().note);
+        this.text('marketTimer', '· '+duration(d.run.marketLeft));
+        this.text('campusOutput', format(d.stats.items)+' items produced');
+        this.text('campusBadge', d.run.paused?'PAUSED':'LIVE');
+        const boost=d.run.boost,
+        recovery=d.run.recovery;
+        this.text('boostButton', boost?'Overclock · '+duration(boost):recovery?'Cooling · '+duration(recovery):'Overclock · '+(20+d.research.overclock*2)+'s');
+        $('boostButton').disabled=boost>0||recovery>0||d.run.paused||engine.busy||Runtime.follower;
+        const blocked=FACTORIES.filter(f=>d.factories[f.id].owned&&engine.status[f.id]?.startsWith('Needs'));
+        $('floorReport').replaceChildren();
+        const report=[['Waiting for inputs', blocked.length], ['Grid capacity', engine.gridCapacity()], ['Storage per product', 120+d.research.warehousing*80], ['Offline limit', duration(engine.offlineLimit())]];
+        for(const [label, value] of report) {
+          const row=this.tag('div', 'metric-row');
+          row.append(this.tag('span', '', label), this.tag('b', '', String(value)));
+          $('floorReport').append(row);
+        }
+        let title,
+        text,
+        targetPage;
+        if(d.run.paused) {
+          title='Production is paused';
+          text='Resume production in Settings to keep earning.';
+          targetPage='settings';
+        }
+        else if(engine.gridEfficiency()<.8) {
+          title='Your grid is overloaded';
+          text='Buy Grid Engineering or pause a few production lines to recover speed.';
+          targetPage='research';
+        }
+        else if(blocked.length) {
+          title=blocked[0].name+' needs supplies';
+          text=engine.status[blocked[0].id]+'. Check upstream production and export reserves.';
+          targetPage='warehouse';
+        }
+        else {
+          const next=FACTORIES.find(f=>!d.factories[f.id].owned&&f.requires.every(id=>d.factories[id].owned));
+          if(next) {
+            title='Next: '+next.name;
+            text='Unlock for '+points(next.cost)+'. Your credits are shown in the top bar.';
+            targetPage='factories';
+          }
+          else {
+            title='Refine your production';
+            text='Add lines, improve product quality, and expand your permanent research.';
+            targetPage='research';
+          }
+        }
+        this.text('nextTitle', title);
+        this.text('nextText', text);
+        this.text('nextButton', 'Open '+targetPage[0].toUpperCase()+targetPage.slice(1));
+        $('nextButton').onclick=()=>this.showPage(targetPage);
+        this.text('overviewSubtitle', 'Campaign '+(d.stats.resets+1)+' · '+duration(d.run.seconds)+' in production');
+        Art.chart($('revenueChart'), engine.revenueTrail);
+      },
+      renderPage() {
+        const renderers= {
+          factories:'renderFactories',
+          warehouse:'renderWarehouse',
+          orders:'renderOrders',
+          research:'renderResearch',
+          records:'renderRecords',
+          settings:'renderSettings',
+          guide:'renderGuide'
+        };
+        if(renderers[this.page])this[renderers[this.page]]();
+        if(this.page==='prestige')this.renderPrestige();
+        if(this.page==='overview')this.refreshOverview();
+      },
+      recipe(factory) {
+        const inputs=Object.entries(factory.inputs).map(([id, n])=>n+' '+RESOURCE[id].name).join(' + ');
+        return (inputs||'Raw extraction')+' → '+factory.batch+' '+RESOURCE[factory.output].name;
+      },
+      renderFactories() {
+        $('factoryGrid').replaceChildren();
+        for(const f of FACTORIES) {
+          const s=engine.data.factories[f.id];
+          if(this.filter==='owned'&&!s.owned||this.filter==='locked'&&s.owned)continue;
+          const card=this.tag('article', 'card factory-card'+(!s.owned?' locked':''));
+          const canvas=document.createElement('canvas');
+          canvas.className='factory-art';
+          canvas.width=360;
+          canvas.height=160;
+          Art.preview(canvas, f);
+          const body=this.tag('div', 'factory-body');
+          const heading=this.tag('div', 'factory-title');
+          heading.append(this.tag('h2', '', f.name), this.tag('span', 'badge', f.sector));
+          const recipe=this.tag('div', 'recipe', this.recipe(f));
+          const status=this.tag('div', 'row between');
+          status.append(this.tag('span', 'factory-number', s.owned?s.units+' lines':'Site not built'));
+          const state=this.tag('span', 'badge');
+          state.dataset.factoryStatus=f.id;
+          status.append(state);
+          const progress=this.tag('div', 'progress');
+          const fill=this.tag('span');
+          fill.dataset.factoryProgress=f.id;
+          progress.append(fill);
+          const actions=this.tag('div', 'factory-actions');
+          if(s.owned) {
+            actions.append(this.button('Manage', ()=>this.factoryDialog(f.id), 'btn dark'));
+            const toggle=this.button(s.enabled?'Pause':'Resume', ()=> {
+              s.enabled=!s.enabled;
+              engine.revision++;
+              this.commit();
+            });
+            actions.append(toggle);
+          }
+          else {
+            const needed=f.requires.filter(id=>!engine.data.factories[id].owned);
+            const unlock=this.button('Open · '+points(f.cost), ()=> {
+              if(engine.unlock(f.id)) {
+                Sounds.play();
+                this.commit(f.name+' is open');
+              }
+              else this.toast('Check your credits and required factories.');
+            }, 'btn primary wide');
+            unlock.dataset.unlock=f.id;
+            actions.append(unlock);
+            if(needed.length)body.append(this.tag('p', '', 'Requires: '+needed.map(id=>FACTORY[id].name).join(', ')));
+          }
+          body.append(heading, recipe, status, progress, actions);
+          card.append(canvas, body);
+          $('factoryGrid').append(card);
+        }
+        this.refreshFactories();
+      },
+      refreshFactories() {
+        document.querySelectorAll('[data-factory-status]').forEach(el=> {
+          const id=el.dataset.factoryStatus,
+          s=engine.data.factories[id];
+          el.textContent=!s.owned?'Locked':!s.enabled?'Paused':engine.status[id]||'Starting';
+          el.className='badge'+(el.textContent.startsWith('Needs')||el.textContent==='Storage full'?' warning':!s.enabled?' off':'');
+        });
+        document.querySelectorAll('[data-factory-progress]').forEach(el=> {
+          const id=el.dataset.factoryProgress;
+          el.style.width=Math.min(100, engine.data.factories[id].progress/FACTORY[id].cycle*100)+'%';
+        });
+        document.querySelectorAll('[data-unlock]').forEach(el=> {
+          const f=FACTORY[el.dataset.unlock];
+          el.disabled=engine.data.credits<f.cost||f.requires.some(id=>!engine.data.factories[id].owned)||Runtime.follower;
+        });
+      },
+      factoryDialog(id) {
+        this.openDialog(FACTORY[id].name);
+        this.dialogFactory=id;
+        const f=FACTORY[id],
+        s=engine.data.factories[id],
+        body=$('dialogBody');
+        const hero=this.tag('div', 'detail-hero'),
+        canvas=document.createElement('canvas');
+        canvas.width=240;
+        canvas.height=170;
+        Art.preview(canvas, f);
+        const text=this.tag('div');
+        text.append(this.tag('span', 'eyebrow', f.sector), this.tag('p', '', f.description), this.tag('div', 'recipe', this.recipe(f)));
+        hero.append(canvas, text);
+        body.append(hero);
+        const live=this.tag('p');
+        live.id='factoryDialogLive';
+        body.append(live);
+        const upgrades=this.tag('div', 'upgrade-grid');
+        for(const type of UPGRADE_TYPES) {
+          const panel=this.tag('div', 'upgrade');
+          panel.append(this.tag('h3', '', type.name), this.tag('p', '', type.note));
+          const effect=this.tag('p', 'cost');
+          effect.dataset.upgradeEffect=type.id;
+          panel.append(effect);
+          const button=this.button('', ()=> {
+            if(engine.upgrade(id, type.id)) {
+              Sounds.play();
+              SaveManager.save();
+              this.refreshFactoryDialog();
+              this.renderPage();
+              this.refresh();
+            }
+          }, 'btn');
+          button.dataset.upgradeType=type.id;
+          panel.append(button);
+          upgrades.append(panel);
+        }
+        body.append(upgrades);
+        const capacity=this.tag('p', 'section-gap');
+        capacity.id='factoryDialogStorage';
+        body.append(capacity);
+        this.refreshFactoryDialog();
+      },
+      refreshFactoryDialog() {
+        const id=this.dialogFactory;
+        if(!id)return;
+        const f=FACTORY[id],
+        s=engine.data.factories[id];
+        this.text('factoryDialogLive', (engine.status[id]||'Starting')+' · '+(f.cycle/engine.cycleSpeed(f)).toFixed(2)+'s per line cycle · '+(f.power*s.units*Math.pow(.96, engine.data.research.efficiency)).toFixed(1)+' base power');
+        this.text('factoryDialogStorage', 'Stored: '+format(engine.data.stock[f.output])+' / '+format(engine.capacity(f.output))+' · Export price: '+money(engine.price(f.output))+' each');
+        document.querySelectorAll('[data-upgrade-effect]').forEach(el=> {
+          const type=UPGRADE_TYPES.find(u=>u.id===el.dataset.upgradeEffect);
+          el.textContent=type.effect(s[type.id]);
+        });
+        document.querySelectorAll('[data-upgrade-type]').forEach(el=> {
+          const type=UPGRADE_TYPES.find(u=>u.id===el.dataset.upgradeType),
+          cost=engine.upgradeCost(id, type.id),
+          max=s[type.id]>=type.max;
+          el.textContent=max?'Maximum reached':'Level '+(s[type.id]+1)+' · '+points(cost);
+          el.disabled=max||engine.data.credits<cost||Runtime.follower;
+        });
+      },
+      renderWarehouse() {
+        $('warehouseGrid').replaceChildren();
+        for(const r of RESOURCES) {
+          if(!engine.data.factories[PRODUCER[r.id].id].owned)continue;
+          const card=this.tag('article', 'card resource-card');
+          const heading=this.tag('div', 'resource-heading');
+          heading.append(this.tag('span', 'resource-icon', r.short), this.tag('h2', '', r.name));
+          const amount=this.tag('div', 'resource-amount');
+          amount.dataset.stock=r.id;
+          const progress=this.tag('div', 'progress'),
+          fill=this.tag('span');
+          fill.dataset.stockFill=r.id;
+          progress.append(fill);
+          const price=this.tag('p');
+          price.dataset.stockPrice=r.id;
+          const controls=this.tag('div', 'row between');
+          const label=this.tag('label', 'row', 'Auto-export');
+          const toggle=document.createElement('input');
+          toggle.type='checkbox';
+          toggle.checked=engine.data.policies[r.id].auto;
+          toggle.onchange=()=> {
+            if(Runtime.follower)return;
+            engine.data.policies[r.id].auto=toggle.checked;
+            SaveManager.save();
+          };
+          label.append(toggle);
+          const reserveLabel=this.tag('label', 'row', 'Reserve');
+          const reserve=document.createElement('input');
+          reserve.type='number';
+          reserve.min='0';
+          reserve.max=engine.capacity(r.id);
+          reserve.value=engine.data.policies[r.id].reserve;
+          reserve.setAttribute('aria-label', r.name+' export reserve');
+          reserve.onchange=()=> {
+            if(Runtime.follower)return;
+            const n=Number(reserve.value);
+            engine.data.policies[r.id].reserve=Number.isFinite(n)?clamp(Math.floor(n), 0, engine.capacity(r.id)):12;
+            reserve.value=engine.data.policies[r.id].reserve;
+            SaveManager.save();
+          };
+          reserveLabel.append(reserve);
+          controls.append(label, reserveLabel);
+          const actions=this.tag('div', 'row');
+          actions.append(this.button('Sell surplus', ()=> {
+            const result=engine.sell(r.id, Math.max(0, engine.data.stock[r.id]-engine.data.policies[r.id].reserve));
+            engine.checkAchievements();
+            this.commit(result?money(result)+' exported':'No surplus to sell.');
+          }, 'btn small'));
+          actions.append(this.button('Sell all', ()=>this.confirm('Sell all '+r.name+'?', 'This includes your reserve. Downstream factories may run out of this ingredient.', ()=> {
+            const result=engine.sell(r.id, engine.data.stock[r.id]);
+            engine.checkAchievements();
+            this.commit(money(result)+' exported');
+          }), 'btn small'));
+          card.append(heading, amount, progress, price, controls, actions);
+          $('warehouseGrid').append(card);
+        }
+        this.refreshWarehouse();
+      },
+      refreshWarehouse() {
+        document.querySelectorAll('[data-stock]').forEach(el=> {
+          const id=el.dataset.stock;
+          el.textContent=format(engine.data.stock[id])+' / '+format(engine.capacity(id));
+        });
+        document.querySelectorAll('[data-stock-fill]').forEach(el=> {
+          const id=el.dataset.stockFill;
+          el.style.width=engine.data.stock[id]/engine.capacity(id)*100+'%';
+        });
+        document.querySelectorAll('[data-stock-price]').forEach(el=> {
+          const id=el.dataset.stockPrice;
+          el.textContent='Current export value: '+money(engine.price(id))+' each';
+        });
+      },
+      renderOrders() {
+        $('orderBoard').replaceChildren();
+        engine.data.contracts.forEach((order, slot)=> {
+          const card=this.tag('article', 'card');
+          if(!order) {
+            card.append(this.tag('h2', '', 'Dispatch desk '+(slot+1)), this.tag('p', '', 'A new contract is being prepared.'));
+            const timer=this.tag('p', 'cost');
+            timer.dataset.orderCooldown=slot;
+            card.append(timer);
+            $('orderBoard').append(card);
+            return;
+          }
+          const head=this.tag('div', 'order-head');
+          head.append(this.tag('b', '', 'ORDER '+String(order.id).padStart(4, '0')));
+          const timer=this.tag('span', 'badge');
+          timer.dataset.orderTimer=slot;
+          head.append(timer);
+          card.append(head, this.tag('h2', '', order.client));
+          const list=this.tag('div', 'order-list');
+          for(const [id, qty] of Object.entries(order.goods)) {
+            const row=this.tag('div', 'metric-row');
+            const count=this.tag('b');
+            count.dataset.orderStock=slot+':'+id;
+            row.append(this.tag('span', '', RESOURCE[id].name), count);
+            list.append(row);
+          }
+          const reward=this.tag('div', 'order-reward', money(order.payout));
+          const actions=this.tag('div', 'row');
+          const deliver=this.button('Deliver order', ()=> {
+            if(engine.deliver(slot, order.id)) {
+              Sounds.play();
+              this.commit('Delivery complete.');
+            }
+            else this.toast('The order changed or needs more stock.');
+          }, 'btn primary');
+          deliver.dataset.deliver=slot;
+          const skip=this.button('Skip', ()=> {
+            if(engine.skip(slot, order.id))this.commit('New order in 60 seconds.');
+          }, 'btn');
+          actions.append(deliver, skip);
+          card.append(list, reward, actions);
+          $('orderBoard').append(card);
+        });
+        this.refreshOrders();
+      },
+      refreshOrders() {
+        document.querySelectorAll('[data-order-timer]').forEach(el=> {
+          const order=engine.data.contracts[el.dataset.orderTimer];
+          el.textContent=order?duration(order.left):'Expired';
+        });
+        document.querySelectorAll('[data-order-cooldown]').forEach(el=> {
+          el.textContent=duration(engine.data.orderCooldowns[el.dataset.orderCooldown]);
+        });
+        document.querySelectorAll('[data-order-stock]').forEach(el=> {
+          const [slot, id]=el.dataset.orderStock.split(':'),
+          order=engine.data.contracts[slot];
+          el.textContent=format(engine.data.stock[id])+' / '+(order?.goods[id]||0);
+        });
+        document.querySelectorAll('[data-deliver]').forEach(el=> {
+          const order=engine.data.contracts[el.dataset.deliver];
+          el.disabled=!order||Object.entries(order.goods).some(([id, n])=>engine.data.stock[id]<n)||Runtime.follower;
+        });
+      },
+      renderResearch() {
+        $('researchGrid').replaceChildren();
+        for(const r of RESEARCH) {
+          const card=this.tag('article', 'card research-card');
+          card.append(this.tag('div', 'research-icon', r.icon), this.tag('h2', '', r.name), this.tag('p', '', r.description));
+          const effect=this.tag('p', 'cost');
+          effect.dataset.researchEffect=r.id;
+          card.append(effect);
+          const button=this.button('', ()=> {
+            if(engine.research(r.id)) {
+              Sounds.play();
+              this.commit(r.name+' improved');
+            }
+          }, 'btn');
+          button.dataset.research=r.id;
+          card.append(button);
+          $('researchGrid').append(card);
+        }
+        this.refreshResearch();
+      },
+      refreshResearch() {
+        document.querySelectorAll('[data-research-effect]').forEach(el=> {
+          const r=STUDY[el.dataset.researchEffect];
+          el.textContent=r.effect(engine.data.research[r.id]);
+        });
+        document.querySelectorAll('[data-research]').forEach(el=> {
+          const r=STUDY[el.dataset.research],
+          level=engine.data.research[r.id],
+          cost=engine.researchCost(r.id);
+          el.textContent=engine.ownedCount()<r.required?'Requires '+r.required+' factories':level>=r.max?'Maximum reached':'Level '+(level+1)+' / '+r.max+' · '+points(cost);
+          el.disabled=engine.ownedCount()<r.required||level>=r.max||engine.data.credits<cost||Runtime.follower;
+        });
+      },
+      renderPrestige() {
+        $('campaignHistory').replaceChildren();
+        if(!engine.data.history.length)$('campaignHistory').append(this.tag('li', '', 'Your first campaign is still being written.'));
+        for(const h of [...engine.data.history].reverse()) {
+          const li=this.tag('li');
+          li.append(this.tag('span', '', 'Campaign '+h.campaign+' · '+money(h.revenue)), this.tag('strong', 'cost', points(h.points)), this.tag('time', '', duration(h.seconds)));
+          $('campaignHistory').append(li);
+        }
+        this.refreshPrestige();
+      },
+      refreshPrestige() {
+        const d=engine.data,
+        n=engine.potential(),
+        next=engine.nextPrestigeRevenue();
+        this.text('prestigeClaim', points(n));
+        this.text('prestigeFormula', money(d.run.revenue)+' campaign revenue · '+(1+d.research.legacy*.06).toFixed(2)+'× accounting bonus');
+        this.text('prestigeNext', money(Math.max(0, next-d.run.revenue))+' more revenue for '+points(n+1));
+        $('prestigeBar').style.width=Math.min(100, d.run.revenue/next*100)+'%';
+        $('prestigeButton').disabled=n<1||engine.busy||Runtime.follower;
+        this.text('lifetimePrestige', format(d.creditsEarned));
+        this.text('resetCount', format(d.stats.resets));
+        this.text('legacyBonus', '+'+Math.round((engine.legacyMultiplier()-1)*100)+'%');
+        this.text('bestCampaign', money(d.stats.bestRun));
+      },
+      renderRecords() {
+        const d=engine.data;
+        $('lifetimeStats').replaceChildren();
+        for(const [key, label] of [['revenue', 'Lifetime revenue'], ['items', 'Goods produced'], ['orders', 'Orders delivered'], ['seconds', 'Production time']]) {
+          const card=this.tag('div', 'card stat');
+          const value=this.tag('strong');
+          value.dataset.lifetimeStat=key;
+          card.append(this.tag('small', '', label), value);
+          $('lifetimeStats').append(card);
+        }
+        this.refreshRecordStats();
+        $('achievementGrid').replaceChildren();
+        for(const a of ACHIEVEMENTS) {
+          const done=d.achievements.includes(a.id),
+          card=this.tag('article', 'card achievement'+(done?' done':''));
+          card.append(this.tag('span', 'badge', done?'COMPLETED':'IN PROGRESS'), this.tag('h3', 'section-gap', a.name), this.tag('p', '', a.note), this.tag('strong', 'cost', points(a.reward)));
+          $('achievementGrid').append(card);
+        }
+        $('activityLog').replaceChildren();
+        for(const event of [...d.log].reverse()) {
+          const li=this.tag('li');
+          li.append(this.tag('span', '', event.text), this.tag('time', '', duration(event.time)));
+          $('activityLog').append(li);
+        }
+      },
+      refreshRecordStats() {
+        document.querySelectorAll('[data-lifetime-stat]').forEach(el=> {
+          const key=el.dataset.lifetimeStat,
+          value=engine.data.stats[key];
+          el.textContent=key==='revenue'?money(value):key==='seconds'?duration(value):format(value);
+        });
+      },
+      renderSettings() {
+        const d=engine.data;
+        $('soundSetting').checked=d.settings.sound;
+        $('motionSetting').checked=d.settings.motion;
+        $('offlineSetting').checked=d.settings.offline;
+        this.text('pauseProduction', d.run.paused?'Resume':'Pause');
+        this.text('saveDetails', 'Campaign '+(d.stats.resets+1)+' · '+engine.ownedCount()+' factories · '+duration(engine.offlineLimit())+' offline production limit.');
+      },
+      renderGuide() {
+        $('guideChains').replaceChildren();
+        for(const f of FACTORIES) {
+          const row=this.tag('div', 'chain');
+          row.append(this.tag('strong', '', f.name+':'), this.tag('span', '', this.recipe(f)));
+          $('guideChains').append(row);
+        }
+      },
+      welcome() {
+        this.openDialog('Your first factory is already working');
+        const art=document.createElement('canvas');
+        art.width=700;
+        art.height=240;
+        art.className='welcome-art';
+        Art.preview(art, FACTORIES[0]);
+        const body=$('dialogBody');
+        body.append(art, this.tag('p', '', 'The Timber Yard produces automatically. It keeps 12 timber in reserve and sells the rest. Early achievements give you credits to buy your next factory.'), this.tag('p', '', 'Build supply chains, deliver orders, and reset campaigns for more permanent buying power. Every purchase uses credits.'));
+        body.append(this.button('Start building', ()=> {
+          engine.data.welcomed=true;
+          SaveManager.save();
+          this.closeDialog();
+        }, 'btn primary section-gap'));
+      },
+      offlineReport(report) {
+        this.openDialog('Shift report');
+        const body=$('dialogBody');
+        body.append(this.tag('p', '', 'Your factories worked for '+duration(report.simulated)+'.'+(report.capped?' Time beyond your offline limit was not simulated.':'')));
+        for(const [label, value] of [['Revenue earned', money(report.revenue)], ['Goods produced', format(report.items)], ['Milestone credits', points(report.credits)]]) {
+          const row=this.tag('div', 'metric-row');
+          row.append(this.tag('span', '', label), this.tag('b', '', value));
+          body.append(row);
+        }
+        body.append(this.button('Back to work', ()=>this.closeDialog(), 'btn primary section-gap'));
+      }
+    };
+    const Runtime = {
+      lastFrame: 0,
+      accumulator: 0,
+      saveCounter: 0,
+      hiddenAt: 0,
+      follower: false,
+      lockRelease: null,
+      channel: null,
+      async start() {
+        // Web Locks prevent two tabs from writing the same factory save.
+        // The fallback is a visible single-tab warning, not another storage key.
+        if(navigator.locks?.request) {
+          await new Promise(resolve=> {
+            navigator.locks.request('idle-factory-owner', {
+              ifAvailable:true
+            }, async lock=> {
+              if(!lock) {
+                this.follower=true;
+                resolve();
+                return;
+              }
+              resolve();
+              await new Promise(release=>this.lockRelease=release);
+            }).catch(()=>resolve());
+          });
+        }
+        SaveManager.load();
+        engine=new FactoryEngine(SaveManager.data);
+        this.bind();
+        UI.renderPage();
+        UI.refresh();
+        if(this.follower) {
+          UI.openDialog('Idle Factory is already open');
+          $('dialogBody').append(UI.tag('p', '', 'This tab is read-only to protect your save. Close the other Idle Factory tab, then reload this one to take over production.'));
+        }
+        else {
+          await this.catchUp();
+          if(!engine.data.welcomed && $('dialog').classList.contains('hidden'))UI.welcome();
+          SaveManager.save();
+        }
+        this.lastFrame=performance.now();
+        requestAnimationFrame(now=>this.frame(now));
+      },
+      frame(now) {
+        let delta=Math.max(0, (now-this.lastFrame)/1000);
+        this.lastFrame=now;
+        if(delta>10&&!document.hidden&&!engine.busy&&!this.follower) {
+          this.catchUp(Date.now()-delta*1000);
+          delta=0;
+        }
+        if(!document.hidden&&!engine.busy&&!this.follower) {
+          this.accumulator+=delta;
+          let changed=false;
+          while(this.accumulator>=1) {
+            engine.tick();
+            this.accumulator--;
+            this.saveCounter++;
+            changed=true;
+          }
+          if(changed)UI.refresh();
+          if(this.saveCounter>=15) {
+            SaveManager.save();
+            this.saveCounter=0;
+          }
+        }
+        if(UI.page==='overview'&&!document.hidden) {
+          const motion=engine.data.settings.motion&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          Art.campus($('campus'), engine, motion?now/1000:0);
+        }
+        requestAnimationFrame(t=>this.frame(t));
+      },
+      async catchUp(from=engine.data.lastSaved) {
+        if(this.follower||engine.busy)return;
+        const elapsed=Math.max(0, Math.floor((Date.now()-from)/1000));
+        if(!engine.data.settings.offline||engine.data.run.paused||elapsed<2) {
+          engine.data.lastSaved=Date.now();
+          return;
+        }
+        const simulated=Math.min(elapsed, engine.offlineLimit());
+        const before= {
+          revenue:engine.data.run.revenue,
+          items:engine.data.stats.items,
+          credits: engine.data.credits
+        };
+        $('busy').classList.remove('hidden');
+        await engine.advance(simulated, value=> {
+          $('busyProgress').style.width=value*100+'%';
+        });
+        $('busy').classList.add('hidden');
+        SaveManager.save();
+        UI.renderPage();
+        UI.refresh();
+        if(elapsed>=30)UI.offlineReport( {
+          simulated,
+          capped:elapsed>simulated,
+          revenue:engine.data.run.revenue-before.revenue,
+          items:engine.data.stats.items-before.items,
+          credits: engine.data.credits-before.credits
+        });
+        this.lastFrame=performance.now();
+        this.accumulator=0;
+      },
+      transact(action) {
+        if(engine.busy||this.follower)return;
+        action();
+      },
+      bind() {
+        document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>UI.showPage(b.dataset.page));
+        $('factoryFilters').addEventListener('click', event=> {
+          const b=event.target.closest('[data-filter]');
+          if(!b)return;
+          UI.filter=b.dataset.filter;
+          document.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active', el===b));
+          UI.renderFactories();
+        });
+        $('boostButton').onclick=()=>this.transact(()=> {
+          if(engine.boost()) {
+            Sounds.play();
+            UI.commit('Overclock engaged.');
+          }
+        });
+        $('sellSurplus').onclick=()=>this.transact(()=> {
+          const amount=engine.sellSurplus();
+          UI.commit(money(amount)+' surplus exported.');
+        });
+        $('prestigeButton').onclick=()=>this.transact(()=> {
+          const preview=engine.potential();
+          if(preview<1)return;
+          UI.confirm('Begin campaign '+(engine.data.stats.resets+2)+'?', 'Claim at least '+points(preview)+'. Your inventory and campaign revenue reset. All factories, upgrades, research, achievements, and unspent credits stay.', ()=> {
+            const awarded=engine.prestige();
+            if(awarded) {
+              Sounds.play('prestige');
+              UI.commit(points(awarded)+' claimed. A new campaign begins.');
+            }
+          });
+        });
+        $('closeDialog').onclick=()=>UI.closeDialog();
+        $('confirmCancel').onclick=()=>UI.closeConfirm();
+        $('confirmAccept').onclick=()=>this.transact(()=> {
+          const action=UI.confirmAction;
+          UI.closeConfirm();
+          if(action)action();
+        });
+        for(const [id, key] of [['soundSetting', 'sound'], ['motionSetting', 'motion'], ['offlineSetting', 'offline']]) {
+          $(id).onchange=()=>this.transact(()=> {
+            engine.data.settings[key]=$(id).checked;
+            SaveManager.save();
+          });
+        }
+        $('pauseProduction').onclick=()=>this.transact(()=> {
+          engine.data.run.paused=!engine.data.run.paused;
+          UI.commit();
+        });
+        $('saveNow').onclick=()=>this.transact(()=> {
+          if(SaveManager.save())UI.toast('Saved on this device.');
+        });
+        $('exportSave').onclick=()=>this.export();
+        $('importSave').onclick=()=>this.transact(()=>$('backupFile').click());
+        $('backupFile').onchange=event=>this.import(event.target.files?.[0]);
+        window.addEventListener('keydown', event=> {
+          if(event.key==='Escape') {
+            UI.closeConfirm();
+            UI.closeDialog();
+          }
+          if(event.key==='Tab')this.trapFocus(event);
+        });
+        document.addEventListener('visibilitychange', ()=> {
+          if(this.follower)return;
+          if(document.hidden) {
+            this.hiddenAt=Date.now();
+            if(!engine.busy)SaveManager.save();
+          }
+          else {
+            const from=this.hiddenAt||engine.data.lastSaved;
+            this.hiddenAt=0;
+            this.catchUp(from);
+          }
+        });
+        window.addEventListener('pagehide', ()=> {
+          if(!this.follower&&!engine.busy)SaveManager.save();
+        });
+      },
+      trapFocus(event) {
+        const overlay=!$('confirm').classList.contains('hidden')?$('confirm'):!$('dialog').classList.contains('hidden')?$('dialog'):null;
+        if(!overlay)return;
+        const buttons=[...overlay.querySelectorAll('button:not(:disabled),input,select,[tabindex="0"]')];
+        if(!buttons.length)return;
+        const first=buttons[0],
+        last=buttons[buttons.length-1];
+        if(event.shiftKey&&document.activeElement===first) {
+          event.preventDefault();
+          last.focus();
+        }
+        else if(!event.shiftKey&&document.activeElement===last) {
+          event.preventDefault();
+          first.focus();
+        }
+      },
+      export() {
+        const payload= {
+          game:SaveManager.GAME_KEY,
+          version:SaveManager.VERSION,
+          exportedAt:new Date().toISOString(),
+          data:engine.data
+        };
+        const blob=new Blob([JSON.stringify(payload, null, 2)], {
+          type:'application/json'
+        });
+        const url=URL.createObjectURL(blob),
+        link=document.createElement('a');
+        link.href=url;
+        link.download='idle-factory-backup.json';
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      },
+      async import(file) {
+        if(!file||this.follower||engine.busy)return;
+        try {
+          if(file.size>1000000)throw new Error('Backup is too large.');
+          const parsed=JSON.parse(await file.text());
+          if(parsed.game!==SaveManager.GAME_KEY||![1, SaveManager.VERSION].includes(parsed.version)||!parsed.data?.factories)throw new Error('This is not a supported Idle Factory backup.');
+          const data=SaveManager.sanitize(parsed.data);
+          UI.confirm('Replace your factory save?', 'The imported backup will replace this Idle Factory save. Other arcade games are unaffected.', ()=> {
+            data.lastSaved=Date.now();
+            SaveManager.data=data;
+            engine=new FactoryEngine(data);
+            this.accumulator=0;
+            this.lastFrame=performance.now();
+            UI.closeDialog();
+            UI.commit('Backup restored.');
+          });
+        }
+        catch(error) {
+          UI.toast(error instanceof SyntaxError?'Invalid JSON backup.':error.message);
+        }
+        $('backupFile').value='';
+      }
+    };
+    Runtime.start();
+  </script>
+  </body>
+</html>
