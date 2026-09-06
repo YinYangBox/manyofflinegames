@@ -5,9 +5,1213 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#08111f">
     <title>Many Offline Games</title>
+    <style>
+:root {
+    --bg-0: #030712;
+    --bg-1: #08111f;
+    --bg-2: #101b2f;
+    --panel: rgba(13, 23, 42, 0.78);
+    --panel-solid: #0d172a;
+    --panel-soft: rgba(255, 255, 255, 0.045);
+    --card: rgba(16, 27, 47, 0.9);
+    --card-hover: rgba(26, 41, 67, 0.98);
+    --text: #f8fafc;
+    --muted: #aebdd1;
+    --muted-strong: #d6e1ef;
+    --accent: #55e6a5;
+    --accent-2: #55c7ff;
+    --gold: #ffd85c;
+    --danger: #ff7b8f;
+    --border: rgba(166, 190, 224, 0.16);
+    --shadow: rgba(0, 0, 0, 0.35);
+}
 
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+    background: var(--bg-0);
+}
+
+body {
+    position: relative;
+    min-height: 100vh;
+    margin: 0;
+    padding: 22px 20px 72px;
+    overflow-x: hidden;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 10% 0%, rgba(85, 199, 255, 0.16), transparent 26rem),
+        radial-gradient(circle at 90% 10%, rgba(85, 230, 165, 0.12), transparent 24rem),
+        linear-gradient(145deg, var(--bg-0), var(--bg-1) 42%, var(--bg-2));
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+button,
+iframe {
+    font: inherit;
+}
+
+button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.background-orb {
+    position: fixed;
+    width: 18rem;
+    height: 18rem;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(70px);
+    opacity: 0.12;
+}
+
+.background-orb--one {
+    top: 18%;
+    left: -8rem;
+    background: #55c7ff;
+}
+
+.background-orb--two {
+    right: -8rem;
+    bottom: 4%;
+    background: #55e6a5;
+}
+
+.topbar {
+    position: relative;
+    z-index: 10;
+    width: min(1180px, 100%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 14px;
+}
+
+.coin-badge,
+.reward-badge {
+    min-height: 58px;
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 16px;
+    border-radius: 17px;
+    color: var(--text);
+    background: rgba(10, 19, 34, 0.76);
+    border: 1px solid var(--border);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(16px);
+}
+
+.coin-badge {
+    justify-self: start;
+}
+
+.reward-badge {
+    justify-self: end;
+    border-color: rgba(85, 199, 255, 0.24);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.reward-badge:hover {
+    transform: translateY(-2px);
+    border-color: rgba(85, 199, 255, 0.5);
+    background: rgba(18, 36, 60, 0.88);
+}
+
+.coin-badge__icon,
+.reward-badge__icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(255, 216, 92, 0.11);
+    font-size: 1.25rem;
+}
+
+.reward-badge__icon {
+    background: rgba(85, 199, 255, 0.1);
+}
+
+.coin-badge__label,
+.reward-badge__label {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.coin-badge strong,
+.reward-badge strong {
+    font-size: 1.05rem;
+    line-height: 1.1;
+}
+
+.coin-badge strong {
+    color: var(--gold);
+}
+
+.reward-badge strong {
+    color: #e7f6ff;
+}
+
+.topbar__status {
+    display: inline-flex;
+    justify-self: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 9px 13px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(166, 190, 224, 0.12);
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.store-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(166, 190, 224, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.store-tab {
+    min-height: 38px;
+    padding: 8px 11px;
+    color: var(--muted);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+}
+
+.store-tab:hover,
+.store-tab.active {
+    color: var(--text);
+    border-color: rgba(85, 230, 165, 0.32);
+    background: rgba(85, 230, 165, 0.12);
+}
+
+.store-tab:focus-visible {
+    outline: 3px solid rgba(85, 199, 255, 0.35);
+    outline-offset: 2px;
+}
+
+.connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    box-shadow: 0 0 0 5px rgba(174, 189, 209, 0.06);
+}
+
+.connection-dot--online {
+    background: var(--accent);
+    box-shadow: 0 0 0 5px rgba(85, 230, 165, 0.08);
+}
+
+.connection-dot--offline {
+    background: var(--gold);
+    box-shadow: 0 0 0 5px rgba(255, 216, 92, 0.08);
+}
+
+.page-shell {
+    position: relative;
+    z-index: 1;
+    width: min(1180px, 100%);
+    margin: 0 auto;
+}
+
+.hero {
+    margin: 54px auto 0;
+    padding: 44px 28px 38px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    background:
+        linear-gradient(145deg, rgba(18, 31, 53, 0.88), rgba(11, 20, 35, 0.68)),
+        radial-gradient(circle at 50% -30%, rgba(85, 199, 255, 0.13), transparent 60%);
+    box-shadow: 0 30px 80px var(--shadow);
+    backdrop-filter: blur(18px);
+}
+
+.hero__eyebrow,
+.section-kicker {
+    color: var(--accent-2);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.hero h1 {
+    margin: 10px 0 0;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height: 0.98;
+    letter-spacing: -0.05em;
+    background: linear-gradient(110deg, #ffffff 0%, #c9f4ff 38%, #b9fbdc 72%, #ffffff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.subtitle {
+    max-width: 680px;
+    margin: 16px auto 0;
+    color: var(--muted);
+    font-size: clamp(0.95rem, 2vw, 1.05rem);
+    line-height: 1.6;
+}
+
+.library-section {
+    margin-top: 34px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.section-heading h2 {
+    margin: 5px 0 0;
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+    letter-spacing: -0.02em;
+}
+
+.library-count {
+    padding: 8px 11px;
+    border-radius: 999px;
+    color: var(--muted-strong);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(166, 190, 224, 0.12);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.game-hub {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+    gap: 18px;
+}
+
+.store-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.store-card {
+    min-width: 0;
+    padding: 18px;
+    color: var(--text);
+    text-align: left;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: linear-gradient(145deg, rgba(22, 38, 63, 0.92), rgba(10, 19, 34, 0.96));
+}
+
+.store-card__icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    font-size: 2rem;
+}
+
+.store-card__icon img,
+.game-card__icon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.store-card h3 {
+    margin: 8px 0 4px;
+    font-size: 1.05rem;
+}
+
+.store-card p {
+    min-height: 40px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.credit-options {
+    display: grid;
+    gap: 7px;
+    margin-top: 14px;
+}
+
+.credit-option {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 0.76rem;
+}
+
+.pack-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 190px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.pack-card.is-hidden {
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-color: rgba(255, 216, 92, 0.3);
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 216, 92, 0.2), transparent 55%),
+        linear-gradient(145deg, rgba(38, 42, 71, 0.96), rgba(12, 20, 38, 0.98));
+}
+
+.pack-card.is-hidden:hover {
+    border-color: rgba(255, 216, 92, 0.7);
+    transform: translateY(-6px) rotate(-1deg);
+}
+
+.pack-card__mystery {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    margin-bottom: 12px;
+    color: #fff2bf;
+    border: 1px solid rgba(255, 216, 92, 0.5);
+    border-radius: 18px;
+    background: rgba(255, 216, 92, 0.13);
+    box-shadow: 0 0 28px rgba(255, 216, 92, 0.14);
+    font-size: 2rem;
+    font-weight: 900;
+}
+
+.pack-card.is-hidden h3 {
+    margin: 0 0 5px;
+    color: #fff2bf;
+}
+
+.pack-card.is-hidden p {
+    min-height: auto;
+}
+
+.pack-card.is-hidden .store-card__action {
+    margin-top: 14px;
+    color: var(--gold);
+}
+
+.pack-card:hover:not(:disabled) {
+    transform: translateY(-4px);
+    border-color: rgba(85, 230, 165, 0.5);
+}
+
+.pack-card:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.pack-card__tag {
+    align-self: flex-start;
+    padding: 6px 8px;
+    color: #06130d;
+    border-radius: 999px;
+    background: var(--accent);
+    font-size: 0.65rem;
+    font-weight: 900;
+}
+
+.pack-card strong {
+    margin-top: 12px;
+    color: var(--gold);
+    font-size: 1.2rem;
+}
+
+.store-card__action {
+    margin-top: auto;
+    padding-top: 12px;
+    color: var(--accent-2);
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.coin-store-intro {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 22px 0 14px;
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 216, 92, 0.2);
+    border-radius: 18px;
+    background:
+        linear-gradient(115deg, rgba(255, 216, 92, 0.1), rgba(85, 199, 255, 0.06)),
+        rgba(255, 255, 255, 0.025);
+}
+
+.coin-store-intro h3 {
+    margin: 6px 0 3px;
+    font-size: 1.12rem;
+}
+
+.coin-store-intro p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.coin-store-intro__balance {
+    color: var(--muted-strong);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.coin-store-intro__balance strong {
+    color: var(--gold);
+}
+
+.coin-card {
+    position: relative;
+    min-height: 190px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.coin-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 216, 92, 0.55);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
+}
+
+.coin-card--featured {
+    border-color: rgba(255, 216, 92, 0.36);
+    background:
+        radial-gradient(circle at 90% 0%, rgba(255, 216, 92, 0.17), transparent 45%),
+        linear-gradient(145deg, rgba(38, 42, 71, 0.96), rgba(12, 20, 38, 0.98));
+}
+
+.coin-card .pack-card__tag {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+.coin-card__icon,
+.coin-checkout__icon {
+    display: grid;
+    place-items: center;
+    color: var(--gold);
+    background: rgba(255, 216, 92, 0.1);
+    border: 1px solid rgba(255, 216, 92, 0.2);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+}
+
+.coin-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+}
+
+.coin-card h3 {
+    margin: 14px 0 0;
+    font-size: 1.08rem;
+}
+
+.coin-card strong {
+    display: block;
+    margin-top: 7px;
+    color: var(--gold);
+    font-size: 1.22rem;
+}
+
+.coin-checkout {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 16px;
+    border: 1px solid rgba(255, 216, 92, 0.2);
+    border-radius: 17px;
+    background: rgba(255, 216, 92, 0.06);
+}
+
+.coin-checkout__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+}
+
+.coin-checkout strong,
+.coin-checkout span:last-child {
+    display: block;
+}
+
+.coin-checkout strong {
+    font-size: 1.05rem;
+}
+
+.coin-checkout span:last-child {
+    margin-top: 4px;
+    color: var(--gold);
+    font-weight: 900;
+}
+
+.pack-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pack-preview__game {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 11px;
+    color: var(--muted-strong);
+    border: 1px solid rgba(166, 190, 224, 0.12);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 0.82rem;
+}
+
+.pack-preview__icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.game-card {
+    min-height: 246px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 19px;
+    text-align: left;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 23px;
+    background: linear-gradient(160deg, rgba(24, 39, 65, 0.94), rgba(10, 19, 34, 0.96));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+.game-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(85, 199, 255, 0.52);
+    background: linear-gradient(160deg, rgba(31, 52, 83, 0.98), rgba(10, 19, 34, 0.98));
+    box-shadow: 0 26px 54px rgba(0, 0, 0, 0.3);
+}
+
+.game-card:focus-visible,
+.reward-badge:focus-visible,
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.icon-button:focus-visible {
+    outline: 3px solid rgba(85, 199, 255, 0.35);
+    outline-offset: 3px;
+}
+
+.game-card.locked {
+    border-color: rgba(255, 216, 92, 0.23);
+}
+
+.game-card.unlocked {
+    border-color: rgba(85, 230, 165, 0.18);
+}
+
+.game-card__topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.game-card__icon {
+    width: 66px;
+    height: 66px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    background:
+        linear-gradient(135deg, rgba(85, 230, 165, 0.22), rgba(85, 199, 255, 0.2)),
+        rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 2rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.game-card__icon-image {
+    width: 48px;
+    height: 48px;
+}
+
+.game-card__badge,
+.game-card__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.game-card__badge {
+    padding: 7px 9px;
+    color: #fff2bf;
+    border: 1px solid rgba(255, 216, 92, 0.22);
+    background: rgba(255, 216, 92, 0.08);
+}
+
+.game-card.unlocked .game-card__badge {
+    color: #caffea;
+    border-color: rgba(85, 230, 165, 0.2);
+    background: rgba(85, 230, 165, 0.09);
+}
+
+.game-card__content {
+    margin-top: 25px;
+}
+
+.game-card h3 {
+    margin: 0 0 8px;
+    font-size: 1.2rem;
+    letter-spacing: -0.015em;
+}
+
+.game-card p {
+    margin: 0;
+    min-height: 48px;
+    color: var(--muted);
+    line-height: 1.5;
+    font-size: 0.9rem;
+}
+
+.game-card__action {
+    margin-top: auto;
+    padding: 10px 12px;
+    color: var(--muted-strong);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(166, 190, 224, 0.1);
+}
+
+.game-card.locked .game-card__action {
+    color: #fff2bf;
+    background: rgba(255, 216, 92, 0.075);
+    border-color: rgba(255, 216, 92, 0.14);
+}
+
+.game-card.unlocked .game-card__action {
+    color: #caffea;
+    background: rgba(85, 230, 165, 0.07);
+    border-color: rgba(85, 230, 165, 0.12);
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    padding: 54px 22px;
+    text-align: center;
+    border: 1px dashed rgba(166, 190, 224, 0.18);
+    border-radius: 23px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.empty-state span {
+    display: block;
+    font-size: 2.5rem;
+}
+
+.empty-state h3 {
+    margin: 12px 0 5px;
+}
+
+.empty-state p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.status-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    z-index: 2000;
+    max-width: min(92vw, 620px);
+    padding: 12px 17px;
+    border-radius: 14px;
+    color: var(--text);
+    background: rgba(7, 14, 25, 0.94);
+    border: 1px solid rgba(166, 190, 224, 0.18);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    transform: translate(-50%, 18px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    backdrop-filter: blur(14px);
+}
+
+.status-toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.status-toast[data-type="success"] {
+    border-color: rgba(85, 230, 165, 0.33);
+}
+
+.status-toast[data-type="error"] {
+    border-color: rgba(255, 123, 143, 0.35);
+}
+
+.app-modal,
+.game-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(2, 7, 15, 0.78);
+    backdrop-filter: blur(14px);
+}
+
+.app-modal.open,
+.game-modal.open {
+    display: flex;
+}
+
+.app-modal__panel {
+    width: min(560px, 94vw);
+    overflow: hidden;
+    border: 1px solid rgba(166, 190, 224, 0.16);
+    border-radius: 24px;
+    background: linear-gradient(160deg, rgba(16, 29, 49, 0.98), rgba(8, 15, 27, 0.98));
+    box-shadow: 0 34px 90px rgba(0, 0, 0, 0.52);
+}
+
+.app-modal__header,
+.game-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(166, 190, 224, 0.1);
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.app-modal__header h2,
+.game-modal__header h2 {
+    margin: 6px 0 0;
+    font-size: 1.2rem;
+}
+
+.icon-button {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(166, 190, 224, 0.12);
+    border-radius: 11px;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+}
+
+.icon-button:hover {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.purchase-panel__body,
+.reward-panel__body {
+    padding: 20px;
+}
+
+.purchase-preview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(166, 190, 224, 0.1);
+}
+
+.purchase-preview__icon,
+.reward-hero__icon {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 16px;
+    font-size: 1.65rem;
+    background: rgba(85, 199, 255, 0.09);
+    border: 1px solid rgba(85, 199, 255, 0.13);
+}
+
+.purchase-icon-image {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+}
+
+.purchase-preview h3 {
+    margin: 0 0 4px;
+    font-size: 1.08rem;
+}
+
+.purchase-preview p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.purchase-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.purchase-summary > div {
+    padding: 13px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(166, 190, 224, 0.09);
+}
+
+.purchase-summary span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.purchase-summary strong {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted-strong);
+    font-size: 0.92rem;
+}
+
+.purchase-summary > div:first-child strong {
+    color: var(--gold);
+}
+
+.purchase-note {
+    min-height: 22px;
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.modal-actions {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.code-panel {
+    width: min(980px, 100%);
+}
+
+.code-panel__body {
+    padding: 20px;
+}
+
+.code-display {
+    max-height: 60vh;
+    margin: 0;
+    padding: 16px;
+    overflow: auto;
+    color: #d8f8e8;
+    background: #06100e;
+    border: 1px solid rgba(85, 230, 165, 0.18);
+    border-radius: 12px;
+    font: 0.78rem/1.5 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    user-select: text;
+    -webkit-user-select: text;
+    white-space: pre;
+}
+
+.primary-button,
+.secondary-button {
+    min-height: 48px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    padding: 11px 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+}
+
+.primary-button:hover:not(:disabled),
+.secondary-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.primary-button {
+    color: #06130d;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 12px 26px rgba(85, 230, 165, 0.12);
+}
+
+.secondary-button {
+    color: var(--muted-strong);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(166, 190, 224, 0.12);
+}
+
+.secondary-button--wide {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.paypal-button-container {
+    min-height: 45px;
+    margin-top: 14px;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.primary-button--wide {
+    width: 100%;
+    margin-top: 16px;
+}
+
+.reward-hero {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 14px;
+    border: 1px solid rgba(255, 216, 92, 0.16);
+    border-radius: 18px;
+    background: rgba(255, 216, 92, 0.05);
+}
+
+.reward-hero__icon {
+    background: rgba(255, 216, 92, 0.08);
+    border-color: rgba(255, 216, 92, 0.14);
+}
+
+.reward-hero strong,
+.reward-hero span {
+    display: block;
+}
+
+.reward-hero strong {
+    font-size: 1rem;
+}
+
+.reward-hero span {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.reward-list {
+    display: grid;
+    gap: 9px;
+    margin-top: 14px;
+}
+
+.reward-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 13px;
+    border: 1px solid rgba(166, 190, 224, 0.09);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.reward-item--today {
+    border-color: rgba(255, 216, 92, 0.3);
+    background: rgba(255, 216, 92, 0.07);
+}
+
+.reward-item--claimed {
+    opacity: 0.76;
+}
+
+.reward-item__day {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--muted);
+    font-size: 0.64rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+}
+
+.reward-item strong {
+    font-size: 0.87rem;
+}
+
+.reward-item__value {
+    color: var(--gold);
+    font-weight: 900;
+    white-space: nowrap;
+    font-size: 0.82rem;
+}
+
+.reward-footnote {
+    margin: 11px 0 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.game-modal {
+    z-index: 1100;
+}
+
+.game-modal__panel {
+    width: min(1160px, 96vw);
+    height: min(90vh, 860px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(166, 190, 224, 0.15);
+    border-radius: 22px;
+    background: #070e18;
+    box-shadow: 0 34px 100px rgba(0, 0, 0, 0.58);
+}
+
+#game-frame {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    border: 0;
+    background: #ffffff;
+}
+
+@media (max-width: 780px) {
+    body {
+        padding: 15px 13px 58px;
+    }
+
+    .topbar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .topbar__status {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        justify-self: center;
+        order: 3;
+    }
+
+    .store-tabs {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+    }
+
+    .store-tab {
+        flex: 1 1 0;
+        padding-inline: 5px;
+        font-size: 0.58rem;
+    }
+
+    .reward-badge {
+        justify-self: end;
+    }
+
+    .hero {
+        margin-top: 30px;
+        padding: 34px 18px 30px;
+        border-radius: 24px;
+    }
+
+    .section-heading {
+        align-items: center;
+    }
+
+    .purchase-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .coin-store-intro {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .modal-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .game-modal {
+        padding: 10px;
+    }
+
+    .game-modal__panel {
+        width: 100%;
+        height: 92vh;
+        border-radius: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+    </style>
 </head>
 
 <body>
@@ -492,6 +1696,2839 @@
             ></iframe>
         </div>
     </div>
+    <script>
+
+const APP_CACHE = "many-offline-games-v6";
+const LEGACY_APP_CACHES = ["many-offline-games-v5"];
+
+const STATE_KEY = "./__state__/hub-state-v2.json";
+const LEGACY_STATE_KEYS = ["hub-state-v1"];
+
+const LOCAL_COINS_KEY = "many-offline-games-coins-v1";
+const LEGACY_LOCAL_STATE_KEY = "many-offline-games-state-v2";
+
+const DAILY_REWARDS = [10, 20, 30, 40, 50, 60, 70];
+const CREDIT_PACKS = [
+    { credits: 100, coins: 10 },
+    { credits: 300, coins: 25 },
+    { credits: 1000, coins: 50 },
+    { credits: 1500, coins: 100 }
+];
+const COIN_PACKS = [
+    { coins: 400, price: "EUR 0.49" },
+    { coins: 1200, price: "EUR 0.99" },
+    { coins: 2500, price: "EUR 1.99" },
+    { coins: 7000, price: "EUR 4.99" },
+    { coins: 20000, price: "EUR 9.99" },
+    { coins: 50000, price: "EUR 19.99" }
+];
+// PayPal Client ID is public and belongs here. Replace this placeholder with
+// the Client ID from your PayPal Developer Dashboard (Sandbox while testing).
+const PAYPAL_CLIENT_ID = "PON_AQUI_TU_PAYPAL_CLIENT_ID";
+// Use "sandbox" for tests and "production" after your PayPal account is live.
+const PAYPAL_ENVIRONMENT = "sandbox";
+const PAYPAL_CURRENCY = "EUR";
+const PACK_DISCOUNTS = [10, 20, 35, 50];
+const DAILY_OFFERS_KEY = "many-offline-games-daily-offers-v1";
+
+const DEFAULT_STATE = {
+    coins: 0,
+    lastDailyClaim: "",
+    dailyStreak: 0,
+    unlocked: [],
+    codeUnlocked: []
+};
+
+let defaultGames = [];
+let appState = { ...DEFAULT_STATE };
+
+let purchaseTarget = null;
+let purchaseBusy = false;
+let currentFrameGameId = "";
+let packTarget = null;
+let packBusy = false;
+let coinTarget = null;
+let coinBusy = false;
+let paypalButtons = null;
+let activeStoreTab = "library";
+
+
+// ======================================================
+// BASIC PROTECTION
+// ======================================================
+
+document.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+});
+
+document.addEventListener("keydown", (event) => {
+    const blocked =
+        event.key === "F12" ||
+        (
+            event.ctrlKey &&
+            event.shiftKey &&
+            ["I", "J", "C"].includes(
+                event.key.toUpperCase()
+            )
+        ) ||
+        (
+            event.ctrlKey &&
+            event.key.toUpperCase() === "U"
+        );
+
+    if (blocked) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    if (event.key === "Escape") {
+        closePurchaseModal();
+        closeCodeModal();
+        closePackModal();
+        closeCoinModal();
+        closeRewardModal();
+        closeGameModal();
+    }
+});
+
+
+// ======================================================
+// STATE
+// ======================================================
+
+function cloneDefaultState() {
+    return {
+        ...DEFAULT_STATE,
+        unlocked: [],
+        codeUnlocked: []
+    };
+}
+
+function normalizeState(data) {
+    const dailyStreak = Math.max(
+        0,
+        Math.floor(Number(data?.dailyStreak) || 0)
+    );
+
+    const lastDailyClaim = String(
+        data?.lastDailyClaim || ""
+    );
+
+    const unlocked = Array.isArray(data?.unlocked)
+        ? [
+            ...new Set(
+                data.unlocked
+                    .map(String)
+                    .map((id) => id.trim())
+                    .filter(Boolean)
+            )
+        ]
+        : [];
+
+    const codeUnlocked = Array.isArray(data?.codeUnlocked)
+        ? [
+            ...new Set(
+                data.codeUnlocked
+                    .map(String)
+                    .map((id) => id.trim())
+                    .filter(Boolean)
+            )
+        ]
+        : [];
+
+    return {
+        coins: 0,
+        lastDailyClaim,
+        dailyStreak,
+        unlocked,
+        codeUnlocked
+    };
+}
+
+function getCachedStateSnapshot() {
+    return JSON.stringify({
+        lastDailyClaim: appState.lastDailyClaim,
+        dailyStreak: appState.dailyStreak,
+        unlocked: appState.unlocked,
+        codeUnlocked: appState.codeUnlocked
+    });
+}
+
+function readLocalCoins() {
+    try {
+        const value = localStorage.getItem(
+            LOCAL_COINS_KEY
+        );
+
+        if (value !== null) {
+            const coins = Number(value);
+
+            if (Number.isFinite(coins)) {
+                return Math.max(
+                    0,
+                    Math.floor(coins)
+                );
+            }
+        }
+    } catch (error) {
+        console.warn(
+            "Could not read local coins:",
+            error
+        );
+    }
+
+    return null;
+}
+
+function saveLocalCoins() {
+    try {
+        localStorage.setItem(
+            LOCAL_COINS_KEY,
+            String(
+                Math.max(
+                    0,
+                    Math.floor(
+                        Number(appState.coins) || 0
+                    )
+                )
+            )
+        );
+    } catch (error) {
+        console.warn(
+            "Could not save local coins:",
+            error
+        );
+    }
+}
+
+function readLegacyLocalState() {
+    try {
+        return JSON.parse(
+            localStorage.getItem(
+                LEGACY_LOCAL_STATE_KEY
+            ) || "null"
+        );
+    } catch {
+        return null;
+    }
+}
+
+async function openAppCache() {
+    if (!("caches" in window)) {
+        return null;
+    }
+
+    return caches.open(APP_CACHE);
+}
+
+async function readState() {
+    let cachedState = null;
+
+    // Current Cache Storage state
+    try {
+        const cache = await openAppCache();
+
+        if (cache) {
+            const response = await cache.match(
+                STATE_KEY
+            );
+
+            if (response) {
+                cachedState = normalizeState(
+                    await response.json()
+                );
+            }
+        }
+    } catch (error) {
+        console.warn(
+            "Could not read current cached state:",
+            error
+        );
+    }
+
+    // Legacy Cache Storage migration
+    if (!cachedState) {
+        try {
+            for (
+                const legacyCacheName of LEGACY_APP_CACHES
+            ) {
+                const legacyCache =
+                    await caches.open(
+                        legacyCacheName
+                    );
+
+                for (
+                    const legacyKey of LEGACY_STATE_KEYS
+                ) {
+                    const response =
+                        await legacyCache.match(
+                            legacyKey
+                        );
+
+                    if (response) {
+                        const legacyData =
+                            await response.json();
+
+                        cachedState =
+                            normalizeState(
+                                legacyData
+                            );
+
+                        break;
+                    }
+                }
+
+                if (cachedState) {
+                    break;
+                }
+            }
+        } catch (error) {
+            console.warn(
+                "Could not migrate legacy state:",
+                error
+            );
+        }
+    }
+
+    if (!cachedState) {
+        cachedState = cloneDefaultState();
+
+        // Migrate old localStorage state only
+        // when the new coins key does not exist.
+        const legacyLocalState =
+            readLegacyLocalState();
+
+        if (
+            legacyLocalState &&
+            Array.isArray(
+                legacyLocalState.unlocked
+            )
+        ) {
+            cachedState.unlocked =
+                [
+                    ...new Set(
+                        legacyLocalState.unlocked
+                            .map(String)
+                            .map((id) =>
+                                id.trim()
+                            )
+                            .filter(Boolean)
+                    )
+                ];
+
+            cachedState.lastDailyClaim =
+                String(
+                    legacyLocalState.lastDailyClaim ||
+                    ""
+                );
+
+            cachedState.dailyStreak =
+                Math.max(
+                    0,
+                    Math.floor(
+                        Number(
+                            legacyLocalState.dailyStreak
+                        ) || 0
+                    )
+                );
+        }
+    }
+
+    // Coins are ONLY read from localStorage.
+    const localCoins = readLocalCoins();
+
+    if (localCoins !== null) {
+        cachedState.coins = localCoins;
+    } else {
+        // One-time migration of old coins value.
+        const legacyLocalState =
+            readLegacyLocalState();
+
+        const migratedCoins =
+            Number(legacyLocalState?.coins);
+
+        cachedState.coins =
+            Number.isFinite(migratedCoins)
+                ? Math.max(
+                    0,
+                    Math.floor(
+                        migratedCoins
+                    )
+                )
+                : 0;
+
+        saveLocalCoins();
+    }
+
+    appState = normalizeState(cachedState);
+
+    // normalizeState intentionally ignores coins,
+    // so restore them separately.
+    appState.coins =
+        readLocalCoins() ??
+        cachedState.coins ??
+        0;
+
+    return appState;
+}
+
+async function saveState() {
+    // Coins -> ONLY localStorage
+    saveLocalCoins();
+
+    // Purchases + daily reward -> Cache Storage
+    try {
+        const cache = await openAppCache();
+
+        if (!cache) {
+            return true;
+        }
+
+        await cache.put(
+            STATE_KEY,
+            new Response(
+                getCachedStateSnapshot(),
+                {
+                    headers: {
+                        "Content-Type":
+                            "application/json; charset=utf-8",
+                        "Cache-Control":
+                            "no-store"
+                    }
+                }
+            )
+        );
+
+        return true;
+    } catch (error) {
+        console.warn(
+            "Could not save game state:",
+            error
+        );
+
+        return false;
+    }
+}
+
+
+// ======================================================
+// DATE / DAILY REWARD
+// ======================================================
+
+function getTodayKey() {
+    return formatDateKey(
+        new Date()
+    );
+}
+
+function formatDateKey(date) {
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
+
+    const day =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(value) {
+    if (
+        !/^\d{4}-\d{2}-\d{2}$/.test(
+            String(value || "")
+        )
+    ) {
+        return null;
+    }
+
+    const [
+        year,
+        month,
+        day
+    ] = value.split("-").map(Number);
+
+    const date =
+        new Date(
+            year,
+            month - 1,
+            day
+        );
+
+    if (
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
+    ) {
+        return null;
+    }
+
+    date.setHours(
+        12,
+        0,
+        0,
+        0
+    );
+
+    return date;
+}
+
+function daysBetween(dateA, dateB) {
+    const a = parseDateKey(dateA);
+    const b = parseDateKey(dateB);
+
+    if (!a || !b) {
+        return null;
+    }
+
+    return Math.round(
+        Math.abs(
+            b.getTime() -
+            a.getTime()
+        ) / 86400000
+    );
+}
+
+function getDailyStatus() {
+    const today = getTodayKey();
+    const last = appState.lastDailyClaim;
+
+    const gap = last
+        ? daysBetween(last, today)
+        : null;
+
+    const claimedToday =
+        last === today;
+
+    const streak =
+        claimedToday
+            ? Math.max(
+                1,
+                appState.dailyStreak || 1
+            )
+            : gap === 1
+                ? Math.max(
+                    1,
+                    appState.dailyStreak || 0
+                ) + 1
+                : 1;
+
+    const cycleDay =
+        ((streak - 1) %
+            DAILY_REWARDS.length) + 1;
+
+    return {
+        today,
+        last,
+        gap,
+        claimedToday,
+        streak,
+        cycleDay
+    };
+}
+
+function getNextRewardForToday() {
+    const status =
+        getDailyStatus();
+
+    return DAILY_REWARDS[
+        status.cycleDay - 1
+    ];
+}
+
+
+// ======================================================
+// UI STATE
+// ======================================================
+
+function renderCoins() {
+    const coinNodes =
+        document.querySelectorAll(
+            "[data-coin-value]"
+        );
+
+    coinNodes.forEach((node) => {
+        node.textContent =
+            appState.coins.toLocaleString(
+                "en-US"
+            );
+    });
+}
+
+function showToast(
+    message,
+    type = "info"
+) {
+    const toast =
+        document.getElementById(
+            "status-toast"
+        );
+
+    if (!toast) {
+        return;
+    }
+
+    toast.textContent =
+        message;
+
+    toast.dataset.type =
+        type;
+
+    toast.classList.add(
+        "show"
+    );
+
+    clearTimeout(
+        showToast.timeoutId
+    );
+
+    showToast.timeoutId =
+        setTimeout(() => {
+            toast.classList.remove(
+                "show"
+            );
+        }, 2400);
+}
+
+function isOnline() {
+    return navigator.onLine;
+}
+
+function updateConnectionStatus() {
+    const status =
+        document.getElementById(
+            "connection-status"
+        );
+
+    const dot =
+        document.getElementById(
+            "connection-dot"
+        );
+
+    if (!status || !dot) {
+        return;
+    }
+
+    const online =
+        isOnline();
+
+    status.textContent =
+        online
+            ? "Online • latest code"
+            : "Offline • cached code";
+
+    dot.classList.toggle(
+        "connection-dot--online",
+        online
+    );
+
+    dot.classList.toggle(
+        "connection-dot--offline",
+        !online
+    );
+
+    updateRewardButton();
+    renderLibraries();
+}
+
+
+// ======================================================
+// MODALS
+// ======================================================
+
+function openModal(modal) {
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.add("open");
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+}
+
+function closeModal(modal) {
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove(
+        "open"
+    );
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+}
+
+function openRewardModal() {
+    renderRewardList();
+
+    openModal(
+        document.getElementById(
+            "reward-modal"
+        )
+    );
+}
+
+function closeRewardModal() {
+    closeModal(
+        document.getElementById(
+            "reward-modal"
+        )
+    );
+}
+
+
+// ======================================================
+// DAILY REWARD UI
+// ======================================================
+
+function renderRewardList() {
+    const rewardList =
+        document.getElementById(
+            "reward-list"
+        );
+
+    const claimButton =
+        document.getElementById(
+            "claim-daily"
+        );
+
+    const streakNode =
+        document.getElementById(
+            "reward-streak"
+        );
+
+    const nextText =
+        document.getElementById(
+            "reward-next-text"
+        );
+
+    const topText =
+        document.getElementById(
+            "reward-button-text"
+        );
+
+    const status =
+        getDailyStatus();
+
+    const cycleDay =
+        status.cycleDay;
+
+    if (streakNode) {
+        streakNode.textContent =
+            `${status.streak}-day streak`;
+    }
+
+    if (nextText) {
+        nextText.textContent =
+            status.claimedToday
+                ? "Come back tomorrow to keep your streak."
+                : `Today is Day ${cycleDay}: claim ${getNextRewardForToday()} coins.`;
+    }
+
+    if (topText) {
+        topText.textContent =
+            status.claimedToday
+                ? "Claimed today"
+                : `Claim +${getNextRewardForToday()}`;
+    }
+
+    if (rewardList) {
+        rewardList.innerHTML =
+            DAILY_REWARDS.map(
+                (amount, index) => {
+                    const day =
+                        index + 1;
+
+                    const isToday =
+                        day === cycleDay;
+
+                    const isClaimed =
+                        status.claimedToday &&
+                        isToday;
+
+                    const repeatDay =
+                        day ===
+                        DAILY_REWARDS.length
+                            ? " • then repeats"
+                            : "";
+
+                    return `
+                        <div class="reward-item ${isToday ? "reward-item--today" : ""} ${isClaimed ? "reward-item--claimed" : ""}">
+                            <div>
+                                <span class="reward-item__day">
+                                    DAY ${day}
+                                </span>
+
+                                <strong>
+                                    ${day === 7 ? "Big reward" : "Daily reward"}${repeatDay}
+                                </strong>
+                            </div>
+
+                            <span class="reward-item__value">
+                                ${isClaimed ? "✓ Claimed" : `+${amount} 🪙`}
+                            </span>
+                        </div>
+                    `;
+                }
+            ).join("");
+    }
+
+    if (claimButton) {
+        claimButton.disabled =
+            status.claimedToday;
+
+        claimButton.textContent =
+            status.claimedToday
+                ? "Come back tomorrow"
+                : `Claim +${getNextRewardForToday()} coins`;
+    }
+}
+
+function updateRewardButton() {
+    const topText =
+        document.getElementById(
+            "reward-button-text"
+        );
+
+    if (!topText) {
+        return;
+    }
+
+    const status =
+        getDailyStatus();
+
+    topText.textContent =
+        status.claimedToday
+            ? "Claimed today"
+            : `Claim +${getNextRewardForToday()}`;
+}
+
+async function claimDailyReward() {
+    const status =
+        getDailyStatus();
+
+    if (status.claimedToday) {
+        showToast(
+            "You already claimed today's reward.",
+            "info"
+        );
+
+        return;
+    }
+
+    const reward =
+        getNextRewardForToday();
+
+    appState.coins +=
+        reward;
+
+    appState.lastDailyClaim =
+        status.today;
+
+    appState.dailyStreak =
+        status.streak;
+
+    renderCoins();
+    renderRewardList();
+
+    await saveState();
+
+    showToast(
+        `Daily reward claimed: +${reward} coins!`,
+        "success"
+    );
+}
+
+
+// ======================================================
+// GAMES
+// ======================================================
+
+function getGameIdentifier(game) {
+    if (
+        typeof game?.id === "string" &&
+        game.id.trim()
+    ) {
+        return game.id.trim();
+    }
+
+    if (
+        typeof game?.name === "string" &&
+        game.name.trim()
+    ) {
+        return game.name
+            .trim()
+            .toLowerCase()
+            .replace(
+                /[^a-z0-9]+/g,
+                "-"
+            );
+    }
+
+    if (
+        typeof game?.path === "string" &&
+        game.path.trim()
+    ) {
+        return game.path
+            .trim()
+            .toLowerCase()
+            .replace(
+                /[^a-z0-9]+/g,
+                "-"
+            );
+    }
+
+    return "game";
+}
+
+function getGameCost(game) {
+    return Number(game?.cost) > 0
+        ? Math.floor(Number(game.cost))
+        : 100;
+}
+
+function getCodeCost(game) {
+    return Math.max(1, Math.ceil(getGameCost(game) * 0.1));
+}
+
+function getGameById(gameId) {
+    return defaultGames.find(
+        (game) =>
+            getGameIdentifier(game) ===
+            String(gameId)
+    ) || null;
+}
+
+function getSavedGameKey(game) {
+    return getGameIdentifier(game) === "space-invaders"
+        ? "SPACE_INVADERS"
+        : getGameIdentifier(game);
+}
+
+function readArcadeGames() {
+    try {
+        const data = JSON.parse(
+            localStorage.getItem("ARCADE_GAMES") || "{}"
+        );
+
+        return data && typeof data === "object" && !Array.isArray(data)
+            ? data
+            : {};
+    } catch (error) {
+        console.warn("Could not read game credits:", error);
+        return {};
+    }
+}
+
+function addGameCredits(game, credits) {
+    if (!isGameUnlocked(getGameIdentifier(game))) {
+        throw new Error("Game purchase required for credits.");
+    }
+    if (!Number.isSafeInteger(credits) || credits <= 0) {
+        throw new Error("Invalid credit amount.");
+    }
+    const root = readArcadeGames();
+    const key = getSavedGameKey(game);
+    const current = root[key] && typeof root[key] === "object"
+        ? root[key]
+        : {};
+
+    current.credits = Math.max(
+        0,
+        Math.floor(Number(current.credits) || 0) + credits
+    );
+    root[key] = current;
+    localStorage.setItem("ARCADE_GAMES", JSON.stringify(root));
+}
+
+function renderGameIcon(icon, alt, className = "") {
+    const value = String(icon || "🎮").trim();
+    const isImage = /^(?:https?:\/\/|\.?\.?\/)?[^\s]+\.(?:png|jpe?g|webp|gif|svg)(?:[?#].*)?$/i.test(value);
+
+    if (!isImage) {
+        return escapeHtml(value);
+    }
+
+    return `<img class="${className}" src="${escapeHtml(value)}" alt="${escapeHtml(alt)}" loading="lazy">`;
+}
+
+function renderCreditStore() {
+    const store = document.getElementById("credits-store");
+
+    if (!store) {
+        return;
+    }
+
+    const purchasedGames = defaultGames.filter((game) =>
+        isGameUnlocked(getGameIdentifier(game))
+    );
+
+    if (!purchasedGames.length) {
+        store.innerHTML = `
+            <div class="empty-state">
+                <span>🎮</span>
+                <h3>No purchased games yet</h3>
+                <p>Buy a game first to get credits for it.</p>
+            </div>
+        `;
+        return;
+    }
+
+    store.innerHTML = purchasedGames.map((game) => `
+        <article class="store-card">
+            <div class="store-card__icon">${renderGameIcon(game.icon, String(game.name))}</div>
+            <div class="store-card__content">
+                <h3>${escapeHtml(String(game.name))}</h3>
+                <p>Use these credits inside this game.</p>
+            </div>
+            <div class="credit-options">
+                ${CREDIT_PACKS.slice(0, 3).map((pack) => `
+                    <button class="secondary-button credit-option" type="button"
+                        data-credit-game="${encodeURIComponent(getGameIdentifier(game))}"
+                        data-credit-value="${pack.credits}" data-credit-cost="${pack.coins}">
+                        +${pack.credits} C / ${pack.coins} 🪙
+                    </button>
+                `).join("")}
+            </div>
+        </article>
+    `).join("");
+}
+
+function renderCoinStore() {
+    const store = document.getElementById("coin-store");
+
+    if (!store) {
+        return;
+    }
+
+    store.innerHTML = COIN_PACKS.map((pack, index) => `
+        <button class="store-card coin-card ${index === 2 ? "coin-card--featured" : ""}" type="button" data-coin-pack="${index}">
+            ${index === 2 ? '<span class="pack-card__tag">BEST VALUE</span>' : ""}
+            <span class="coin-card__icon">COIN</span>
+            <h3>${pack.coins.toLocaleString("en-US")} coins</h3>
+            <strong>${pack.price}</strong>
+            <span class="store-card__action">Buy coin pack</span>
+        </button>
+    `).join("");
+}
+
+function closeCoinModal() {
+    if (coinBusy) {
+        return;
+    }
+
+    coinTarget = null;
+    closeModal(document.getElementById("coin-modal"));
+}
+
+function openCoinModal(packIndex) {
+    if (!isOnline()) {
+        showToast("Go online to buy coins.", "info");
+        return;
+    }
+
+    const pack = COIN_PACKS[Number(packIndex)];
+
+    if (!pack) {
+        return;
+    }
+
+    coinTarget = pack;
+    document.getElementById("coin-purchase-amount").textContent = `${pack.coins.toLocaleString("en-US")} coins`;
+    document.getElementById("coin-purchase-price").textContent = pack.price;
+    document.getElementById("coin-purchase-note").textContent = PAYPAL_CLIENT_ID.startsWith("PON_AQUI")
+        ? "Add your PayPal Client ID in public/script.js to enable secure checkout."
+        : "You will be redirected to PayPal to complete payment securely.";
+    renderPayPalButtons();
+    openModal(document.getElementById("coin-modal"));
+}
+
+function loadPayPalSdk() {
+    if (window.paypal) {
+        return Promise.resolve(window.paypal);
+    }
+
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(PAYPAL_CLIENT_ID)}&currency=${PAYPAL_CURRENCY}&intent=capture&components=buttons`;
+        script.onload = () => resolve(window.paypal);
+        script.onerror = () => reject(new Error("PayPal SDK could not load."));
+        document.head.appendChild(script);
+    });
+}
+
+async function renderPayPalButtons() {
+    const container = document.getElementById("paypal-button-container");
+
+    if (!container || PAYPAL_CLIENT_ID.startsWith("PON_AQUI")) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    try {
+        const paypal = await loadPayPalSdk();
+        paypalButtons = paypal.Buttons({
+            style: { layout: "vertical", shape: "rect", label: "paypal" },
+            createOrder: async () => {
+                const response = await fetch("/.netlify/functions/paypal-create-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ coins: coinTarget.coins })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.id) {
+                    throw new Error(data.error || "Could not create PayPal order.");
+                }
+                return data.id;
+            },
+            onApprove: async (data) => {
+                coinBusy = true;
+                try {
+                    const response = await fetch("/.netlify/functions/paypal-capture-order", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ orderID: data.orderID })
+                    });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== "COMPLETED") {
+                        throw new Error(result.error || "PayPal payment was not completed.");
+                    }
+                    appState.coins += result.coins;
+                    renderCoins();
+                    await saveState();
+                    closeCoinModal();
+                    showToast(`Payment complete: +${result.coins.toLocaleString("en-US")} coins.`, "success");
+                } catch (error) {
+                    console.error("PayPal capture error:", error);
+                    showToast("PayPal could not confirm the payment.", "error");
+                } finally {
+                    coinBusy = false;
+                }
+            },
+            onError: (error) => {
+                coinBusy = false;
+                console.error("PayPal checkout error:", error);
+                showToast("PayPal could not complete the payment.", "error");
+            }
+        });
+        await paypalButtons.render(container);
+    } catch (error) {
+        console.error("PayPal setup error:", error);
+        showToast("PayPal checkout is not configured yet.", "error");
+    }
+}
+
+function getPackGames(size) {
+    return defaultGames.slice(0, size);
+}
+
+function seededRandom(seed) {
+    let value = seed;
+
+    return () => {
+        value = (value * 9301 + 49297) % 233280;
+        return value / 233280;
+    };
+}
+
+function getDailyOffers() {
+    const today = getTodayKey();
+    const stored = (() => {
+        try {
+            return JSON.parse(localStorage.getItem(DAILY_OFFERS_KEY) || "null");
+        } catch {
+            return null;
+        }
+    })();
+
+    if (
+        stored?.date === today &&
+        Array.isArray(stored.offers) &&
+        stored.offers.length > 0
+    ) {
+        return {
+            ...stored,
+            revealed: Array.isArray(stored.revealed)
+                ? stored.revealed
+                : []
+        };
+    }
+
+    const seed = [...today].reduce((total, character) => total + character.charCodeAt(0), 0);
+    const random = seededRandom(seed);
+    const shuffledGames = [...defaultGames].sort(() => random() - 0.5);
+    const offers = Array.from({ length: Math.min(3, Math.floor(defaultGames.length / 2)) }, (_, index) => {
+        const size = 1 + Math.floor(random() * 4);
+        const discount = PACK_DISCOUNTS[Math.floor(random() * PACK_DISCOUNTS.length)];
+        const start = index * 2;
+
+        return {
+            id: `${today}-${index}`,
+            size,
+            discount,
+            gameIds: shuffledGames.slice(start, start + size).map(getGameIdentifier)
+        };
+    });
+    const next = { date: today, offers, revealed: [] };
+
+    try {
+        localStorage.setItem(DAILY_OFFERS_KEY, JSON.stringify(next));
+    } catch (error) {
+        console.warn("Could not save daily offers:", error);
+    }
+
+    return next;
+}
+
+function getOfferGames(offer) {
+    return offer.gameIds
+        .map(getGameById)
+        .filter(Boolean);
+}
+
+function revealDailyOffer(offerId) {
+    const daily = getDailyOffers();
+
+    if (!daily.revealed.includes(offerId)) {
+        daily.revealed.push(offerId);
+        try {
+            localStorage.setItem(DAILY_OFFERS_KEY, JSON.stringify(daily));
+        } catch (error) {
+            console.warn("Could not save revealed offer:", error);
+        }
+    }
+
+    renderPackStore();
+}
+
+function renderPackStore() {
+    const store = document.getElementById("packs-store");
+
+    if (!store) {
+        return;
+    }
+
+    const daily = getDailyOffers();
+
+    store.innerHTML = daily.offers.map((offer, index) => {
+        const games = getOfferGames(offer);
+        const regularCost = games.reduce((total, game) => total + getGameCost(game), 0);
+        const discount = offer.discount;
+        const price = Math.ceil(regularCost * (1 - discount / 100));
+        const revealed = daily.revealed.includes(offer.id);
+
+        return `
+            <button class="store-card pack-card ${revealed ? "is-revealed" : "is-hidden"}" type="button" data-offer-id="${offer.id}" ${games.length !== offer.size ? "disabled" : ""}>
+                ${revealed ? `
+                    <span class="pack-card__tag">${discount}% OFF</span>
+                    <h3>${offer.size}-GAME DROP</h3>
+                    <p>${games.map((game) => escapeHtml(String(game.name))).join(" · ")}</p>
+                    <strong>${price.toLocaleString("en-US")} 🪙</strong>
+                    <span class="store-card__action">Tap to claim offer</span>
+                ` : `
+                    <span class="pack-card__mystery">?</span>
+                    <h3>MYSTERY DROP ${index + 1}</h3>
+                    <p>Today's secret bundle is waiting.</p>
+                    <span class="store-card__action">Tap to reveal</span>
+                `}
+            </button>
+        `;
+    }).join("");
+}
+
+function getGameCost(game) {
+    return Number(game?.cost) > 0 ? Math.floor(Number(game.cost)) : 100;
+}
+
+function closePackModal() {
+    if (packBusy) {
+        return;
+    }
+
+    packTarget = null;
+    closeModal(document.getElementById("pack-modal"));
+}
+
+function openPackModal(offerId) {
+    if (!isOnline()) {
+        showToast("Go online to buy a pack.", "info");
+        return;
+    }
+
+    const daily = getDailyOffers();
+    const offer = daily.offers.find((item) => item.id === offerId);
+
+    if (!offer || !daily.revealed.includes(offerId)) {
+        return;
+    }
+
+    const games = getOfferGames(offer);
+    const discount = offer.discount;
+    const regularCost = games.reduce((total, game) => total + getGameCost(game), 0);
+    const price = Math.ceil(regularCost * (1 - discount / 100));
+    packTarget = { games, price, discount, regularCost };
+
+    document.getElementById("pack-title").textContent = `${offer.size}-game daily drop`;
+    document.getElementById("pack-games").innerHTML = games.map((game) => `
+        <span class="pack-preview__game">${renderGameIcon(game.icon, String(game.name), "pack-preview__icon")} ${escapeHtml(String(game.name))}</span>
+    `).join("");
+    document.getElementById("pack-regular-cost").textContent = `${regularCost.toLocaleString("en-US")} 🪙`;
+    document.getElementById("pack-discount").textContent = `${discount}%`;
+    document.getElementById("pack-balance").textContent = `${appState.coins.toLocaleString("en-US")} 🪙`;
+
+    const note = document.getElementById("pack-note");
+    const confirm = document.getElementById("confirm-pack");
+    note.textContent = appState.coins < price
+        ? `You need ${(price - appState.coins).toLocaleString("en-US")} more coins.`
+        : `Pay ${price.toLocaleString("en-US")} coins to unlock and cache every game.`;
+    confirm.disabled = appState.coins < price;
+    confirm.textContent = appState.coins < price ? "Not enough coins" : `Buy for ${price} 🪙`;
+    openModal(document.getElementById("pack-modal"));
+}
+
+async function purchasePack() {
+    if (packBusy || !packTarget || appState.coins < packTarget.price) {
+        return;
+    }
+
+    packBusy = true;
+    const purchasedGameCount = packTarget.games.length;
+    const confirm = document.getElementById("confirm-pack");
+    confirm.disabled = true;
+    confirm.textContent = "Preparing pack...";
+
+    try {
+        for (const game of packTarget.games) {
+            if (!await fetchLatestGameHtml(game)) {
+                throw new Error(`Could not download ${game.name}`);
+            }
+        }
+
+        appState.coins -= packTarget.price;
+        appState.unlocked = [...new Set([
+            ...appState.unlocked,
+            ...packTarget.games.map(getGameIdentifier)
+        ])];
+        renderCoins();
+        renderLibraries();
+        await saveState();
+        packBusy = false;
+        closePackModal();
+        showToast(`Pack purchased: ${purchasedGameCount} games unlocked.`, "success");
+    } catch (error) {
+        console.error("Pack purchase cancelled:", error);
+        showToast("Pack cancelled: a game could not be downloaded.", "error");
+    } finally {
+        packBusy = false;
+    }
+}
+
+function isGameUnlocked(gameId) {
+    return appState.unlocked.includes(
+        String(gameId)
+    );
+}
+
+function isCodeUnlocked(gameId) {
+    return appState.codeUnlocked.includes(
+        String(gameId)
+    );
+}
+
+function createGameCard(game) {
+    const gameId =
+        getGameIdentifier(game);
+
+    const cost = getGameCost(game);
+
+    const unlocked =
+        isGameUnlocked(
+            gameId
+        );
+
+    const icon =
+        renderGameIcon(
+            game.icon,
+            String(game.name || "Game"),
+            "game-card__icon-image"
+        );
+
+    const description =
+        String(
+            game.description ||
+            "Play now."
+        );
+
+    return `
+        <div class="game-card-entry" style="display:grid;gap:8px;min-width:0">
+        <button
+            class="game-card ${unlocked ? "unlocked" : "locked"}"
+            type="button"
+            data-game-id="${encodeURIComponent(gameId)}"
+        >
+            <div class="game-card__topline">
+                <span class="game-card__icon">
+                    ${icon}
+                </span>
+
+                <span class="game-card__badge">
+                    ${unlocked ? "OWNED" : `${cost} 🪙`}
+                </span>
+            </div>
+
+            <div class="game-card__content">
+                <h3>
+                    ${escapeHtml(
+                        String(game.name)
+                    )}
+                </h3>
+
+                <p>
+                    ${escapeHtml(
+                        description
+                    )}
+                </p>
+            </div>
+
+            <span class="game-card__action">
+                ${
+                    unlocked
+                        ? "▶ Play now"
+                        : "🛒 Buy game"
+                }
+            </span>
+        </button>
+        ${unlocked ? `<button class="secondary-button" type="button" data-code-game="${encodeURIComponent(gameId)}">${isCodeUnlocked(gameId) ? "Code" : `Get code · ${getCodeCost(game)} 🪙`}</button>` : ""}
+        </div>
+    `;
+}
+
+function renderYourGames(
+    games = []
+) {
+    const hub =
+        document.getElementById(
+            "your-game-hub"
+        );
+
+    const count =
+        document.getElementById(
+            "your-games-count"
+        );
+
+    if (!hub) {
+        return;
+    }
+
+    const purchasedGames =
+        Array.isArray(games)
+            ? games.filter(
+                (game) =>
+                    game &&
+                    typeof game.name ===
+                        "string" &&
+                    game.name.trim() &&
+                    isGameUnlocked(
+                        getGameIdentifier(
+                            game
+                        )
+                    )
+            )
+            : [];
+
+    if (count) {
+        count.textContent =
+            `${purchasedGames.length} ${
+                purchasedGames.length === 1
+                    ? "game"
+                    : "games"
+            }`;
+    }
+
+    if (!purchasedGames.length) {
+        hub.innerHTML = `
+            <div class="empty-state">
+                <span>🎮</span>
+
+                <h3>
+                    No games purchased yet
+                </h3>
+
+                <p>
+                    ${
+                        isOnline()
+                            ? "Buy a game from the Game Gallery to add it here."
+                            : "Your purchased games will appear here when available offline."
+                    }
+                </p>
+            </div>
+        `;
+
+        return;
+    }
+
+    hub.innerHTML =
+        purchasedGames
+            .map(createGameCard)
+            .join("");
+}
+
+function renderGameGallery(
+    games = []
+) {
+    const gallery =
+        document.getElementById(
+            "game-gallery"
+        );
+
+    const count =
+        document.getElementById(
+            "gallery-count"
+        );
+
+    if (!gallery) {
+        return;
+    }
+
+    const validGames =
+        Array.isArray(games)
+            ? games.filter(
+                (game) =>
+                    game &&
+                    typeof game.name ===
+                        "string" &&
+                    game.name.trim()
+            )
+            : [];
+
+    if (count) {
+        count.textContent =
+            `${validGames.length} ${
+                validGames.length === 1
+                    ? "game"
+                    : "games"
+            }`;
+    }
+
+    if (!validGames.length) {
+        gallery.innerHTML = `
+            <div class="empty-state">
+                <span>🎮</span>
+
+                <h3>
+                    No games available
+                </h3>
+
+                <p>
+                    Check again when you're online.
+                </p>
+            </div>
+        `;
+
+        return;
+    }
+
+    gallery.innerHTML =
+        validGames
+            .map(createGameCard)
+            .join("");
+}
+
+function renderLibraries() {
+    renderYourGames(
+        defaultGames
+    );
+
+    const gallerySection =
+        document.getElementById(
+            "gallery-section"
+        );
+
+    if (!gallerySection) {
+        return;
+    }
+
+    const online =
+        isOnline();
+
+    gallerySection.hidden =
+        !online;
+
+    if (online) {
+        renderGameGallery(
+            defaultGames
+        );
+    }
+
+    renderCreditStore();
+    renderCoinStore();
+    renderPackStore();
+}
+
+function setStoreTab(tab) {
+    const validTab = ["library", "offers", "coins", "credits"].includes(tab)
+        ? tab
+        : "library";
+
+    activeStoreTab = validTab;
+
+    document.querySelectorAll("[data-store-tab]").forEach((button) => {
+        const selected = button.dataset.storeTab === validTab;
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-selected", String(selected));
+    });
+
+    document.querySelectorAll(".store-tab-panel").forEach((panel) => {
+        panel.hidden = !panel.classList.contains(`store-tab-panel--${validTab}`);
+    });
+}
+
+
+// ======================================================
+// ESCAPE HTML
+// ======================================================
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+}
+
+
+// ======================================================
+// PURCHASE MODAL
+// ======================================================
+
+function openPurchaseModal(
+    game
+) {
+    if (!game) {
+        return;
+    }
+
+    const gameId =
+        getGameIdentifier(
+            game
+        );
+
+    const cost =
+        Number(game.cost) > 0
+            ? Math.floor(
+                Number(game.cost)
+            )
+            : 100;
+
+    const name =
+        String(
+            game.name ||
+            "Game"
+        );
+
+    const description =
+        String(
+            game.description ||
+            "Play this game offline."
+        );
+
+    const codeCost = getCodeCost(game);
+    const balanceAfter =
+        appState.coins -
+        cost;
+
+    purchaseTarget =
+        game;
+
+    document.getElementById(
+        "purchase-title"
+    ).textContent =
+        `Buy ${name}?`;
+
+    document.getElementById(
+        "purchase-game-name"
+    ).textContent =
+        name;
+
+    document.getElementById(
+        "purchase-game-description"
+    ).textContent =
+        description;
+
+    document.getElementById(
+        "purchase-icon"
+    ).innerHTML = renderGameIcon(
+        game.icon,
+        name,
+        "purchase-icon-image"
+    );
+
+    document.getElementById(
+        "purchase-cost"
+    ).textContent =
+        `${cost.toLocaleString("en-US")} 🪙`;
+
+    document.getElementById(
+        "purchase-balance"
+    ).textContent =
+        `${appState.coins.toLocaleString("en-US")} 🪙`;
+
+    document.getElementById(
+        "purchase-after"
+    ).textContent =
+        `${Math.max(
+            0,
+            balanceAfter
+        ).toLocaleString("en-US")} 🪙`;
+
+    const note =
+        document.getElementById(
+            "purchase-note"
+        );
+
+    const confirmButton =
+        document.getElementById(
+            "confirm-purchase"
+        );
+
+    const codeButton = document.getElementById("get-code");
+
+    codeButton.textContent = isCodeUnlocked(gameId)
+        ? "Code"
+        : `Get code for ${codeCost} 🪙`;
+    codeButton.disabled = purchaseBusy || (!isCodeUnlocked(gameId) && (!isOnline() || appState.coins < codeCost));
+
+    if (isGameUnlocked(gameId)) {
+        note.textContent = "You own this game. Source code is a separate unlock at 10% of the game price.";
+        confirmButton.disabled = false;
+        confirmButton.textContent = "Play game";
+    } else if (!isOnline()) {
+        note.textContent = "Go online to make a new purchase. Unlocked code remains available offline once cached.";
+        confirmButton.disabled = true;
+        confirmButton.textContent = "Buy game";
+    } else if (appState.coins < cost) {
+        note.textContent =
+            `You need ${(cost - appState.coins).toLocaleString("en-US")} more coins. Claim a daily reward first.`;
+
+        confirmButton.disabled =
+            true;
+
+        confirmButton.textContent =
+            "Not enough coins";
+    } else {
+        note.textContent =
+            "The newest game HTML will be downloaded now and kept in your offline cache.";
+
+        confirmButton.disabled =
+            false;
+
+        confirmButton.textContent =
+            `Buy for ${cost} 🪙`;
+    }
+
+    openModal(
+        document.getElementById(
+            "purchase-modal"
+        )
+    );
+}
+
+async function unlockGameCode(game) {
+    if (purchaseBusy || packBusy || !game) {
+        return;
+    }
+
+    const gameId = getGameIdentifier(game);
+
+    if (isCodeUnlocked(gameId)) {
+        await openCodeModal(game);
+        return;
+    }
+
+    if (!isOnline()) {
+        showToast("Go online to unlock the game code.", "info");
+        return;
+    }
+
+    const cost = getCodeCost(game);
+
+    if (appState.coins < cost) {
+        showToast(`You need ${(cost - appState.coins).toLocaleString("en-US")} more coins.`, "error");
+        return;
+    }
+
+    const button = document.getElementById("get-code");
+    purchaseBusy = true;
+    button.disabled = true;
+    button.textContent = "Preparing code...";
+
+    try {
+        const html = await fetchLatestGameHtml(game);
+
+        if (!html) {
+            throw new Error("No game code available.");
+        }
+
+        // Keep a dedicated source copy even when only code was purchased.
+        await cacheGameCode(game, html);
+        if (isCodeUnlocked(gameId)) {
+            await openCodeModal(game, html);
+            return;
+        }
+        if (appState.coins < cost) throw new Error("Balance changed during download.");
+        appState.coins -= cost;
+        appState.codeUnlocked = [...new Set([
+            ...appState.codeUnlocked,
+            gameId
+        ])];
+        renderCoins();
+        await saveState();
+        renderLibraries();
+        button.disabled = false;
+        button.textContent = "Code";
+        showToast(`${game.name} code unlocked.`, "success");
+        await openCodeModal(game, html);
+    } catch (error) {
+        console.error("Code unlock cancelled:", error);
+        button.disabled = false;
+        button.textContent = `Get code for ${cost} 🪙`;
+        showToast("The game code could not be unlocked.", "error");
+    } finally {
+        purchaseBusy = false;
+    }
+}
+
+async function openCodeModal(game, html = "") {
+    if (!game || !isCodeUnlocked(getGameIdentifier(game))) {
+        showToast("Unlock this game's code first.", "info");
+        return;
+    }
+
+    let code = html;
+    if (!code) {
+        try {
+            const cache = await caches.open(APP_CACHE);
+            const cached = await cache.match(codeCacheKey(game));
+            if (cached) code = await cached.text();
+        } catch (error) { console.warn("Could not read saved source:", error); }
+    }
+    if (!code) code = await fetchLatestGameHtml(game);
+
+    if (!code) {
+        showToast("The game code could not be loaded.", "error");
+        return;
+    }
+
+    closeModal(document.getElementById("purchase-modal"));
+    document.getElementById("code-title").textContent = `${game.name} code`;
+    document.getElementById("code-display").textContent = code;
+    document.getElementById("download-code").onclick = () => {
+        const filename = `${getGameIdentifier(game)}.html`;
+        const url = URL.createObjectURL(new Blob([code], { type: "text/html" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    openModal(document.getElementById("code-modal"));
+}
+
+function closeCodeModal() {
+    closeModal(document.getElementById("code-modal"));
+    document.getElementById("code-display").textContent = "";
+    document.getElementById("download-code").onclick = null;
+}
+
+function codeCacheKey(game) {
+    return new URL(`./__source__/${encodeURIComponent(getGameIdentifier(game))}.html`, window.location.href).href;
+}
+
+async function cacheGameCode(game, html) {
+    const cache = await caches.open(APP_CACHE);
+    await cache.put(codeCacheKey(game), new Response(html, {
+        headers: { "Content-Type": "text/html; charset=utf-8" }
+    }));
+}
+
+function closePurchaseModal() {
+    if (purchaseBusy) {
+        return;
+    }
+
+    purchaseTarget =
+        null;
+
+    closeModal(
+        document.getElementById(
+            "purchase-modal"
+        )
+    );
+}
+
+function setPurchaseBusy(
+    busy
+) {
+    purchaseBusy =
+        busy;
+
+    const confirmButton =
+        document.getElementById(
+            "confirm-purchase"
+        );
+
+    const cancelButton =
+        document.getElementById(
+            "cancel-purchase"
+        );
+
+    if (
+        !confirmButton ||
+        !cancelButton
+    ) {
+        return;
+    }
+
+    confirmButton.disabled =
+        busy;
+
+    cancelButton.disabled =
+        busy;
+
+    confirmButton.textContent =
+        busy
+            ? "Preparing game…"
+            : "Buy game";
+}
+
+
+// ======================================================
+// GAME LOADING
+// ======================================================
+
+function cleanupFrame() {
+    const frame =
+        document.getElementById(
+            "game-frame"
+        );
+
+    if (!frame) {
+        return;
+    }
+
+    frame.src =
+        "about:blank";
+
+    frame.srcdoc =
+        "";
+
+    frame.removeAttribute(
+        "data-game-source"
+    );
+}
+
+function prepareGameHtml(
+    html,
+    gameUrl
+) {
+    const sourceUrl =
+        new URL(
+            gameUrl,
+            window.location.href
+        ).href;
+
+    const baseTag =
+        `<base href="${escapeHtml(
+            sourceUrl
+        )}">`;
+
+    if (
+        /<base\s/i.test(
+            html
+        )
+    ) {
+        return html;
+    }
+
+    if (
+        /<head[\s>]/i.test(
+            html
+        )
+    ) {
+        return html.replace(
+            /<head([^>]*)>/i,
+            `<head$1>${baseTag}`
+        );
+    }
+
+    return `
+        <!doctype html>
+        <html>
+            <head>
+                ${baseTag}
+            </head>
+            <body>
+                ${html}
+            </body>
+        </html>
+    `;
+}
+
+async function fetchLatestGameHtml(
+    gameData
+) {
+    const gameUrl =
+        String(
+            gameData?.path || ""
+        ).trim();
+
+    if (!gameUrl) {
+        return "";
+    }
+
+    try {
+        /*
+         * ONLINE:
+         * Service Worker contacts Netlify,
+         * receives the newest HTML and stores it.
+         *
+         * OFFLINE:
+         * Service Worker returns the last cached copy.
+         */
+        const response =
+            await fetch(
+                gameUrl,
+                {
+                    cache: "no-store",
+                    headers: {
+                        "Accept":
+                            "text/html, */*"
+                    }
+                }
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+        const html =
+            await response.text();
+
+        if (!html.trim()) {
+            throw new Error(
+                "Empty game response"
+            );
+        }
+
+        return html;
+    } catch (error) {
+        console.warn(
+            "Game fetch failed:",
+            error
+        );
+
+        /*
+         * Extra fallback in case the Service Worker
+         * is not currently controlling the page.
+         */
+        try {
+            const cached =
+                await caches.match(
+                    gameUrl
+                );
+
+            if (cached) {
+                return await cached.text();
+            }
+        } catch (cacheError) {
+            console.warn(
+                "Could not read cached game:",
+                cacheError
+            );
+        }
+
+        return "";
+    }
+}
+
+async function openGameModal(
+    game
+) {
+    if (!game) {
+        return;
+    }
+
+    const gameId =
+        getGameIdentifier(
+            game
+        );
+
+    if (
+        !isGameUnlocked(
+            gameId
+        )
+    ) {
+        showToast(
+            "Buy this game first.",
+            "info"
+        );
+
+        return;
+    }
+
+    const title =
+        document.getElementById(
+            "modal-title"
+        );
+
+    const frame =
+        document.getElementById(
+            "game-frame"
+        );
+
+    if (!title || !frame) {
+        return;
+    }
+
+    title.textContent =
+        String(
+            game.name ||
+            "Game"
+        );
+
+    currentFrameGameId =
+        gameId;
+
+    cleanupFrame();
+
+    const html =
+        await fetchLatestGameHtml(
+            game
+        );
+
+    if (!html) {
+        showToast(
+            isOnline()
+                ? "Could not load the game right now."
+                : "This game has not been cached for offline play yet.",
+            "error"
+        );
+
+        currentFrameGameId =
+            "";
+
+        return;
+    }
+
+    const preparedHtml =
+        prepareGameHtml(
+            html,
+            String(
+                game.path ||
+                window.location.href
+            )
+        );
+
+    frame.dataset.gameSource =
+        String(
+            game.path || ""
+        );
+
+    frame.srcdoc =
+        preparedHtml;
+
+    openModal(
+        document.getElementById(
+            "game-modal"
+        )
+    );
+}
+
+function closeGameModal() {
+    currentFrameGameId =
+        "";
+
+    cleanupFrame();
+
+    closeModal(
+        document.getElementById(
+            "game-modal"
+        )
+    );
+}
+
+
+// ======================================================
+// PURCHASE
+// ======================================================
+
+async function purchaseGame(
+    gameData
+) {
+    if (
+        purchaseBusy || packBusy ||
+        !gameData
+    ) {
+        return;
+    }
+
+    if (!isOnline() && !isGameUnlocked(getGameIdentifier(gameData))) {
+        closePurchaseModal();
+
+        showToast(
+            "Go online to buy new games.",
+            "info"
+        );
+
+        return;
+    }
+
+    const gameId =
+        getGameIdentifier(
+            gameData
+        );
+
+    const cost = getGameCost(gameData);
+
+    if (
+        isGameUnlocked(
+            gameId
+        )
+    ) {
+        closePurchaseModal();
+
+        await openGameModal(
+            gameData
+        );
+
+        return;
+    }
+
+    if (
+        appState.coins <
+        cost
+    ) {
+        closePurchaseModal();
+
+        showToast(
+            `You need ${(cost - appState.coins).toLocaleString("en-US")} more coins.`,
+            "error"
+        );
+
+        return;
+    }
+
+    setPurchaseBusy(
+        true
+    );
+
+    try {
+        /*
+         * This request gets the NEWEST online
+         * version. The Service Worker simultaneously
+         * updates GAME_CACHE.
+         */
+        const html =
+            await fetchLatestGameHtml(
+                gameData
+            );
+
+        if (!html) {
+            throw new Error(
+                "No online version available."
+            );
+        }
+
+        if (
+            isGameUnlocked(
+                gameId
+            )
+        ) {
+            closePurchaseModal();
+
+            await openGameModal(
+                gameData
+            );
+
+            return;
+        }
+
+        appState.coins -=
+            cost;
+
+        appState.unlocked =
+            [
+                ...new Set(
+                    [
+                        ...appState.unlocked,
+                        gameId
+                    ]
+                )
+            ];
+
+        renderCoins();
+        renderLibraries();
+
+        await saveState();
+
+        closePurchaseModal();
+
+        showToast(
+            `${gameData.name} purchased and cached with the latest version.`,
+            "success"
+        );
+
+        await openGameModal(
+            gameData
+        );
+    } catch (error) {
+        console.error(
+            "Purchase cancelled:",
+            error
+        );
+
+        showToast(
+            "Purchase cancelled: the latest game could not be downloaded.",
+            "error"
+        );
+    } finally {
+        setPurchaseBusy(
+            false
+        );
+    }
+}
+
+
+// ======================================================
+// GAMES.JSON
+// ======================================================
+
+async function loadGamesList() {
+    try {
+        const response =
+            await fetch(
+                "games.json",
+                {
+                    cache: "no-store",
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+        const data =
+            await response.json();
+
+        const games =
+            Array.isArray(data)
+                ? data
+                : Object.values(data);
+
+        defaultGames =
+            games;
+
+        renderLibraries();
+    } catch (error) {
+        console.warn(
+            "Could not load newest games list; using cache:",
+            error
+        );
+
+        try {
+            const cache =
+                await openAppCache();
+
+            const cached =
+                cache
+                    ? await cache.match(
+                        "games.json"
+                    )
+                    : null;
+
+            if (!cached) {
+                throw error;
+            }
+
+            const data =
+                await cached.json();
+
+            defaultGames =
+                Array.isArray(data)
+                    ? data
+                    : Object.values(data);
+
+            renderLibraries();
+
+            showToast(
+                "Using your cached game list.",
+                "info"
+            );
+        } catch (cacheError) {
+            console.error(
+                "Could not load games.json:",
+                cacheError
+            );
+
+            defaultGames =
+                [];
+
+            renderLibraries();
+
+            showToast(
+                "The game list could not be loaded.",
+                "error"
+            );
+        }
+    }
+}
+
+
+// ======================================================
+// GAME CARD CLICK
+// ======================================================
+
+async function handleGameCardClick(
+    event
+) {
+    const codeAction = event.target.closest("[data-code-game]");
+    if (codeAction) {
+        const game = getGameById(decodeURIComponent(codeAction.dataset.codeGame));
+        if (game) openPurchaseModal(game);
+        return;
+    }
+    const card =
+        event.target.closest(
+            ".game-card"
+        );
+
+    if (!card) {
+        return;
+    }
+
+    const encodedId =
+        card.dataset.gameId ||
+        "";
+
+    const gameId =
+        decodeURIComponent(
+            encodedId
+        );
+
+    const game =
+        getGameById(
+            gameId
+        );
+
+    if (!game) {
+        showToast(
+            "That game is no longer available in the current list.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (
+        isGameUnlocked(
+            gameId
+        )
+    ) {
+        await openGameModal(
+            game
+        );
+
+        return;
+    }
+
+    if (!isOnline() && !isCodeUnlocked(gameId)) {
+        showToast(
+            "Go online to buy new games.",
+            "info"
+        );
+
+        return;
+    }
+
+    openPurchaseModal(
+        game
+    );
+}
+
+function handleCreditPurchase(event) {
+    if (purchaseBusy || packBusy) return;
+    const button = event.target.closest("[data-credit-game]");
+
+    if (!button) {
+        return;
+    }
+
+    const game = getGameById(decodeURIComponent(button.dataset.creditGame));
+    const credits = Number(button.dataset.creditValue);
+    const cost = Number(button.dataset.creditCost);
+
+    if (!game || !CREDIT_PACKS.some(pack => pack.credits === credits && pack.coins === cost)) {
+        return;
+    }
+
+    if (!isGameUnlocked(getGameIdentifier(game))) {
+        renderCreditStore();
+        showToast("Buy this game first to get credits.", "error");
+        return;
+    }
+
+    if (appState.coins < cost) {
+        showToast(`You need ${(cost - appState.coins).toLocaleString("en-US")} more coins.`, "error");
+        return;
+    }
+
+    try {
+        addGameCredits(game, credits);
+        appState.coins -= cost;
+        renderCoins();
+        saveState();
+        showToast(`${credits} credits added to ${game.name}.`, "success");
+    } catch (error) {
+        console.error("Credit purchase cancelled:", error);
+        showToast("Credit purchase could not be completed.", "error");
+    }
+}
+
+
+// ======================================================
+// INITIALIZATION
+// ======================================================
+
+async function initializeApp() {
+    appState =
+        await readState();
+
+    renderCoins();
+    renderRewardList();
+    updateConnectionStatus();
+
+    window.addEventListener(
+        "online",
+        () => {
+            updateConnectionStatus();
+
+            showToast(
+                "Back online. Updating to the latest code.",
+                "success"
+            );
+
+            loadGamesList();
+        }
+    );
+
+    window.addEventListener(
+        "offline",
+        () => {
+            updateConnectionStatus();
+
+            showToast(
+                "Offline mode: your cached games remain available.",
+                "info"
+            );
+        }
+    );
+
+    document
+        .getElementById(
+            "reward-button"
+        )
+        ?.addEventListener(
+            "click",
+            openRewardModal
+        );
+
+    document
+        .querySelectorAll("[data-store-tab]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                setStoreTab(button.dataset.storeTab);
+            });
+        });
+
+    setStoreTab(activeStoreTab);
+
+    document
+        .getElementById(
+            "close-reward"
+        )
+        ?.addEventListener(
+            "click",
+            closeRewardModal
+        );
+
+    document
+        .getElementById(
+            "claim-daily"
+        )
+        ?.addEventListener(
+            "click",
+            claimDailyReward
+        );
+
+    document
+        .getElementById(
+            "close-purchase"
+        )
+        ?.addEventListener(
+            "click",
+            closePurchaseModal
+        );
+
+    document
+        .getElementById(
+            "cancel-purchase"
+        )
+        ?.addEventListener(
+            "click",
+            closePurchaseModal
+        );
+
+    document
+        .getElementById("get-code")
+        ?.addEventListener("click", () => {
+            if (purchaseTarget) {
+                unlockGameCode(purchaseTarget);
+            }
+        });
+
+    document
+        .getElementById("close-code")
+        ?.addEventListener("click", closeCodeModal);
+
+    document
+        .getElementById("close-pack")
+        ?.addEventListener("click", closePackModal);
+
+    document
+        .getElementById("cancel-pack")
+        ?.addEventListener("click", closePackModal);
+
+    document
+        .getElementById("confirm-pack")
+        ?.addEventListener("click", purchasePack);
+
+    document
+        .getElementById("close-coin")
+        ?.addEventListener("click", closeCoinModal);
+
+    document
+        .getElementById("cancel-coin")
+        ?.addEventListener("click", closeCoinModal);
+
+    document
+        .getElementById("coin-store")
+        ?.addEventListener("click", (event) => {
+            const card = event.target.closest("[data-coin-pack]");
+
+            if (card) {
+                openCoinModal(card.dataset.coinPack);
+            }
+        });
+
+    document
+        .getElementById("credits-store")
+        ?.addEventListener("click", handleCreditPurchase);
+
+    document
+        .getElementById("packs-store")
+        ?.addEventListener("click", (event) => {
+            const card = event.target.closest("[data-offer-id]");
+
+            if (!card || card.disabled) {
+                return;
+            }
+
+            const daily = getDailyOffers();
+            if (!daily.revealed.includes(card.dataset.offerId)) {
+                revealDailyOffer(card.dataset.offerId);
+                return;
+            }
+
+            openPackModal(card.dataset.offerId);
+        });
+
+    document
+        .getElementById(
+            "confirm-purchase"
+        )
+        ?.addEventListener(
+            "click",
+            async () => {
+                if (
+                    purchaseTarget
+                ) {
+                    await purchaseGame(
+                        purchaseTarget
+                    );
+                }
+            }
+        );
+
+    document
+        .getElementById(
+            "close-game"
+        )
+        ?.addEventListener(
+            "click",
+            closeGameModal
+        );
+
+    document
+        .querySelectorAll(
+            ".app-modal, .game-modal"
+        )
+        .forEach(
+            (modal) => {
+                modal.addEventListener(
+                    "click",
+                    (event) => {
+                        if (
+                            event.target !==
+                            modal
+                        ) {
+                            return;
+                        }
+
+                        if (
+                            modal.id ===
+                            "purchase-modal"
+                        ) {
+                            closePurchaseModal();
+                        }
+
+                        if (modal.id === "code-modal") {
+                            closeCodeModal();
+                        }
+
+                        if (
+                            modal.id ===
+                            "reward-modal"
+                        ) {
+                            closeRewardModal();
+                        }
+
+                        if (modal.id === "pack-modal") {
+                            closePackModal();
+                        }
+
+                        if (modal.id === "coin-modal") {
+                            closeCoinModal();
+                        }
+
+                        if (
+                            modal.id ===
+                            "game-modal"
+                        ) {
+                            closeGameModal();
+                        }
+                    }
+                );
+            }
+        );
+
+    document
+        .getElementById(
+            "your-game-hub"
+        )
+        ?.addEventListener(
+            "click",
+            handleGameCardClick
+        );
+
+    document
+        .getElementById(
+            "game-gallery"
+        )
+        ?.addEventListener(
+            "click",
+            handleGameCardClick
+        );
+
+    if (
+        "serviceWorker" in navigator &&
+        window.isSecureContext
+    ) {
+        try {
+            await navigator.serviceWorker.register(
+                "./sw.js",
+                {
+                    updateViaCache:
+                        "none"
+                }
+            );
+        } catch (error) {
+            console.warn(
+                "Service worker registration failed:",
+                error
+            );
+        }
+
+        navigator.serviceWorker.addEventListener(
+            "controllerchange",
+            () => {
+                if (
+                    !navigator.serviceWorker
+                        .controller
+                ) {
+                    return;
+                }
+
+                window.location.reload();
+            }
+        );
+    }
+
+    await loadGamesList();
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeApp
+);
+
+
+    </script>
 </body>
 </html>
-
