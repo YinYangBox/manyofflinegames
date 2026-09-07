@@ -735,6 +735,27 @@ button:disabled {
     font-size: 0.9rem;
 }
 
+.game-card__features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+}
+
+.game-card__feature {
+    display: inline-flex;
+    align-items: center;
+    min-height: 25px;
+    padding: 5px 8px;
+    color: #d7f8ea;
+    border: 1px solid rgba(85, 230, 165, 0.18);
+    border-radius: 8px;
+    background: rgba(85, 230, 165, 0.07);
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
 .game-card__action {
     margin-top: auto;
     padding: 10px 12px;
@@ -3132,6 +3153,20 @@ function createGameCard(game) {
             "Play now."
         );
 
+    const features = Array.isArray(game.features)
+        ? game.features.filter(Boolean).slice(0, 4)
+        : [];
+
+    const featureMarkup = features.length
+        ? `
+            <div class="game-card__features" aria-label="Game features">
+                ${features.map((feature) => `
+                    <span class="game-card__feature">${escapeHtml(String(feature))}</span>
+                `).join("")}
+            </div>
+        `
+        : "";
+
     return `
         <div class="game-card-entry" style="display:grid;gap:8px;min-width:0">
         <button
@@ -3161,6 +3196,8 @@ function createGameCard(game) {
                         description
                     )}
                 </p>
+
+                ${featureMarkup}
             </div>
 
             <span class="game-card__action">

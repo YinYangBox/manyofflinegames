@@ -3,7 +3,8 @@
 		"id": "2048",
 		"name": "2048",
 		"description": "Classic 2048 Puzzle",
-		"cost": 400,
+		"features": ["3×3 to 6×6 boards", "Combo system", "Skins", "Stats"],
+		"cost": 1200,
 		"icon": "Images/2048.png",
 		"path": "/api/proxy?game=2048"
 	},
@@ -11,7 +12,8 @@
 		"id": "bouncy-balls",
 		"name": "Bouncy Balls",
 		"description": "Bouncy Balls Chaos",
-		"cost": 500,
+		"features": ["4 difficulty modes", "Drag-to-aim controls", "Skins", "Stats"],
+		"cost": 1500,
 		"icon": "Images/bouncy-balls.png",
 		"path": "/api/proxy?game=bouncy-balls"
 	},
@@ -19,7 +21,8 @@
 		"id": "chess",
 		"name": "Chess",
 		"description": "Classic Chess Master",
-		"cost": 1200,
+		"features": ["VS Bot", "2 Player mode", "4 bot difficulties", "Piece and board skins"],
+		"cost": 3600,
 		"icon": "Images/chess.png",
 		"path": "/api/proxy?game=chess"
 	},
@@ -27,7 +30,8 @@
 		"id": "doodle-jump",
 		"name": "Doodle Jump",
 		"description": "Doodle Jump Adventure",
-		"cost": 800,
+		"features": ["Endless vertical run", "Character skins", "Touch controls", "Career stats"],
+		"cost": 2300,
 		"icon": "Images/doodle-jump.png",
 		"path": "/api/proxy?game=doodle"
 	},
@@ -35,7 +39,8 @@
 		"id": "flappy-bird",
 		"name": "Flappy Bird",
 		"description": "Flappy Bird Classic",
-		"cost": 500,
+		"features": ["Multiple difficulty modes", "Pilot loadouts", "Character skins", "Best-score tracking"],
+		"cost": 1500,
 		"icon": "Images/flappy-bird.png",
 		"path": "/api/proxy?game=flappy-bird"
 	},
@@ -43,7 +48,8 @@
 		"id": "maze-runner",
 		"name": "Maze Runner",
 		"description": "Escape the Maze",
-		"cost": 850,
+		"features": ["4 difficulty modes", "Procedural mazes", "Time trials", "Skin shop"],
+		"cost": 2950,
 		"icon": "Images/maze-runner.png",
 		"path": "/api/proxy?game=maze-runner"
 	},
@@ -51,7 +57,8 @@
 		"id": "minesweeper",
 		"name": "Minesweeper",
 		"description": "Classic Minesweeper",
-		"cost": 400,
+		"features": ["Beginner, Advanced and Expert", "Flag mode", "Pause", "Grid cosmetics"],
+		"cost": 1600,
 		"icon": "Images/minesweeper.png",
 		"path": "/api/proxy?game=minesweeper"
 	},
@@ -59,7 +66,8 @@
 		"id": "pacman",
 		"name": "Pacman",
 		"description": "Classic Pacman Arcade",
-		"cost": 1000,
+		"features": ["Progressive levels", "Ghost combos", "Power pellets", "Character skins"],
+		"cost": 2000,
 		"icon": "Images/pacman.png",
 		"path": "/api/proxy?game=pacman"
 	},
@@ -67,7 +75,8 @@
 		"id": "pong",
 		"name": "Pong",
 		"description": "Retro Pong Battle",
-		"cost": 250,
+		"features": ["1 Player mode", "2 Player mode", "4 difficulty modes", "Ball and paddle skins"],
+		"cost": 750,
 		"icon": "Images/pong.png",
 		"path": "/api/proxy?game=pong"
 	},
@@ -75,7 +84,8 @@
 		"id": "snake",
 		"name": "Snake",
 		"description": "Classic Snake Game",
-		"cost": 350,
+		"features": ["Custom board sizes", "Speed settings", "Fruit count settings", "Snake skins"],
+		"cost": 950,
 		"icon": "Images/snake.png",
 		"path": "/api/proxy?game=snake"
 	},
@@ -83,7 +93,8 @@
 		"id": "space-invaders",
 		"name": "Space Invaders",
 		"description": "Space Invaders Shooter",
-		"cost": 800,
+		"features": ["Wave-based combat", "Player weapons", "Defensive barriers", "Skins"],
+		"cost": 2000,
 		"icon": "Images/space-invaders.png",
 		"path": "/api/proxy?game=space-invaders"
 	},
@@ -91,7 +102,8 @@
 		"id": "survival-arena",
 		"name": "Survival Arena",
 		"description": "Survival Arena Battle",
-		"cost": 1100,
+		"features": ["Endless survival", "Enemy waves", "Power-ups", "Difficulty modes"],
+		"cost": 3100,
 		"icon": "Images/survival-arena.png",
 		"path": "/api/proxy?game=survival-arena"
 	},
@@ -99,7 +111,8 @@
 		"id": "tetris",
 		"name": "Tetris",
 		"description": "Classic Tetris Blocks",
-		"cost": 900,
+		"features": ["Multiple game modes", "Progressive speed", "Hold and preview", "Block skins"],
+		"cost": 1500,
 		"icon": "Images/tetris.png",
 		"path": "/api/proxy?game=tetris"
 	},
@@ -107,7 +120,8 @@
 		"id": "tictactoe",
 		"name": "Tic Tac Toe",
 		"description": "Classic Tic Tac Toe",
-		"cost": 200,
+		"features": ["VS Bot", "2 Player mode", "Difficulty settings", "Match stats"],
+		"cost": 800,
 		"icon": "Images/tictactoe.png",
 		"path": "/api/proxy?game=tictactoe"
 	},
@@ -115,7 +129,8 @@
 		"id": "checkers",
 		"name": "Checkers",
 		"description": "Classic Checkers Match",
-		"cost": 650,
+		"features": ["VS Bot", "2 Player mode", "4 bot difficulties", "Piece and board skins"],
+		"cost": 1800,
 		"icon": "Images/checkers.png",
 		"path": "/api/proxy?game=checkers"
 	},
@@ -123,7 +138,8 @@
 		"id": "asteroid-drift",
 		"name": "Asteroid Drift",
 		"description": "Dodge Asteroids in Space",
-		"cost": 900,
+		"features": ["Endless survival", "Difficulty modes", "Keyboard and touch controls", "Ship skins"],
+		"cost": 2900,
 		"icon": "Images/asteroid-drift.png",
 		"path": "/api/proxy?game=asteroid-drift"
 	},
@@ -131,7 +147,8 @@
 		"id": "breakout",
 		"name": "Breakout",
 		"description": "Classic Brick Breaking Action",
-		"cost": 450,
+		"features": ["Brick layouts", "Power-ups", "Progressive levels", "Paddle upgrades"],
+		"cost": 1600,
 		"icon": "Images/breakout.png",
 		"path": "/api/proxy?game=breakout"
 	},
@@ -139,7 +156,8 @@
 		"id": "conway-game",
 		"name": "Conway's Game of Life",
 		"description": "Explore Cellular Automata",
-		"cost": 600,
+		"features": ["Boards up to 1000×1000", "Cell themes", "Universe builder", "Runtime stats"],
+		"cost": 2000,
 		"icon": "Images/conway-game.png",
 		"path": "/api/proxy?game=conway-game"
 	},
@@ -147,7 +165,8 @@
 		"id": "memory-match",
 		"name": "Memory Match",
 		"description": "Find All Matching Pairs",
-		"cost": 700,
+		"features": ["Custom pair counts", "Card collection", "Rewards", "Best-result stats"],
+		"cost": 1700,
 		"icon": "Images/memory-match.png",
 		"path": "/api/proxy?game=memory-match"
 	},
@@ -155,7 +174,8 @@
 		"id": "mini-golf",
 		"name": "Mini Golf",
 		"description": "Aim for the Perfect Putts",
-		"cost": 950,
+		"features": ["Procedural courses", "5-hole rounds", "Portals and hazards", "Ball and flag skins"],
+		"cost": 1900,
 		"icon": "Images/mini-golf.png",
 		"path": "/api/proxy?game=mini-golf"
 	},
@@ -163,7 +183,8 @@
 		"id": "quick-math",
 		"name": "Quick Math",
 		"description": "Solve Math Challenges Fast",
-		"cost": 300,
+		"features": ["Custom operations", "Timed challenges", "Touch-friendly controls", "Difficulty progression"],
+		"cost": 1300,
 		"icon": "Images/quick-math.png",
 		"path": "/api/proxy?game=quick-math"
 	},
@@ -171,7 +192,8 @@
 		"id": "stack",
 		"name": "Stack",
 		"description": "Build the Highest Stack",
-		"cost": 650,
+		"features": ["Precision stacking", "Progressive speed", "Combo scoring", "Best-score tracking"],
+		"cost": 1700,
 		"icon": "Images/stack.png",
 		"path": "/api/proxy?game=stack"
 	},
@@ -179,7 +201,8 @@
 		"id": "sudoku",
 		"name": "Sudoku",
 		"description": "Classic Number Logic Puzzle",
-		"cost": 750,
+		"features": ["4 difficulty modes", "Hints and notes", "Mistake tracking", "Cell skins"],
+		"cost": 1800,
 		"icon": "Images/sudoku.png",
 		"path": "/api/proxy?game=sudoku"
 	},
@@ -187,7 +210,8 @@
 		"id": "tower-defense",
 		"name": "Tower Defense",
 		"description": "Defend Your Base from Waves",
-		"cost": 1300,
+		"features": ["Multiple difficulty modes", "Tower upgrades", "Enemy waves", "Tower skins"],
+		"cost": 3800,
 		"icon": "Images/tower-defense.png",
 		"path": "/api/proxy?game=tower-defense"
 	},
@@ -195,7 +219,8 @@
 		"id": "train-space",
 		"name": "Train Space",
 		"description": "Guide Your Train Through Space",
-		"cost": 850,
+		"features": ["Track-routing puzzles", "Progressive levels", "Hazards", "Best-score tracking"],
+		"cost": 1650,
 		"icon": "Images/train-space.png",
 		"path": "/api/proxy?game=train-space"
 	},
@@ -203,7 +228,8 @@
 		"id": "air-hockey",
 		"name": "Air Hockey",
 		"description": "Classic Air Hockey Match",
-		"cost": 600,
+		"features": ["VS CPU", "First to 7", "Striker, puck and table skins", "Rally stats"],
+		"cost": 1900,
 		"icon": "Images/air-hockey.png",
 		"path": "/api/proxy?game=air-hockey"
 	},
@@ -211,7 +237,8 @@
 		"id": "bowling-3d",
 		"name": "3D Bowling",
 		"description": "Knock Down Every Pin",
-		"cost": 800,
+		"features": ["10-frame matches", "3 difficulty modes", "Ball and lane skins", "Strike and spare scoring"],
+		"cost": 2800,
 		"icon": "Images/bowling-3d.png",
 		"path": "/api/proxy?game=bowling-3d"
 	},
@@ -219,7 +246,8 @@
 		"id": "dungeons",
 		"name": "Dungeons",
 		"description": "Explore Dangerous Dungeons",
-		"cost": 1100,
+		"features": ["Roguelike expeditions", "Combat and inventory", "Armor and skins", "Procedural danger"],
+		"cost": 3500,
 		"icon": "Images/dungeons.png",
 		"path": "/api/proxy?game=dungeons"
 	},
@@ -227,7 +255,8 @@
 		"id": "idle-factory",
 		"name": "Idle Factory",
 		"description": "Build and Grow Your Factory",
-		"cost": 700,
+		"features": ["Automated production", "Factory upgrades", "Contracts and markets", "Prestige progression"],
+		"cost": 2000,
 		"icon": "Images/idle-factory.png",
 		"path": "/api/proxy?game=idle-factory"
 	},
@@ -235,7 +264,8 @@
 		"id": "obstacle-run",
 		"name": "Obstacle Run",
 		"description": "Run Through Every Obstacle",
-		"cost": 650,
+		"features": ["3D endless running", "Jump, slide and lane changes", "Difficulty modes", "Character skins"],
+		"cost": 2100,
 		"icon": "Images/obstacle-run.png",
 		"path": "/api/proxy?game=obstacle-run"
 	},
@@ -243,7 +273,8 @@
 		"id": "pipe-connect",
 		"name": "Pipe Connect",
 		"description": "Connect the Pipes and Solve the Puzzle",
-		"cost": 550,
+		"features": ["Procedural puzzles", "Hints and undo", "Timed challenges", "Pipe skins"],
+		"cost": 1800,
 		"icon": "Images/pipe-connect.png",
 		"path": "/api/proxy?game=pipe-connect"
 	}
