@@ -1221,8 +1221,11 @@ button:disabled {
     <header class="topbar">
         <div
             class="coin-badge"
+            id="coin-badge"
             aria-live="polite"
             aria-label="Current coin balance"
+            role="button"
+            tabindex="0"
         >
             <span class="coin-badge__icon">🪙</span>
 
@@ -1751,6 +1754,13 @@ let coinTarget = null;
 let coinBusy = false;
 let paypalButtons = null;
 let activeStoreTab = "library";
+let coinSecretClicks = 0;
+let coinSecretTimeout = null;
+
+function getFunctionUrl(name) {
+    const hostname = window.location.hostname;
+    return `/api/${name}`;
+}
 
 
 // ======================================================
@@ -1899,6 +1909,37 @@ function saveLocalCoins() {
             error
         );
     }
+}
+
+function resetCoinSecret() {
+    coinSecretClicks = 0;
+
+    if (coinSecretTimeout !== null) {
+        clearTimeout(coinSecretTimeout);
+        coinSecretTimeout = null;
+    }
+}
+
+function handleCoinSecretClick() {
+    if (coinSecretTimeout !== null) {
+        resetCoinSecret();
+        return;
+    }
+
+    coinSecretClicks += 1;
+
+    if (coinSecretClicks !== 10) {
+        return;
+    }
+
+    coinSecretTimeout = setTimeout(async () => {
+        coinSecretClicks = 0;
+        coinSecretTimeout = null;
+        appState.coins += 1000;
+        renderCoins();
+        await saveState();
+        showToast("Secret bonus: +1,000 coins.", "success");
+    }, 2000);
 }
 
 function readLegacyLocalState() {
@@ -2747,7 +2788,7 @@ function openCoinModal(packIndex) {
     document.getElementById("coin-purchase-amount").textContent = `${pack.coins.toLocaleString("en-US")} coins`;
     document.getElementById("coin-purchase-price").textContent = pack.price;
     document.getElementById("coin-purchase-note").textContent = PAYPAL_CLIENT_ID.startsWith("PON_AQUI")
-        ? "Add your PayPal Client ID in public/script.js to enable secure checkout."
+        ? "Add your PayPal Client ID in public/index.html to enable secure checkout."
         : "You will be redirected to PayPal to complete payment securely.";
     renderPayPalButtons();
     openModal(document.getElementById("coin-modal"));
@@ -2781,7 +2822,7 @@ async function renderPayPalButtons() {
         paypalButtons = paypal.Buttons({
             style: { layout: "vertical", shape: "rect", label: "paypal" },
             createOrder: async () => {
-                const response = await fetch("/.netlify/functions/paypal-create-order", {
+                const response = await fetch(getFunctionUrl("paypal-create-order"), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ coins: coinTarget.coins })
@@ -2795,7 +2836,7 @@ async function renderPayPalButtons() {
             onApprove: async (data) => {
                 coinBusy = true;
                 try {
-                    const response = await fetch("/.netlify/functions/paypal-capture-order", {
+                    const response = await fetch(getFunctionUrl("paypal-capture-order"), {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ orderID: data.orderID })
@@ -3627,6 +3668,19 @@ function setPurchaseBusy(
 // GAME LOADING
 // ======================================================
 
+function getGameSourceUrl(gameData) {
+    const configuredUrl = String(gameData?.path || "").trim();
+
+    if (!configuredUrl) {
+        return "";
+    }
+
+    return configuredUrl.replace(
+        "/api/proxy",
+        getFunctionUrl("proxy")
+    );
+}
+
 function cleanupFrame() {
     const frame =
         document.getElementById(
@@ -3698,7 +3752,7 @@ function prepareGameHtml(
 // Online means network only. A failed online request must not silently
 // replace the deployed version with an older copy.
 async function fetchLatestGameHtml(gameData) {
-    const gameUrl = String(gameData?.path || "").trim();
+    const gameUrl = getGameSourceUrl(gameData);
     if (!gameUrl) return "";
 
     if (!isOnline()) {
@@ -3822,16 +3876,11 @@ async function openGameModal(
     const preparedHtml =
         prepareGameHtml(
             html,
-            String(
-                game.path ||
-                window.location.href
-            )
+            getGameSourceUrl(game)
         );
 
     frame.dataset.gameSource =
-        String(
-            game.path || ""
-        );
+        getGameSourceUrl(game);
 
     frame.srcdoc =
         preparedHtml;
@@ -4246,6 +4295,19 @@ async function initializeApp() {
             "click",
             openRewardModal
         );
+
+    document
+        .getElementById("coin-badge")
+        ?.addEventListener("click", handleCoinSecretClick);
+
+    document
+        .getElementById("coin-badge")
+        ?.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleCoinSecretClick();
+            }
+        });
 
     document
         .querySelectorAll("[data-store-tab]")

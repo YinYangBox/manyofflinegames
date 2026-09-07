@@ -5,7 +5,7 @@
 		"description": "Classic 2048 Puzzle",
 		"cost": 400,
 		"icon": "Images/2048.png",
-		"path": "/.netlify/functions/proxy?game=2048"
+		"path": "/api/proxy?game=2048"
 	},
 	{
 		"id": "bouncy-balls",
@@ -13,7 +13,7 @@
 		"description": "Bouncy Balls Chaos",
 		"cost": 500,
 		"icon": "Images/bouncy-balls.png",
-		"path": "/.netlify/functions/proxy?game=bouncy-balls"
+		"path": "/api/proxy?game=bouncy-balls"
 	},
 	{
 		"id": "chess",
@@ -21,7 +21,7 @@
 		"description": "Classic Chess Master",
 		"cost": 1200,
 		"icon": "Images/chess.png",
-		"path": "/.netlify/functions/proxy?game=chess"
+		"path": "/api/proxy?game=chess"
 	},
 	{
 		"id": "doodle-jump",
@@ -29,7 +29,7 @@
 		"description": "Doodle Jump Adventure",
 		"cost": 800,
 		"icon": "Images/doodle-jump.png",
-		"path": "/.netlify/functions/proxy?game=doodle"
+		"path": "/api/proxy?game=doodle"
 	},
 	{
 		"id": "flappy-bird",
@@ -37,7 +37,7 @@
 		"description": "Flappy Bird Classic",
 		"cost": 500,
 		"icon": "Images/flappy-bird.png",
-		"path": "/.netlify/functions/proxy?game=flappy-bird"
+		"path": "/api/proxy?game=flappy-bird"
 	},
 	{
 		"id": "maze-runner",
@@ -45,7 +45,7 @@
 		"description": "Escape the Maze",
 		"cost": 850,
 		"icon": "Images/maze-runner.png",
-		"path": "/.netlify/functions/proxy?game=maze-runner"
+		"path": "/api/proxy?game=maze-runner"
 	},
 	{
 		"id": "minesweeper",
@@ -53,7 +53,7 @@
 		"description": "Classic Minesweeper",
 		"cost": 400,
 		"icon": "Images/minesweeper.png",
-		"path": "/.netlify/functions/proxy?game=minesweeper"
+		"path": "/api/proxy?game=minesweeper"
 	},
 	{
 		"id": "pacman",
@@ -61,7 +61,7 @@
 		"description": "Classic Pacman Arcade",
 		"cost": 1000,
 		"icon": "Images/pacman.png",
-		"path": "/.netlify/functions/proxy?game=pacman"
+		"path": "/api/proxy?game=pacman"
 	},
 	{
 		"id": "pong",
@@ -69,7 +69,7 @@
 		"description": "Retro Pong Battle",
 		"cost": 250,
 		"icon": "Images/pong.png",
-		"path": "/.netlify/functions/proxy?game=pong"
+		"path": "/api/proxy?game=pong"
 	},
 	{
 		"id": "snake",
@@ -77,7 +77,7 @@
 		"description": "Classic Snake Game",
 		"cost": 350,
 		"icon": "Images/snake.png",
-		"path": "/.netlify/functions/proxy?game=snake"
+		"path": "/api/proxy?game=snake"
 	},
 	{
 		"id": "space-invaders",
@@ -85,7 +85,7 @@
 		"description": "Space Invaders Shooter",
 		"cost": 800,
 		"icon": "Images/space-invaders.png",
-		"path": "/.netlify/functions/proxy?game=space-invaders"
+		"path": "/api/proxy?game=space-invaders"
 	},
 	{
 		"id": "survival-arena",
@@ -93,7 +93,7 @@
 		"description": "Survival Arena Battle",
 		"cost": 1100,
 		"icon": "Images/survival-arena.png",
-		"path": "/.netlify/functions/proxy?game=survival-arena"
+		"path": "/api/proxy?game=survival-arena"
 	},
 	{
 		"id": "tetris",
@@ -101,7 +101,7 @@
 		"description": "Classic Tetris Blocks",
 		"cost": 900,
 		"icon": "Images/tetris.png",
-		"path": "/.netlify/functions/proxy?game=tetris"
+		"path": "/api/proxy?game=tetris"
 	},
 	{
 		"id": "tictactoe",
@@ -109,7 +109,7 @@
 		"description": "Classic Tic Tac Toe",
 		"cost": 200,
 		"icon": "Images/tictactoe.png",
-		"path": "/.netlify/functions/proxy?game=tictactoe"
+		"path": "/api/proxy?game=tictactoe"
 	},
 	{
 		"id": "checkers",
@@ -117,7 +117,7 @@
 		"description": "Classic Checkers Match",
 		"cost": 650,
 		"icon": "Images/checkers.png",
-		"path": "/.netlify/functions/proxy?game=checkers"
+		"path": "/api/proxy?game=checkers"
 	},
 	{
 		"id": "asteroid-drift",
@@ -125,7 +125,7 @@
 		"description": "Dodge Asteroids in Space",
 		"cost": 900,
 		"icon": "Images/asteroid-drift.png",
-		"path": "/.netlify/functions/proxy?game=asteroid-drift"
+		"path": "/api/proxy?game=asteroid-drift"
 	},
 	{
 		"id": "breakout",
@@ -133,7 +133,7 @@
 		"description": "Classic Brick Breaking Action",
 		"cost": 450,
 		"icon": "Images/breakout.png",
-		"path": "/.netlify/functions/proxy?game=breakout"
+		"path": "/api/proxy?game=breakout"
 	},
 	{
 		"id": "conway-game",
@@ -141,7 +141,7 @@
 		"description": "Explore Cellular Automata",
 		"cost": 600,
 		"icon": "Images/conway-game.png",
-		"path": "/.netlify/functions/proxy?game=conway-game"
+		"path": "/api/proxy?game=conway-game"
 	},
 	{
 		"id": "memory-match",
@@ -149,7 +149,7 @@
 		"description": "Find All Matching Pairs",
 		"cost": 700,
 		"icon": "Images/memory-match.png",
-		"path": "/.netlify/functions/proxy?game=memory-match"
+		"path": "/api/proxy?game=memory-match"
 	},
 	{
 		"id": "mini-golf",
@@ -157,7 +157,7 @@
 		"description": "Aim for the Perfect Putts",
 		"cost": 950,
 		"icon": "Images/mini-golf.png",
-		"path": "/.netlify/functions/proxy?game=mini-golf"
+		"path": "/api/proxy?game=mini-golf"
 	},
 	{
 		"id": "quick-math",
@@ -165,7 +165,7 @@
 		"description": "Solve Math Challenges Fast",
 		"cost": 300,
 		"icon": "Images/quick-math.png",
-		"path": "/.netlify/functions/proxy?game=quick-math"
+		"path": "/api/proxy?game=quick-math"
 	},
 	{
 		"id": "stack",
@@ -173,7 +173,7 @@
 		"description": "Build the Highest Stack",
 		"cost": 650,
 		"icon": "Images/stack.png",
-		"path": "/.netlify/functions/proxy?game=stack"
+		"path": "/api/proxy?game=stack"
 	},
 	{
 		"id": "sudoku",
@@ -181,7 +181,7 @@
 		"description": "Classic Number Logic Puzzle",
 		"cost": 750,
 		"icon": "Images/sudoku.png",
-		"path": "/.netlify/functions/proxy?game=sudoku"
+		"path": "/api/proxy?game=sudoku"
 	},
 	{
 		"id": "tower-defense",
@@ -189,7 +189,7 @@
 		"description": "Defend Your Base from Waves",
 		"cost": 1300,
 		"icon": "Images/tower-defense.png",
-		"path": "/.netlify/functions/proxy?game=tower-defense"
+		"path": "/api/proxy?game=tower-defense"
 	},
 	{
 		"id": "train-space",
@@ -197,7 +197,7 @@
 		"description": "Guide Your Train Through Space",
 		"cost": 850,
 		"icon": "Images/train-space.png",
-		"path": "/.netlify/functions/proxy?game=train-space"
+		"path": "/api/proxy?game=train-space"
 	},
 	{
 		"id": "air-hockey",
@@ -205,7 +205,7 @@
 		"description": "Classic Air Hockey Match",
 		"cost": 600,
 		"icon": "Images/air-hockey.png",
-		"path": "/.netlify/functions/proxy?game=air-hockey"
+		"path": "/api/proxy?game=air-hockey"
 	},
 	{
 		"id": "bowling-3d",
@@ -213,7 +213,7 @@
 		"description": "Knock Down Every Pin",
 		"cost": 800,
 		"icon": "Images/bowling-3d.png",
-		"path": "/.netlify/functions/proxy?game=bowling-3d"
+		"path": "/api/proxy?game=bowling-3d"
 	},
 	{
 		"id": "dungeons",
@@ -221,7 +221,7 @@
 		"description": "Explore Dangerous Dungeons",
 		"cost": 1100,
 		"icon": "Images/dungeons.png",
-		"path": "/.netlify/functions/proxy?game=dungeons"
+		"path": "/api/proxy?game=dungeons"
 	},
 	{
 		"id": "idle-factory",
@@ -229,7 +229,7 @@
 		"description": "Build and Grow Your Factory",
 		"cost": 700,
 		"icon": "Images/idle-factory.png",
-		"path": "/.netlify/functions/proxy?game=idle-factory"
+		"path": "/api/proxy?game=idle-factory"
 	},
 	{
 		"id": "obstacle-run",
@@ -237,7 +237,7 @@
 		"description": "Run Through Every Obstacle",
 		"cost": 650,
 		"icon": "Images/obstacle-run.png",
-		"path": "/.netlify/functions/proxy?game=obstacle-run"
+		"path": "/api/proxy?game=obstacle-run"
 	},
 	{
 		"id": "pipe-connect",
@@ -245,6 +245,6 @@
 		"description": "Connect the Pipes and Solve the Puzzle",
 		"cost": 550,
 		"icon": "Images/pipe-connect.png",
-		"path": "/.netlify/functions/proxy?game=pipe-connect"
+		"path": "/api/proxy?game=pipe-connect"
 	}
 ]

@@ -58,12 +58,12 @@ self.addEventListener("fetch", event => {
     }
 
     const isProxy = url.pathname.endsWith(
-        "/.netlify/functions/proxy"
+        "/api/proxy"
     );
 
     // Do not cache payments or other server functions.
     if (
-        url.pathname.includes("/.netlify/functions/") &&
+        url.pathname.includes("/api/") &&
         !isProxy
     ) {
         return;
