@@ -148,7 +148,8 @@ button:disabled {
     padding: 0;
     color: inherit;
     border: 0;
-    cursor: pointer;
+    cursor: default;
+    user-select: none;
 }
 
 .reward-badge__icon {
@@ -1231,12 +1232,10 @@ button:disabled {
             aria-live="polite"
             aria-label="Current coin balance"
         >
-            <button
+            <span
                 id="coin-secret-icon"
                 class="coin-badge__icon"
-                type="button"
-                aria-label="Coin icon"
-            >🪙</button>
+            >🪙</span>
 
             <span>
                 <span class="coin-badge__label">Coins</span>
@@ -1764,6 +1763,7 @@ let coinBusy = false;
 let paypalButtons = null;
 let activeStoreTab = "library";
 let coinSecretClicks = 0;
+let coinSecretArmed = false;
 let coinSecretTimeout = null;
 
 function getFunctionUrl(name) {
@@ -1922,6 +1922,7 @@ function saveLocalCoins() {
 
 function resetCoinSecret() {
     coinSecretClicks = 0;
+    coinSecretArmed = false;
 
     if (coinSecretTimeout !== null) {
         clearTimeout(coinSecretTimeout);
@@ -1930,25 +1931,36 @@ function resetCoinSecret() {
 }
 
 function handleCoinSecretClick() {
-    if (coinSecretTimeout !== null) {
+    if (coinSecretArmed) {
         resetCoinSecret();
         return;
     }
 
     coinSecretClicks += 1;
 
+    if (coinSecretTimeout !== null) {
+        clearTimeout(coinSecretTimeout);
+    }
+
+    coinSecretTimeout = setTimeout(resetCoinSecret, 2000);
+
     if (coinSecretClicks !== 10) {
         return;
     }
 
-    coinSecretTimeout = setTimeout(async () => {
-        coinSecretClicks = 0;
-        coinSecretTimeout = null;
+    coinSecretArmed = true;
+}
+
+async function handleRewardButtonClick() {
+    if (coinSecretArmed) {
+        resetCoinSecret();
         appState.coins += 1000;
         renderCoins();
         await saveState();
         showToast("Secret bonus: +1,000 coins.", "success");
-    }, 2000);
+    }
+
+    openRewardModal();
 }
 
 function readLegacyLocalState() {
@@ -4302,7 +4314,7 @@ async function initializeApp() {
         )
         ?.addEventListener(
             "click",
-            openRewardModal
+            handleRewardButtonClick
         );
 
     document
