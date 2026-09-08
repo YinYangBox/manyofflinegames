@@ -277,5 +277,14 @@
 		"cost": 1800,
 		"icon": "Images/pipe-connect.png",
 		"path": "/api/proxy?game=pipe-connect"
+	},
+	{
+		"id": "pool",
+		"name": "Pool",
+		"description": "Classic billar Game",
+		"features": ["With bot", "2 Player mode", "3 dificulties", "cheap skins"],
+		"cost": 2000,
+		"icon": "Images/pool.png",
+		"path": "/api/proxy?game=pool"
 	}
 ]
