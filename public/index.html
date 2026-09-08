@@ -1158,8 +1158,8 @@ button:disabled {
 }
 
 .game-modal__panel {
-    width: min(1160px, 96vw);
-    height: min(90vh, 860px);
+    width: min(1440px, 98vw);
+    height: min(94dvh, 1040px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1167,6 +1167,26 @@ button:disabled {
     border-radius: 22px;
     background: #070e18;
     box-shadow: 0 34px 100px rgba(0, 0, 0, 0.58);
+}
+
+.game-modal.is-maximized {
+    padding: 0;
+    background: #070e18;
+}
+
+.game-modal.is-maximized .game-modal__panel,
+.game-modal__panel:fullscreen {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+}
+
+.game-modal__fullscreen-button {
+    font-size: 1.25rem;
+    line-height: 1;
 }
 
 #game-frame {
@@ -1238,7 +1258,7 @@ button:disabled {
 
     .game-modal__panel {
         width: 100%;
-        height: 92vh;
+        height: 96dvh;
         border-radius: 16px;
     }
 }
@@ -1724,14 +1744,25 @@ button:disabled {
                     </h2>
                 </div>
 
-                <button
-                    id="close-game"
-                    class="icon-button"
-                    type="button"
-                    aria-label="Close game"
-                >
-                    ✕
-                </button>
+                <div class="game-modal__actions">
+                    <button
+                        id="toggle-game-fullscreen"
+                        class="icon-button game-modal__fullscreen-button"
+                        type="button"
+                        aria-label="Maximize game"
+                        title="Maximize game"
+                    >
+                        ⛶
+                    </button>
+                    <button
+                        id="close-game"
+                        class="icon-button"
+                        type="button"
+                        aria-label="Close game"
+                    >
+                        ✕
+                    </button>
+                </div>
             </div>
 
             <iframe
@@ -1798,6 +1829,7 @@ let coinSecretArmed = false;
 let coinSecretTimeout = null;
 let paypalClientId = "";
 let paypalConfigPromise = null;
+let gameFullscreenFallback = false;
 
 function getFunctionUrl(name) {
     const hostname = window.location.hostname;
@@ -1831,6 +1863,11 @@ document.addEventListener("keydown", (event) => {
     if (blocked) {
         event.preventDefault();
         event.stopPropagation();
+    }
+
+    if (event.key === "Escape" && (gameFullscreenFallback || document.fullscreenElement)) {
+        toggleGameFullscreen(false);
+        return;
     }
 
     if (event.key === "Escape") {
@@ -4073,6 +4110,7 @@ async function openGameModal(
 }
 
 function closeGameModal() {
+    exitGameFullscreen();
     currentFrameGameId =
         "";
 
@@ -4083,6 +4121,54 @@ function closeGameModal() {
             "game-modal"
         )
     );
+}
+
+function updateGameFullscreenButton() {
+    const button = document.getElementById("toggle-game-fullscreen");
+    const maximized = gameFullscreenFallback || Boolean(document.fullscreenElement);
+
+    if (!button) return;
+
+    button.setAttribute("aria-label", maximized ? "Restore game size" : "Maximize game");
+    button.title = maximized ? "Restore game size" : "Maximize game";
+}
+
+function setGameFullscreenFallback(enabled) {
+    const modal = document.getElementById("game-modal");
+    gameFullscreenFallback = enabled;
+    modal?.classList.toggle("is-maximized", enabled);
+    updateGameFullscreenButton();
+}
+
+async function toggleGameFullscreen(forceState = null) {
+    const panel = document.querySelector("#game-modal .game-modal__panel");
+    if (!panel) return;
+
+    const isFullscreen = Boolean(document.fullscreenElement) || gameFullscreenFallback;
+    const shouldMaximize = forceState === null ? !isFullscreen : forceState;
+
+    try {
+        if (shouldMaximize && panel.requestFullscreen) {
+            await panel.requestFullscreen();
+            setGameFullscreenFallback(false);
+            return;
+        }
+        if (!shouldMaximize && document.fullscreenElement && document.exitFullscreen) {
+            await document.exitFullscreen();
+            return;
+        }
+    } catch (_) {
+        // Some mobile browsers reject native fullscreen; use the viewport fallback.
+    }
+
+    setGameFullscreenFallback(shouldMaximize);
+}
+
+function exitGameFullscreen() {
+    if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+    }
+    setGameFullscreenFallback(false);
 }
 
 
@@ -4615,6 +4701,20 @@ async function initializeApp() {
             "click",
             closeGameModal
         );
+
+    document
+        .getElementById(
+            "toggle-game-fullscreen"
+        )
+        ?.addEventListener(
+            "click",
+            () => toggleGameFullscreen()
+        );
+
+    document.addEventListener(
+        "fullscreenchange",
+        updateGameFullscreenButton
+    );
 
     document
         .querySelectorAll(
