@@ -2795,8 +2795,8 @@ function renderCoinStore() {
     }
 
     store.innerHTML = COIN_PACKS.map((pack, index) => `
-        <button class="store-card coin-card ${index === 2 ? "coin-card--featured" : ""}" type="button" data-coin-pack="${index}">
-            ${index === 2 ? '<span class="pack-card__tag">BEST VALUE</span>' : ""}
+        <button class="store-card coin-card ${index === 3 ? "coin-card--featured" : ""}" type="button" data-coin-pack="${index}">
+            ${index === 2 ? '<span class="pack-card__tag">MOST POPULAR</span>' : index === 3 ? '<span class="pack-card__tag">BEST VALUE</span>' : ""}
             <span class="coin-card__icon">COIN</span>
             <h3>${pack.coins.toLocaleString("en-US")} coins</h3>
             <strong>${pack.price}</strong>
