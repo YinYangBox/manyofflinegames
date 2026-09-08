@@ -2927,6 +2927,12 @@ function seededRandom(seed) {
 
 function getDailyOffers() {
     const today = getTodayKey();
+    const availableGames = defaultGames.filter((game) =>
+        !isGameUnlocked(getGameIdentifier(game))
+    );
+    const availableGameIds = new Set(
+        availableGames.map((game) => String(getGameIdentifier(game)))
+    );
     const stored = (() => {
         try {
             return JSON.parse(localStorage.getItem(DAILY_OFFERS_KEY) || "null");
@@ -2935,34 +2941,112 @@ function getDailyOffers() {
         }
     })();
 
-    if (
-        stored?.date === today &&
-        Array.isArray(stored.offers) &&
-        stored.offers.length > 0
-    ) {
-        return {
-            ...stored,
-            revealed: Array.isArray(stored.revealed)
-                ? stored.revealed
-                : []
+    const normalizeStoredOffers = (offers) => {
+        if (!Array.isArray(offers)) {
+            return [];
+        }
+
+        return offers
+            .filter((offer) => {
+                if (!offer || !Array.isArray(offer.gameIds) || !offer.gameIds.length) {
+                    return false;
+                }
+
+                const uniqueIds = [...new Set(
+                    offer.gameIds
+                        .map(String)
+                        .map((gameId) => gameId.trim())
+                        .filter(Boolean)
+                )];
+
+                if (!uniqueIds.length) {
+                    return false;
+                }
+
+                return uniqueIds.every((gameId) => availableGameIds.has(gameId));
+            })
+            .map((offer) => {
+                const uniqueIds = [...new Set(
+                    offer.gameIds
+                        .map(String)
+                        .map((gameId) => gameId.trim())
+                        .filter(Boolean)
+                )];
+
+                return {
+                    ...offer,
+                    id: String(offer.id || `${today}-${uniqueIds.join("-")}`),
+                    size: uniqueIds.length,
+                    gameIds: uniqueIds
+                };
+            });
+    };
+
+    const normalizeRevealedOffers = (revealed, offers) => {
+        if (!Array.isArray(revealed)) {
+            return [];
+        }
+
+        const validIds = new Set(offers.map((offer) => String(offer.id)));
+
+        return [...new Set(
+            revealed
+                .map(String)
+                .map((offerId) => offerId.trim())
+                .filter(Boolean)
+                .filter((offerId) => validIds.has(offerId))
+        )];
+    };
+
+    if (stored?.date === today) {
+        const offers = normalizeStoredOffers(stored.offers);
+        const refreshed = {
+            date: today,
+            offers,
+            revealed: normalizeRevealedOffers(stored.revealed, offers)
         };
+
+        if (JSON.stringify(refreshed) !== JSON.stringify(stored)) {
+            try {
+                localStorage.setItem(DAILY_OFFERS_KEY, JSON.stringify(refreshed));
+            } catch (error) {
+                console.warn("Could not refresh daily offers:", error);
+            }
+        }
+
+        return refreshed;
+    }
+
+    if (!availableGames.length) {
+        const cleared = { date: today, offers: [], revealed: [] };
+
+        try {
+            localStorage.setItem(DAILY_OFFERS_KEY, JSON.stringify(cleared));
+        } catch (error) {
+            console.warn("Could not clear daily offers:", error);
+        }
+
+        return cleared;
     }
 
     const seed = [...today].reduce((total, character) => total + character.charCodeAt(0), 0);
     const random = seededRandom(seed);
-    const shuffledGames = [...defaultGames].sort(() => random() - 0.5);
-    const offers = Array.from({ length: Math.min(3, Math.floor(defaultGames.length / 2)) }, (_, index) => {
-        const size = 1 + Math.floor(random() * 4);
-        const discount = PACK_DISCOUNTS[Math.floor(random() * PACK_DISCOUNTS.length)];
+    const shuffledGames = [...availableGames].sort(() => random() - 0.5);
+    const offers = Array.from({ length: Math.min(3, shuffledGames.length) }, (_, index) => {
         const start = index * 2;
+        const games = shuffledGames.slice(start, start + 1 + Math.floor(random() * 4));
+
+        if (!games.length) {
+            return null;
+        }
 
         return {
             id: `${today}-${index}`,
-            size,
-            discount,
-            gameIds: shuffledGames.slice(start, start + size).map(getGameIdentifier)
+            size: games.length,
+            discount: PACK_DISCOUNTS[Math.floor(random() * PACK_DISCOUNTS.length)],
+            gameIds: [...new Set(games.map(getGameIdentifier))]
         };
-    });
+    }).filter(Boolean);
     const next = { date: today, offers, revealed: [] };
 
     try {
@@ -2972,6 +3056,27 @@ function getDailyOffers() {
     }
 
     return next;
+}
+
+function getDailyOfferById(offerId) {
+    return getDailyOffers().offers.find((offer) => offer.id === offerId) || null;
+}
+
+/*
+ * Keep this fallback for clients that still have an offer object in memory
+ * while the daily offer cache is being refreshed after a purchase.
+ */
+function getLegacyDailyOffer(stored) {
+    if (stored?.date !== getTodayKey() || !Array.isArray(stored.offers)) {
+        return null;
+    }
+
+    return {
+        ...stored,
+        revealed: Array.isArray(stored.revealed)
+            ? stored.revealed
+            : []
+    };
 }
 
 function getOfferGames(offer) {
