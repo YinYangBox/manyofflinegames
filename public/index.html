@@ -1754,9 +1754,6 @@ const COIN_PACKS = [
     { coins: 20000, price: "EUR 9.99" },
     { coins: 50000, price: "EUR 19.99" }
 ];
-// PayPal Client ID is public and belongs here. Replace this placeholder with
-// the Client ID from your PayPal Developer Dashboard (Sandbox while testing).
-const PAYPAL_CLIENT_ID = "PON_AQUI_TU_PAYPAL_CLIENT_ID";
 // Use "sandbox" for tests and "production" after your PayPal account is live.
 const PAYPAL_ENVIRONMENT = "sandbox";
 const PAYPAL_CURRENCY = "EUR";
@@ -1786,6 +1783,8 @@ let activeStoreTab = "library";
 let coinSecretClicks = 0;
 let coinSecretArmed = false;
 let coinSecretTimeout = null;
+let paypalClientId = "";
+let paypalConfigPromise = null;
 
 function getFunctionUrl(name) {
     const hostname = window.location.hostname;
@@ -2829,9 +2828,7 @@ function openCoinModal(packIndex) {
     coinTarget = pack;
     document.getElementById("coin-purchase-amount").textContent = `${pack.coins.toLocaleString("en-US")} coins`;
     document.getElementById("coin-purchase-price").textContent = pack.price;
-    document.getElementById("coin-purchase-note").textContent = PAYPAL_CLIENT_ID.startsWith("PON_AQUI")
-        ? "Add your PayPal Client ID in public/index.html to enable secure checkout."
-        : "You will be redirected to PayPal to complete payment securely.";
+    document.getElementById("coin-purchase-note").textContent = "You will be redirected to PayPal to complete payment securely.";
     renderPayPalButtons();
     openModal(document.getElementById("coin-modal"));
 }
@@ -2843,7 +2840,7 @@ function loadPayPalSdk() {
 
     return new Promise((resolve, reject) => {
         const script = document.createElement("script");
-        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(PAYPAL_CLIENT_ID)}&currency=${PAYPAL_CURRENCY}&intent=capture&components=buttons`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalClientId)}&currency=${PAYPAL_CURRENCY}&intent=capture&components=buttons`;
         script.onload = () => resolve(window.paypal);
         script.onerror = () => reject(new Error("PayPal SDK could not load."));
         document.head.appendChild(script);
@@ -2853,13 +2850,20 @@ function loadPayPalSdk() {
 async function renderPayPalButtons() {
     const container = document.getElementById("paypal-button-container");
 
-    if (!container || PAYPAL_CLIENT_ID.startsWith("PON_AQUI")) {
+    if (!container) {
         return;
     }
 
     container.innerHTML = "";
 
     try {
+        paypalConfigPromise ||= fetch(getFunctionUrl("paypal-config"))
+            .then((response) => response.json().then((data) => ({ response, data })));
+        const configResult = await paypalConfigPromise;
+        if (!configResult.response.ok || !configResult.data.clientId) {
+            throw new Error("PayPal Client ID is not configured.");
+        }
+        paypalClientId = configResult.data.clientId;
         const paypal = await loadPayPalSdk();
         paypalButtons = paypal.Buttons({
             style: { layout: "vertical", shape: "rect", label: "paypal" },

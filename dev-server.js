@@ -70,6 +70,13 @@ const server = http.createServer((request, response) => {
         return;
     }
 
+    if (requestUrl.pathname === "/api/paypal-config") {
+        send(response, 200, JSON.stringify({
+            clientId: process.env.PAYPAL_CLIENT_ID || ""
+        }), "application/json; charset=utf-8");
+        return;
+    }
+
     servePublicFile(requestUrl.pathname, response);
 });
 
