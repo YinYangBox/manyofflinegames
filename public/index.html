@@ -858,6 +858,13 @@ button:disabled {
     box-shadow: 0 34px 90px rgba(0, 0, 0, 0.52);
 }
 
+#coin-modal .app-modal__panel {
+    width: min(440px, 94vw);
+    max-height: calc(100dvh - 24px);
+    display: flex;
+    flex-direction: column;
+}
+
 .app-modal__header,
 .game-modal__header {
     display: flex;
@@ -893,6 +900,12 @@ button:disabled {
 .purchase-panel__body,
 .reward-panel__body {
     padding: 20px;
+}
+
+#coin-modal .purchase-panel__body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .purchase-preview {
@@ -1041,7 +1054,7 @@ button:disabled {
 
 .paypal-button-container {
     min-height: 45px;
-    margin-top: 14px;
+    margin-top: 10px;
 }
 
 .primary-button:disabled,
