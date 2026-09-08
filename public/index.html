@@ -2730,7 +2730,7 @@ function getGameCost(game) {
 }
 
 function getCodeCost(game) {
-    return Math.max(1, Math.ceil(getGameCost(game) * 0.1));
+    return Math.max(1, Math.ceil(getGameCost(game) * 0.5));
 }
 
 function getGameById(gameId) {
@@ -3684,7 +3684,7 @@ function openPurchaseModal(
     codeButton.disabled = purchaseBusy || (!isCodeUnlocked(gameId) && (!isOnline() || appState.coins < codeCost));
 
     if (isGameUnlocked(gameId)) {
-        note.textContent = "You own this game. Source code is a separate unlock at 10% of the game price.";
+        note.textContent = "You own this game. Source code is a separate unlock at 50% of the game price.";
         confirmButton.disabled = false;
         confirmButton.textContent = "Play game";
     } else if (!isOnline()) {
