@@ -33,7 +33,7 @@
 		"features": ["Endless vertical run", "Character skins", "Touch controls", "Career stats"],
 		"cost": 2300,
 		"icon": "Images/doodle-jump.png",
-		"path": "/api/proxy?game=doodle"
+		"path": "/api/proxy?game=doodle-jump"
 	},
 	{
 		"id": "flappy-bird",
