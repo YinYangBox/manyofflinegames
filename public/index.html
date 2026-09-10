@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#08111f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Offline Games">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./icons/arcade-180.png">
     <title>Many Offline Games</title>
     <style>
 :root {
@@ -1273,6 +1278,194 @@ button:disabled {
     }
 }
 
+/* Install prompt: separate from checkout and game dialogs. */
+.install-launcher {
+    position: fixed;
+    right: max(18px, env(safe-area-inset-right));
+    bottom: max(18px, env(safe-area-inset-bottom));
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 50px;
+    padding: 12px;
+    border: 1px solid rgba(85, 230, 165, 0.4);
+    border-radius: 16px;
+    background: #102c29;
+    color: #9df6c9;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.32);
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.install-launcher:hover {
+    background: #1b4038;
+    transform: translateY(-2px);
+}
+
+.install-launcher svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+}
+
+.install-launcher:focus-visible,
+.install-panel button:focus-visible {
+    outline: 3px solid var(--accent-2);
+    outline-offset: 4px;
+}
+
+.install-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+    padding: max(16px, env(safe-area-inset-top))
+        max(16px, env(safe-area-inset-right))
+        max(16px, env(safe-area-inset-bottom))
+        max(16px, env(safe-area-inset-left));
+    background: rgba(2, 7, 15, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overscroll-behavior: contain;
+}
+
+.install-panel {
+    display: flex;
+    flex-direction: column;
+    width: min(450px, 100%);
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - max(40px, env(safe-area-inset-top) + env(safe-area-inset-bottom) + 32px));
+    overflow: hidden;
+    border: 1px solid rgba(85, 230, 165, 0.25);
+    border-radius: 24px;
+    background: linear-gradient(155deg, #142c32, #0e1b2b 42%, #091221);
+    box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6);
+}
+
+.install-panel__content {
+    min-height: 0;
+    padding: 26px 26px 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.install-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.install-brand img {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 15px;
+}
+
+.install-brand strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.install-brand span {
+    display: block;
+    margin-top: 4px;
+    color: var(--accent);
+    font-size: 0.73rem;
+}
+
+.install-panel h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(1.4rem, 5.5vw, 1.7rem);
+    line-height: 1.2;
+    letter-spacing: -0.035em;
+}
+
+.install-panel h2:focus {
+    outline: none;
+}
+
+.install-intro {
+    margin: 12px 0 18px;
+    color: var(--muted-strong);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.install-animation {
+    margin: 0 0 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #070e1a;
+}
+
+.install-animation img {
+    display: block;
+    width: 100%;
+    max-height: 260px;
+    max-height: min(260px, 32dvh);
+    object-fit: contain;
+}
+
+.install-steps {
+    display: grid;
+    gap: 10px;
+    padding: 16px 16px 16px 36px;
+    margin: 0 0 16px;
+    border: 1px solid rgba(85, 199, 255, 0.17);
+    border-radius: 14px;
+    color: var(--muted-strong);
+    background: rgba(85, 199, 255, 0.035);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.install-steps li::marker {
+    color: var(--accent);
+    font-weight: 800;
+}
+
+.install-note,
+.install-status {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 0.76rem;
+    line-height: 1.55;
+}
+
+.install-status:not(:empty) {
+    color: var(--gold);
+}
+
+.install-status:empty {
+    display: none;
+}
+
+.install-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+    padding: 16px 26px 22px;
+    border-top: 1px solid rgba(166, 190, 224, 0.1);
+    background: rgba(8, 17, 31, 0.7);
+}
+
+.install-actions button {
+    flex: 1;
+    min-height: 48px;
+}
+
+@media (max-width: 480px) {
+    .install-panel__content { padding: 22px 20px 0; }
+    .install-actions { padding: 14px 20px 18px; }
+    .install-brand { margin-bottom: 18px; }
+}
     </style>
 </head>
 
@@ -1772,7 +1965,437 @@ button:disabled {
             ></iframe>
         </div>
     </div>
+    <!-- Available manually, but hidden during games, checkout and installed use. -->
+    <button id="install-launcher" class="install-launcher" type="button"
+        aria-label="Save the arcade as an app" title="Save as an app"
+        aria-haspopup="dialog" aria-controls="install-modal" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 3h13l4 4v14H3V4a1 1 0 0 1 1-1Z"/>
+            <path d="M7 3v6h9V3M7 21v-8h10v8M13 5v2"/>
+        </svg>
+    </button>
+
+    <div id="install-modal" class="install-modal" role="dialog" aria-modal="true"
+        aria-labelledby="install-title" aria-describedby="install-intro install-note" hidden>
+        <section class="install-panel">
+            <div class="install-panel__content">
+                <div class="install-brand">
+                    <img src="./icons/arcade-192.png" alt="" width="52" height="52">
+                    <div><strong>Many Offline Games</strong><span>Your arcade, one tap away</span></div>
+                </div>
+                <h2 id="install-title" tabindex="-1">Want to save your progress?</h2>
+                <p id="install-intro" class="install-intro"></p>
+                <figure id="install-animation" class="install-animation" hidden>
+                    <!-- Loaded only on Apple mobile devices when the dialog opens. -->
+                    <img id="install-gif" alt="How to add the arcade to your iPhone Home Screen"
+                        decoding="async">
+                </figure>
+                <ol id="install-steps" class="install-steps" hidden></ol>
+                <p id="install-note" class="install-note"></p>
+                <p id="install-status" class="install-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="install-actions">
+                <button id="install-save" class="primary-button" type="button">Save</button>
+                <button id="install-later" class="secondary-button" type="button">Not now</button>
+            </div>
+        </section>
+    </div>
+
     <script>
+
+// ======================================================
+// INSTALLATION / SAVE-AS-APP REMINDERS
+// ======================================================
+
+class InstallManager {
+    static STORAGE_KEY = "many-offline-games-install";
+    static REMINDER_INTERVAL = 7 * 24 * 60 * 60 * 1000;
+    static PURCHASES_BETWEEN_REMINDERS = 3;
+    static IPHONE_GUIDE = "./install-as-application.gif";
+    static PURCHASE_TYPES = new Set(["game", "code", "pack", "coins"]);
+
+    constructor() {
+        this.data = {
+            version: 1,
+            installed: false,
+            purchases: 0,
+            lastPromptAt: 0,
+            lastPromptPurchase: 0
+        };
+        this.readPreferences();
+        this.deferredPrompt = null;
+        this.awaitingInstallation = false;
+        this.nativeBusy = false;
+        this.shownThisSession = false;
+        this.isOpen = false;
+        this.pending = null;
+        this.finishDialog = null;
+        this.dom = null;
+        this.flushTimer = null;
+        this.inertElements = [];
+        this.displayModes = ["standalone", "minimal-ui", "window-controls-overlay"]
+            .map(mode => window.matchMedia?.(`(display-mode: ${mode})`))
+            .filter(Boolean);
+
+        // Register immediately: the browser can emit this before async app startup.
+        window.addEventListener("beforeinstallprompt", event => {
+            event.preventDefault();
+            this.deferredPrompt = event;
+            // A fresh native offer is evidence that an old install was removed.
+            this.data.installed = false;
+            this.awaitingInstallation = false;
+            this.writePreferences();
+            if (this.isOpen && !this.nativeBusy && !this.isAppleMobile()) {
+                this.manualInstructions = false;
+                this.renderDialog();
+            }
+            this.uiChanged();
+        });
+
+        window.addEventListener("appinstalled", () => this.markInstalled());
+        window.addEventListener("storage", event => {
+            if (event.key !== InstallManager.STORAGE_KEY) return;
+            this.readPreferences();
+            if (this.data.installed) this.dismiss();
+            this.uiChanged();
+        });
+        for (const query of this.displayModes) {
+            const changed = () => this.checkInstallation();
+            if (query.addEventListener) query.addEventListener("change", changed);
+            else query.addListener?.(changed);
+        }
+        window.addEventListener("pageshow", () => this.checkInstallation());
+        document.addEventListener("visibilitychange", () => this.checkInstallation());
+        document.addEventListener("fullscreenchange", () => this.uiChanged());
+        this.checkInstallation();
+    }
+
+    readPreferences() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(InstallManager.STORAGE_KEY) || "null");
+            if (!saved || typeof saved !== "object" || Array.isArray(saved)) return;
+            const integer = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+            this.data = {
+                version: 1,
+                installed: saved.installed === true,
+                purchases: integer(saved.purchases),
+                lastPromptAt: integer(saved.lastPromptAt),
+                lastPromptPurchase: Math.min(integer(saved.lastPromptPurchase), integer(saved.purchases))
+            };
+        } catch (_) {
+            // Private mode / denied storage: retain the in-memory cooldown.
+        }
+    }
+
+    writePreferences() {
+        try {
+            localStorage.setItem(InstallManager.STORAGE_KEY, JSON.stringify(this.data));
+        } catch (_) {
+            // The purchase and the arcade still work when preferences cannot persist.
+        }
+    }
+
+    isAppleMobile() {
+        return /iPhone|iPad|iPod/i.test(navigator.userAgent)
+            || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    isMacSafari() {
+        return /Macintosh/i.test(navigator.userAgent)
+            && /Safari/i.test(navigator.userAgent)
+            && !/Chrome|Chromium|Edg|OPR/i.test(navigator.userAgent)
+            && !this.isAppleMobile();
+    }
+
+    inStandalone() {
+        // Game fullscreen is deliberately NOT treated as an installed app.
+        return navigator.standalone === true || this.displayModes.some(query => query.matches);
+    }
+
+    shouldHide() {
+        return this.inStandalone() || this.data.installed || this.awaitingInstallation;
+    }
+
+    checkInstallation() {
+        this.readPreferences();
+        if (this.inStandalone()) this.markInstalled();
+        else this.uiChanged();
+    }
+
+    markInstalled() {
+        this.data.installed = true;
+        this.awaitingInstallation = false;
+        this.deferredPrompt = null;
+        this.writePreferences();
+        this.dismiss();
+        this.uiChanged();
+    }
+
+    init() {
+        if (this.dom) return;
+        const byId = id => document.getElementById(id);
+        this.dom = {
+            launcher: byId("install-launcher"), modal: byId("install-modal"),
+            title: byId("install-title"), intro: byId("install-intro"),
+            animation: byId("install-animation"), gif: byId("install-gif"),
+            steps: byId("install-steps"), note: byId("install-note"),
+            status: byId("install-status"), save: byId("install-save"), later: byId("install-later")
+        };
+        this.dom.launcher.addEventListener("click", () => this.openManually());
+        this.dom.save.addEventListener("click", () => this.saveClicked());
+        this.dom.later.addEventListener("click", () => this.dismiss());
+        this.dom.modal.addEventListener("click", event => {
+            if (event.target === this.dom.modal) this.dismiss();
+        });
+        this.dom.gif.addEventListener("error", () => {
+            // Written instructions remain usable if the optional GIF is missing.
+            this.gifFailed = true;
+            this.dom.animation.hidden = true;
+        });
+        document.addEventListener("keydown", event => this.handleKey(event), true);
+        this.checkInstallation();
+    }
+
+    otherDialogOpen() {
+        return Boolean(document.querySelector(".app-modal.open, .game-modal.open"));
+    }
+
+    canPresent() {
+        return this.dom && !document.hidden && !document.fullscreenElement
+            && !this.otherDialogOpen() && !purchaseBusy && !packBusy && !coinBusy;
+    }
+
+    uiChanged() {
+        if (!this.dom) return;
+        this.dom.launcher.hidden = this.shouldHide() || this.isOpen || this.nativeBusy
+            || !this.canPresent();
+        // Let one dialog finish closing before opening the next. Never interrupt play.
+        clearTimeout(this.flushTimer);
+        this.flushTimer = setTimeout(() => this.flushPending(), 0);
+    }
+
+    reminderDue() {
+        if (this.shouldHide() || this.shownThisSession) return false;
+        if (!this.data.lastPromptAt) return true;
+        return Date.now() - this.data.lastPromptAt >= InstallManager.REMINDER_INTERVAL
+            && this.data.purchases - this.data.lastPromptPurchase
+                >= InstallManager.PURCHASES_BETWEEN_REMINDERS;
+    }
+
+    async afterPurchase(type) {
+        // Call only AFTER a confirmed, committed transaction; never on checkout open.
+        try {
+            if (!InstallManager.PURCHASE_TYPES.has(type)) return false;
+            this.readPreferences();
+            if (this.shouldHide()) return false;
+            this.data.purchases = Math.min(Number.MAX_SAFE_INTEGER, this.data.purchases + 1);
+            this.writePreferences();
+            if (!this.dom || !this.reminderDue() || this.pending || this.isOpen) return false;
+            return await new Promise(resolve => {
+                this.pending = resolve;
+                this.flushPending();
+            });
+        } catch (error) {
+            // Optional installation UI must never turn a successful payment into an error.
+            console.warn("Install reminder unavailable:", error);
+            this.dismiss();
+            return false;
+        }
+    }
+
+    flushPending() {
+        if (!this.pending) return;
+        if (!this.reminderDue()) {
+            const finish = this.pending;
+            this.pending = null;
+            finish(false);
+            return;
+        }
+        if (!this.canPresent() || this.isOpen || this.nativeBusy) return;
+        const finish = this.pending;
+        this.pending = null;
+        this.showDialog(finish);
+    }
+
+    openManually() {
+        this.readPreferences();
+        if (this.shouldHide() || !this.canPresent() || this.isOpen || this.nativeBusy) return;
+        // This path ignores the cooldown; the player explicitly asked to see it.
+        const finish = this.pending;
+        this.pending = null;
+        this.showDialog(finish);
+    }
+
+    showDialog(finish = null) {
+        this.finishDialog = finish;
+        this.isOpen = true;
+        this.shownThisSession = true;
+        this.manualInstructions = this.isAppleMobile();
+        this.data.lastPromptAt = Date.now();
+        this.data.lastPromptPurchase = this.data.purchases;
+        // Count dismissals, Escape and backdrop clicks too, including after a reload.
+        this.writePreferences();
+        this.previousFocus = document.activeElement;
+        this.previousOverflow = document.body.style.overflow;
+        this.dom.status.textContent = "";
+        this.renderDialog();
+        this.dom.modal.hidden = false;
+        document.body.style.overflow = "hidden";
+        this.inertElements = [...document.body.children]
+            .filter(node => node !== this.dom.modal && !["SCRIPT", "STYLE"].includes(node.tagName))
+            .map(node => ({ node, wasInert: node.hasAttribute("inert") }));
+        for (const { node } of this.inertElements) node.setAttribute("inert", "");
+        this.uiChanged();
+        this.dom.title.focus({ preventScroll: true });
+    }
+
+    instructions() {
+        if (this.isAppleMobile()) return [
+            "Open this page in Safari and tap Share (the square with an upward arrow).",
+            "Choose Add to Home Screen. If needed, scroll down or tap More to find it.",
+            "Keep Open as Web App enabled if shown, then tap Add. Open the new arcade icon."
+        ];
+        if (this.isMacSafari()) return [
+            "In Safari, choose File, then Add to Dock.",
+            "Confirm Add, then open the arcade from your Dock."
+        ];
+        if (/Android/i.test(navigator.userAgent)) return [
+            "Open your browser's menu and choose Install app or Add to Home screen.",
+            "Confirm, then open the arcade from your Home screen. If the option is missing, try Chrome."
+        ];
+        if (/Chrome|Chromium|Edg/i.test(navigator.userAgent)) return [
+            "Look for the install icon in the address bar, or open your browser's menu.",
+            "Choose Install Many Offline Games or Install this site as an app. The option may be under Apps or Cast, save and share."
+        ];
+        return [
+            "This browser does not offer installation from this button.",
+            "Use the browser's app-install menu if available, or open this arcade in Chrome or Edge. Progress is not automatically shared between browsers."
+        ];
+    }
+
+    renderDialog() {
+        const apple = this.isAppleMobile();
+        const localFile = window.location.protocol === "file:";
+        if (localFile) this.manualInstructions = true;
+        this.dom.intro.textContent = localFile
+            ? "Open the hosted arcade in your browser to add it as an app."
+            : apple
+                ? "Add Many Offline Games to your Home Screen. Follow the steps below."
+                : "Add Many Offline Games to your device and open your arcade like an app.";
+        this.dom.note.textContent = apple || this.isMacSafari()
+            ? "Installing does not copy this browser's purchases or progress to the app. Keep your browser data; installation is not a backup."
+            : "Progress is already saved in this browser. Installing is not a cloud backup; clearing site data can still remove it.";
+        this.dom.steps.replaceChildren();
+        for (const instruction of localFile ? ["Visit the live store over HTTPS, then tap the save icon again."] : this.instructions()) {
+            const step = document.createElement("li");
+            step.textContent = instruction;
+            this.dom.steps.appendChild(step);
+        }
+        this.dom.steps.hidden = !this.manualInstructions;
+        this.dom.animation.hidden = !apple || localFile || this.gifFailed === true;
+        if (apple && !localFile && !this.dom.gif.getAttribute("src")) {
+            this.dom.gif.src = InstallManager.IPHONE_GUIDE;
+        }
+        this.dom.save.textContent = this.nativeBusy ? "Opening..." : this.manualInstructions ? "OK" : "Save";
+        this.dom.save.disabled = this.nativeBusy;
+        this.dom.later.hidden = this.manualInstructions;
+    }
+
+    async saveClicked() {
+        if (!this.isOpen || this.nativeBusy) return;
+        if (this.manualInstructions) {
+            this.dismiss();
+            return;
+        }
+        if (!this.deferredPrompt) {
+            this.manualInstructions = true;
+            this.renderDialog();
+            this.dom.title.focus({ preventScroll: true });
+            return;
+        }
+        const nativePrompt = this.deferredPrompt;
+        this.deferredPrompt = null; // Native install events can only be used once.
+        this.nativeBusy = true;
+        this.renderDialog();
+        try {
+            // Must run inside this click, before any await, to keep user activation.
+            const result = await nativePrompt.prompt();
+            const choice = nativePrompt.userChoice ? await nativePrompt.userChoice : result;
+            if (choice?.outcome === "accepted") {
+                // Suppress in this session; persist only on appinstalled / standalone.
+                this.awaitingInstallation = true;
+            }
+            this.dismiss();
+        } catch (error) {
+            console.warn("Native install prompt unavailable:", error);
+            this.manualInstructions = true;
+            if (this.isOpen) {
+                this.dom.status.textContent = "Use your browser's menu to add the arcade instead.";
+            }
+        } finally {
+            this.nativeBusy = false;
+            if (this.isOpen) this.renderDialog();
+            this.uiChanged();
+        }
+    }
+
+    dismiss() {
+        if (this.isOpen && this.dom) {
+            this.isOpen = false;
+            this.dom.modal.hidden = true;
+            document.body.style.overflow = this.previousOverflow;
+            for (const { node, wasInert } of this.inertElements) {
+                if (!wasInert) node.removeAttribute("inert");
+            }
+            this.inertElements = [];
+            this.uiChanged();
+            const previous = this.previousFocus;
+            const focusTarget = previous?.isConnected && previous.getClientRects().length
+                && !previous.closest("[hidden], [inert]") ? previous
+                : !this.dom.launcher.hidden ? this.dom.launcher
+                : document.querySelector(".store-tab.active");
+            focusTarget?.focus({ preventScroll: true });
+        }
+        const finish = this.finishDialog;
+        this.finishDialog = null;
+        finish?.(true);
+        if (this.pending && this.shouldHide()) {
+            const pending = this.pending;
+            this.pending = null;
+            pending(false);
+        }
+    }
+
+    handleKey(event) {
+        if (!this.isOpen) return;
+        if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this.dismiss();
+        } else if (event.key === "Tab") {
+            const buttons = [this.dom.save, this.dom.later].filter(button => !button.hidden && !button.disabled);
+            if (!buttons.length) {
+                event.preventDefault();
+                return;
+            }
+            const first = buttons[0];
+            const last = buttons[buttons.length - 1];
+            if (!this.dom.modal.contains(document.activeElement)) {
+                event.preventDefault();
+                (event.shiftKey ? last : first).focus();
+            } else if (event.shiftKey && (document.activeElement === first || document.activeElement === this.dom.title)) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+    }
+}
+
+const installManager = new InstallManager();
 
 const APP_CACHE = "many-offline-games-v6";
 const LEGACY_APP_CACHES = ["many-offline-games-v5"];
@@ -2483,6 +3106,7 @@ function openModal(modal) {
         "aria-hidden",
         "false"
     );
+    installManager.uiChanged();
 }
 
 function closeModal(modal) {
@@ -2498,6 +3122,7 @@ function closeModal(modal) {
         "aria-hidden",
         "true"
     );
+    installManager.uiChanged();
 }
 
 function openRewardModal() {
@@ -2944,8 +3569,11 @@ async function renderPayPalButtons() {
                     appState.coins += result.coins;
                     renderCoins();
                     await saveState();
+                    coinBusy = false;
                     closeCoinModal();
                     showToast(`Payment complete: +${result.coins.toLocaleString("en-US")} coins.`, "success");
+                    // Do not keep PayPal's approval callback waiting for this optional dialog.
+                    void installManager.afterPurchase("coins");
                 } catch (error) {
                     console.error("PayPal capture error:", error);
                     showToast("PayPal could not confirm the payment.", "error");
@@ -3268,6 +3896,7 @@ async function purchasePack() {
         packBusy = false;
         closePackModal();
         showToast(`Pack purchased: ${purchasedGameCount} games unlocked.`, "success");
+        await installManager.afterPurchase("pack");
     } catch (error) {
         console.error("Pack purchase cancelled:", error);
         showToast("Pack cancelled: a game could not be downloaded.", "error");
@@ -3772,6 +4401,9 @@ async function unlockGameCode(game) {
         button.disabled = false;
         button.textContent = "Code";
         showToast(`${game.name} code unlocked.`, "success");
+        purchaseBusy = false;
+        closePurchaseModal();
+        await installManager.afterPurchase("code");
         await openCodeModal(game, html);
     } catch (error) {
         console.error("Code unlock cancelled:", error);
@@ -3878,6 +4510,7 @@ function setPurchaseBusy(
         busy
             ? "Preparing game…"
             : "Buy game";
+    installManager.uiChanged();
 }
 
 
@@ -4258,7 +4891,9 @@ async function purchaseGame(
                 gameId
             )
         ) {
+            setPurchaseBusy(false);
             closePurchaseModal();
+            setPurchaseBusy(true);
 
             await openGameModal(
                 gameData
@@ -4285,6 +4920,7 @@ async function purchaseGame(
 
         await saveState();
 
+        setPurchaseBusy(false);
         closePurchaseModal();
 
         showToast(
@@ -4292,6 +4928,9 @@ async function purchaseGame(
             "success"
         );
 
+        await installManager.afterPurchase("game");
+        // The payment is committed; guard the following game download from double clicks.
+        setPurchaseBusy(true);
         await openGameModal(
             gameData
         );
@@ -4520,6 +5159,7 @@ function handleCreditPurchase(event) {
 // ======================================================
 
 async function initializeApp() {
+    installManager.init();
     appState =
         await readState();
 

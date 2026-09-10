@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Many Offline Games",
+  "short_name": "Offline Games",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#08111f",
+  "theme_color": "#08111f",
+  "icons": [
+    {
+      "src": "/configuration/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
