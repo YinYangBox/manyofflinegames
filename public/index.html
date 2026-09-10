@@ -38,6 +38,8 @@
 html {
     min-height: 100%;
     background: var(--bg-0);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 body {
@@ -2468,6 +2470,11 @@ document.addEventListener("contextmenu", (event) => {
     event.preventDefault();
 });
 
+document.addEventListener("dblclick", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+});
+
 document.addEventListener("keydown", (event) => {
     const blocked =
         event.key === "F12" ||
@@ -4567,12 +4574,62 @@ function prepareGameHtml(
             sourceUrl
         )}">`;
 
+    const protection = `
+        <!-- MANY OFFLINE GAMES PROTECTION -->
+        <style id="many-offline-games-protection">
+            html, body {
+                -webkit-user-select: none !important;
+                user-select: none !important;
+                -webkit-touch-callout: none !important;
+            }
+        </style>
+        <script>
+            (() => {
+                const blockedKeys = event => {
+                    const key = String(event.key || "").toUpperCase();
+                    const blocked = event.key === "F12"
+                        || (event.ctrlKey && event.shiftKey && ["I", "J", "C"].includes(key))
+                        || (event.ctrlKey && key === "U");
+                    if (blocked) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                    }
+                };
+                document.addEventListener("contextmenu", event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }, true);
+                document.addEventListener("dblclick", event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }, true);
+                document.addEventListener("selectstart", event => {
+                    event.preventDefault();
+                }, true);
+                document.addEventListener("keydown", blockedKeys, true);
+            })();
+        <\/script>`;
+
+    const injectProtection = documentHtml => {
+        if (documentHtml.includes("many-offline-games-protection")) {
+            return documentHtml;
+        }
+        const injection = `${/<base\s/i.test(documentHtml) ? "" : baseTag}${protection}`;
+        if (/<head[\s>]/i.test(documentHtml)) {
+            return documentHtml.replace(
+                /<head([^>]*)>/i,
+                `<head$1>${injection}`
+            );
+        }
+        return `${injection}${documentHtml}`;
+    };
+
     if (
         /<base\s/i.test(
             html
         )
     ) {
-        return html;
+        return injectProtection(html);
     }
 
     if (
@@ -4580,23 +4637,19 @@ function prepareGameHtml(
             html
         )
     ) {
-        return html.replace(
-            /<head([^>]*)>/i,
-            `<head$1>${baseTag}`
-        );
+        return injectProtection(html);
     }
 
-    return `
+    return injectProtection(`
         <!doctype html>
         <html>
             <head>
-                ${baseTag}
             </head>
             <body>
                 ${html}
             </body>
         </html>
-    `;
+    `);
 }
 
 // Online means network only. A failed online request must not silently
@@ -4611,7 +4664,11 @@ async function fetchLatestGameHtml(gameData) {
             const saved = await cache.match(codeCacheKey(gameData));
             if (saved) return await saved.text();
             const legacy = await caches.match(gameUrl);
-            return legacy ? await legacy.text() : "";
+            if (!legacy) return "";
+            const legacyHtml = prepareGameHtml(await legacy.text(), gameUrl);
+            try { await cacheGameCode(gameData, legacyHtml); }
+            catch (error) { console.warn("Could not save migrated offline game:", error); }
+            return legacyHtml;
         } catch (error) {
             console.warn("Could not read offline game:", error);
             return "";
@@ -4629,9 +4686,10 @@ async function fetchLatestGameHtml(gameData) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const html = await response.text();
         if (!html.trim()) throw new Error("Empty game response");
-        try { await cacheGameCode(gameData, html); }
+        const protectedHtml = prepareGameHtml(html, gameUrl);
+        try { await cacheGameCode(gameData, protectedHtml); }
         catch (error) { console.warn("Latest game loaded, but offline saving failed:", error); }
-        return html;
+        return protectedHtml;
     } catch (error) {
         console.warn("Latest online game is unavailable:", error);
         return "";

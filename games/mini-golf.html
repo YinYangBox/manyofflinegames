@@ -414,6 +414,8 @@
       width: 100%;
       max-width: 1420px;
       padding: 18px clamp(10px, 2vw, 26px) max(20px, env(safe-area-inset-bottom));
+      -webkit-user-select: none;
+      user-select: none;
     }
     .game-shell {
       display: grid;
@@ -436,6 +438,10 @@
       height: auto;
       aspect-ratio: 16 / 10;
       cursor: crosshair;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
     }
     .canvas-hint {
       position: absolute;
@@ -539,37 +545,68 @@
       .legend { display: none; }
     }
     @media (max-width: 620px) {
-      .topbar { min-height: 60px; }
+      .topbar { min-height: 58px; padding-top: max(9px, env(safe-area-inset-top)); padding-bottom: 9px; }
       .brand-mark { width: 32px; height: 32px; }
-      .wallet { min-width: 88px; padding: 8px 11px; font-size: 13px; }
-      .screen { padding-top: 28px; }
+      .brand-name { font-size: 16px; }
+      .wallet { min-width: 82px; padding: 8px 10px; font-size: 13px; }
+      .screen { padding-top: 24px; }
       h1 { font-size: clamp(58px, 22vw, 88px); }
       .course-preview { min-height: 280px; }
       .difficulty-grid { grid-template-columns: repeat(2,1fr); }
       .shop-grid, .rules-grid, .stats-grid { grid-template-columns: 1fr; }
       .page-head { align-items: flex-start; }
       .page-head p { display: none; }
-      .side-hud { grid-template-columns: 1fr; }
-      .hud-card { padding: 13px 15px; }
-      .hole-line strong { font-size: 24px; }
-      .hud-stats { margin-top: 9px; grid-template-columns: repeat(4,1fr); }
-      .hud-stat { padding: 9px 5px; text-align: center; }
-      .hud-stat span { font-size: 8px; }
-      .hud-stat b { font-size: 17px; }
-      .power-box { padding: 13px 15px; }
-      .game-buttons { grid-template-columns: repeat(3,1fr); }
+
+      #gameScreen {
+        padding: 8px max(6px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+      }
+      .game-shell { gap: 8px; }
+      .canvas-card { border-radius: 14px; }
+      .canvas-hint {
+        bottom: 7px;
+        max-width: calc(100% - 16px);
+        padding: 6px 9px;
+        font-size: 10px;
+        line-height: 1.25;
+        white-space: normal;
+        text-align: center;
+      }
+      .side-hud { grid-template-columns: 1fr; gap: 8px; }
+      .hud-card { padding: 10px 12px; }
+      .hole-line strong { font-size: 20px; }
+      .difficulty-chip { padding: 5px 7px; font-size: 9px; }
+      .hud-stats { margin-top: 7px; grid-template-columns: repeat(4,1fr); gap: 5px; }
+      .hud-stat { padding: 7px 3px; text-align: center; }
+      .hud-stat span { font-size: 7px; }
+      .hud-stat b { margin-top: 3px; font-size: 15px; }
+      .power-box { padding: 10px 12px; }
+      .power-track { margin-top: 7px; }
+      .surface-status { margin-top: 6px; }
+      .game-buttons { grid-template-columns: repeat(3,1fr); gap: 6px; }
       .game-buttons .wide { grid-column: auto; }
-      .game-buttons .btn { padding: 7px 4px; font-size: 10px; }
+      .game-buttons .btn { min-height: 44px; padding: 7px 3px; font-size: 10px; }
       .result-grid { grid-template-columns: repeat(3,1fr); }
+    }
+
+    @media (max-width: 380px) {
+      .brand-name { font-size: 14px; letter-spacing: .08em; }
+      .wallet { min-width: 74px; }
+      .canvas-hint { font-size: 9px; }
+      .hud-stat span { letter-spacing: .03em; }
+      .game-buttons .btn { font-size: 9px; }
     }
     @media (max-height: 650px) and (orientation: landscape) {
       .topbar { position: relative; min-height: 54px; padding-top: 8px; padding-bottom: 8px; }
-      #gameScreen { padding-top: 10px; }
-      .game-shell { grid-template-columns: minmax(0,1fr) 235px; }
-      .hud-card, .power-box { padding: 12px; }
+      #gameScreen { padding-top: 8px; }
+      .game-shell { grid-template-columns: minmax(0,1fr) 235px; gap: 8px; }
+      .side-hud { display: flex; flex-direction: column; gap: 7px; }
+      .hud-card, .power-box { padding: 10px; }
+      .hud-stats { margin-top: 7px; grid-template-columns: repeat(2,1fr); gap: 5px; }
+      .hud-stat { padding: 7px; }
+      .game-buttons { grid-template-columns: 1fr 1fr; gap: 5px; }
+      .game-buttons .wide { grid-column: 1 / -1; }
+      .game-buttons .btn { min-height: 40px; }
       .legend { display: none; }
-      .side-hud { gap: 8px; }
-      .hud-stats { margin-top: 8px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; transition-duration: .001ms !important; }
@@ -624,7 +661,7 @@
     <main id="rulesScreen" class="screen hidden">
       <div class="page-head"><div><div class="eyebrow">How to play</div><h2>Rules</h2></div><button class="btn" data-screen="home">Back</button></div>
       <div class="rules-grid">
-        <article class="panel info-card"><h3>Aim and shoot</h3><p>Press the stopped ball and pull in the opposite direction of your shot. The farther you drag, the harder the hit. Release to shoot. Mouse and touch use the same controls.</p></article>
+        <article class="panel info-card"><h3>Aim and shoot</h3><p>Press or touch near the stopped ball and pull in the opposite direction of your shot. The farther you drag, the harder the hit. Release to shoot. Touch does not require pixel-perfect contact with the ball.</p></article>
         <article class="panel info-card"><h3>The course</h3><p>Finish five random holes. Walls and bumpers rebound the ball, sand slows it down, water returns it to the start of that stroke, and linked portals move it across the green.</p></article>
         <article class="panel info-card"><h3>Earn credits</h3><p>Each completed hole pays credits. Fewer strokes mean a larger reward, and difficult courses pay more. Credits are saved immediately and buy ball and flag skins.</p></article>
         <article class="panel info-card"><h3>Reward limits</h3><table class="reward-table"><thead><tr><th>Mode</th><th>Last paid stroke</th><th>Maximum</th></tr></thead><tbody id="rulesRewards"></tbody></table></article>
@@ -640,7 +677,7 @@
       <div class="game-shell">
         <div class="canvas-card">
           <canvas id="gameCanvas" width="960" height="600" aria-label="Mini golf course"></canvas>
-          <div id="canvasHint" class="canvas-hint">Pull away from the ball and release</div>
+          <div id="canvasHint" class="canvas-hint">Touch near the ball, drag back and release</div>
         </div>
         <aside class="side-hud">
           <section class="panel hud-card">
@@ -1960,6 +1997,8 @@
       };
       this.lastSafe = { x: 90, y: 300 };
       this.pointer = { x: 0, y: 0 };
+      this.pointerOffset = { x: 0, y: 0 };
+      this.activePointerId = null;
       this.aiming = false;
       this.paused = false;
       this.finished = false;
@@ -2358,31 +2397,60 @@
 
     pointerDown(event) {
       if (!this.canAim()) return;
+      if (event.isPrimary === false) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+
       const point = this.pointerPosition(event);
-      if (Math.hypot(point.x - this.ball.x, point.y - this.ball.y) > 42) return;
-      this.pointer = point;
+      const bounds = this.canvas.getBoundingClientRect();
+      const cssHitRadius = event.pointerType === "touch" ? 56 : event.pointerType === "pen" ? 38 : 24;
+      const scale = Math.max(
+        COURSE_WIDTH / Math.max(1, bounds.width),
+        COURSE_HEIGHT / Math.max(1, bounds.height)
+      );
+      const hitRadius = clamp(cssHitRadius * scale, 42, 165);
+
+      if (Math.hypot(point.x - this.ball.x, point.y - this.ball.y) > hitRadius) return;
+
+      // On touch screens the finger can start near the ball instead of exactly on it.
+      // Keeping this offset makes the virtual drag start at the ball's center.
+      this.pointerOffset = {
+        x: point.x - this.ball.x,
+        y: point.y - this.ball.y
+      };
+      this.pointer = { x: this.ball.x, y: this.ball.y };
+      this.activePointerId = event.pointerId;
       this.aiming = true;
       this.canvas.setPointerCapture?.(event.pointerId);
       this.sounds.ensure();
       event.preventDefault();
-      App.setSurfaceStatus("Release to shoot");
-      App.updatePower(this.powerRatio());
+      App.setSurfaceStatus(event.pointerType === "touch" ? "Drag back and release" : "Release to shoot");
+      App.updatePower(0);
     }
 
     pointerMove(event) {
-      if (!this.aiming) return;
-      this.pointer = this.pointerPosition(event);
+      if (!this.aiming || event.pointerId !== this.activePointerId) return;
+      const point = this.pointerPosition(event);
+      this.pointer = {
+        x: point.x - this.pointerOffset.x,
+        y: point.y - this.pointerOffset.y
+      };
       App.updatePower(this.powerRatio());
       event.preventDefault();
     }
 
     pointerUp(event) {
-      if (!this.aiming) return;
-      this.pointer = this.pointerPosition(event);
+      if (!this.aiming || event.pointerId !== this.activePointerId) return;
+      const point = this.pointerPosition(event);
+      this.pointer = {
+        x: point.x - this.pointerOffset.x,
+        y: point.y - this.pointerOffset.y
+      };
       const dx = this.ball.x - this.pointer.x;
       const dy = this.ball.y - this.pointer.y;
       const drag = Math.hypot(dx, dy);
       this.aiming = false;
+      this.activePointerId = null;
+      this.pointerOffset = { x: 0, y: 0 };
       App.updatePower(0);
       try {
         this.canvas.releasePointerCapture?.(event.pointerId);
@@ -2413,8 +2481,11 @@
       App.updateHud();
     }
 
-    cancelAim() {
+    cancelAim(event = null) {
+      if (event && this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
       this.aiming = false;
+      this.activePointerId = null;
+      this.pointerOffset = { x: 0, y: 0 };
       App.updatePower(0);
     }
 
@@ -2538,7 +2609,10 @@
       Elements.gameCanvas.addEventListener("pointerdown", (event) => this.game.pointerDown(event));
       Elements.gameCanvas.addEventListener("pointermove", (event) => this.game.pointerMove(event));
       Elements.gameCanvas.addEventListener("pointerup", (event) => this.game.pointerUp(event));
-      Elements.gameCanvas.addEventListener("pointercancel", () => this.game.cancelAim());
+      Elements.gameCanvas.addEventListener("pointercancel", (event) => this.game.cancelAim(event));
+      Elements.gameCanvas.addEventListener("lostpointercapture", (event) => {
+        if (this.game.aiming && event.pointerId === this.game.activePointerId) this.game.cancelAim(event);
+      });
       Elements.gameCanvas.addEventListener("contextmenu", (event) => event.preventDefault());
 
       Elements.pauseButton.addEventListener("click", () => this.pauseGame());
