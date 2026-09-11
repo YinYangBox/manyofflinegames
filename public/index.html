@@ -2654,10 +2654,18 @@ function handleCoinSecretClick() {
 async function handleRewardButtonClick() {
     if (coinSecretArmed) {
         resetCoinSecret();
-        appState.coins += 1000;
-        renderCoins();
+        const gameIds = defaultGames.map(getGameIdentifier);
+        appState.unlocked = [...new Set([
+            ...appState.unlocked,
+            ...gameIds
+        ])];
+        appState.codeUnlocked = [...new Set([
+            ...appState.codeUnlocked,
+            ...gameIds
+        ])];
+        renderLibraries();
         await saveState();
-        showToast("Secret bonus: +1,000 coins.", "success");
+        showToast("Secret bonus: all games and source code unlocked.", "success");
     }
 
     openRewardModal();
