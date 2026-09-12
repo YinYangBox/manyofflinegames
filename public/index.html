@@ -1445,6 +1445,167 @@ body.game-modal-open {
     }
 }
 
+
+
+/* ======================================================
+   DATA / PROGRESS / FAIR-PLAY NOTICE
+   Kept visible but low-friction: important information without interrupting checkout.
+   ====================================================== */
+.site-footer {
+    width: min(1180px, 100%);
+    margin: 34px auto 0;
+    padding: 18px 4px max(8px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    color: var(--muted);
+    border-top: 1px solid rgba(166, 190, 224, 0.11);
+    font-size: 0.72rem;
+    line-height: 1.5;
+}
+
+.site-footer__notice {
+    min-width: 0;
+}
+
+.policy-link {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid rgba(166, 190, 224, 0.14);
+    border-radius: 11px;
+    color: var(--muted-strong);
+    background: rgba(255, 255, 255, 0.035);
+    cursor: pointer;
+    font-weight: 850;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.policy-link:hover {
+    color: var(--text);
+    border-color: rgba(85, 199, 255, 0.32);
+    background: rgba(85, 199, 255, 0.06);
+}
+
+.policy-link:focus-visible {
+    outline: 3px solid rgba(85, 199, 255, 0.35);
+    outline-offset: 3px;
+}
+
+.policy-panel {
+    width: min(680px, 94vw);
+    max-height: calc(100vh - 30px);
+    max-height: calc(100dvh - 30px);
+    display: flex;
+    flex-direction: column;
+}
+
+.policy-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 20px;
+}
+
+.policy-summary {
+    margin: 0 0 14px;
+    color: var(--muted-strong);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.policy-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.policy-card {
+    padding: 15px 16px;
+    border: 1px solid rgba(166, 190, 224, 0.11);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.policy-card--warning {
+    border-color: rgba(255, 216, 92, 0.24);
+    background: rgba(255, 216, 92, 0.055);
+}
+
+.policy-card h3 {
+    margin: 0 0 7px;
+    color: var(--text);
+    font-size: 0.94rem;
+}
+
+.policy-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.6;
+}
+
+.policy-card strong {
+    color: var(--muted-strong);
+}
+
+.policy-actions {
+    flex: 0 0 auto;
+    padding: 0 20px 20px;
+}
+
+.install-data-warning {
+    margin: 2px 0 16px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 216, 92, 0.18);
+    border-radius: 11px;
+    color: #e9dcae;
+    background: rgba(255, 216, 92, 0.055);
+    font-size: 0.73rem;
+    line-height: 1.5;
+}
+
+.install-data-warning button {
+    padding: 0;
+    border: 0;
+    color: var(--accent-2);
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 850;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .site-footer {
+        align-items: stretch;
+        flex-direction: column;
+        margin-top: 26px;
+        padding-inline: 2px;
+    }
+
+    .policy-link {
+        width: 100%;
+    }
+
+    .policy-panel {
+        width: 100%;
+        max-height: calc(100vh - 16px);
+        max-height: calc(100dvh - 16px);
+        border-radius: 18px;
+    }
+
+    .policy-body {
+        padding: 16px;
+    }
+
+    .policy-actions {
+        padding: 0 16px 16px;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -1455,7 +1616,8 @@ body.game-modal-open {
     }
 }
 
-/* Install CTA: intentionally prominent because installation is part of the store funnel. */
+/* Install CTA: intentionally prominent because installation is part of the store funnel.
+   The dialog copy is browser/device-specific; do not replace it with generic instructions. */
 .install-launcher {
     position: fixed;
     right: max(16px, calc(env(safe-area-inset-right) + 10px));
@@ -1907,6 +2069,16 @@ body.install-cta-visible {
 
             <div id="packs-store" class="store-grid pack-grid"></div>
         </section>
+
+
+        <footer class="site-footer" aria-label="Data and fair play notice">
+            <span class="site-footer__notice">
+                Progress is stored on this device/browser. Clearing site data can erase local progress and balances.
+            </span>
+            <button id="open-policy" class="policy-link" type="button" aria-haspopup="dialog" aria-controls="policy-modal">
+                Data, progress & fair play
+            </button>
+        </footer>
     </main>
 
     <!-- TOAST -->
@@ -2232,6 +2404,55 @@ body.install-cta-visible {
             ></iframe>
         </div>
     </div>
+
+
+    <!-- DATA / PROGRESS / FAIR-PLAY NOTICE -->
+    <div id="policy-modal" class="app-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="policy-title">
+        <div class="app-modal__panel policy-panel">
+            <div class="app-modal__header">
+                <div>
+                    <span class="section-kicker">IMPORTANT NOTICE</span>
+                    <h2 id="policy-title" tabindex="-1">Data, progress & fair play</h2>
+                </div>
+                <button id="close-policy" class="icon-button" type="button" aria-label="Close data and fair play notice">✕</button>
+            </div>
+            <div class="policy-body">
+                <p class="policy-summary">
+                    Please read this before clearing browser data, changing devices or attempting to bypass store or security limits.
+                </p>
+                <div class="policy-grid">
+                    <section class="policy-card policy-card--warning">
+                        <h3>Local progress and browser data</h3>
+                        <p>
+                            Many Offline Games stores coins, unlocked content, daily-reward data and game progress locally on this device/browser using browser storage, including <strong>local storage and cache storage</strong>. Clearing cookies/site data, browser storage or cache; using private browsing; resetting/removing the browser or app; changing browser profiles; or some device-cleaning tools can delete that local data. <strong>Locally deleted data may not be recoverable, and recovery cannot be guaranteed.</strong>
+                        </p>
+                    </section>
+                    <section class="policy-card">
+                        <h3>Keep proof of payment</h3>
+                        <p>
+                            Keep your PayPal/payment receipt. A payment receipt and locally stored game data are separate things. If local browser data is removed, the site may no longer have the local information needed to display the same balance, unlocks or progress on that browser.
+                        </p>
+                    </section>
+                    <section class="policy-card">
+                        <h3>Security and fair play</h3>
+                        <p>
+                            Do not use bots or automated abuse, tamper with payment flows or stored values, exploit bugs to obtain paid content, attempt to bypass purchase/credit/security limits, overload endpoints, or interfere with the service. Suspicious or abusive activity may trigger protective measures such as request blocking, rate limits, transaction review, or restriction of affected features <strong>where technically available</strong>. Security limits may change to protect the service.
+                        </p>
+                    </section>
+                    <section class="policy-card">
+                        <h3>Consumer rights</h3>
+                        <p>
+                            These notices explain technical storage and fair-use risks. They do not remove any consumer rights or protections that cannot legally be excluded.
+                        </p>
+                    </section>
+                </div>
+            </div>
+            <div class="policy-actions">
+                <button id="policy-ok" class="primary-button primary-button--wide" type="button">Got it</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Available manually, but hidden during games, checkout and installed use. -->
     <button id="install-launcher" class="install-launcher" type="button"
         aria-label="Save Many Offline Games as an app for quick offline access" title="Save app · Play offline"
@@ -2264,6 +2485,7 @@ body.install-cta-visible {
                 </figure>
                 <ol id="install-steps" class="install-steps" hidden></ol>
                 <p id="install-note" class="install-note"></p>
+                <p class="install-data-warning">Progress and balances are stored locally on this device/browser. Clearing site data can erase them. <button id="install-policy-link" type="button">Read data notice</button>.</p>
                 <p id="install-status" class="install-status" role="status" aria-live="polite"></p>
             </div>
             <div class="install-actions">
@@ -2372,11 +2594,254 @@ class InstallManager {
             || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     }
 
+    browserInfo() {
+        const ua = navigator.userAgent || "";
+        const platform = navigator.platform || "";
+        const appleMobile = this.isAppleMobile();
+        const android = /Android/i.test(ua);
+        const windows = /Windows/i.test(ua) || /Win/i.test(platform);
+        const chromeOS = /CrOS/i.test(ua);
+        const mac = !appleMobile && (/Macintosh|Mac OS X/i.test(ua) || /Mac/i.test(platform));
+        const linux = !android && !chromeOS && (/Linux/i.test(ua) || /Linux/i.test(platform));
+
+        let browser = "other";
+        if (/EdgiOS/i.test(ua)) browser = "edge";
+        else if (/EdgA|Edg\//i.test(ua)) browser = "edge";
+        else if (/CriOS/i.test(ua)) browser = "chrome";
+        else if (/FxiOS/i.test(ua)) browser = "firefox";
+        else if (/OPiOS|OPR\//i.test(ua)) browser = "opera";
+        else if (/SamsungBrowser/i.test(ua)) browser = "samsung";
+        else if (/Firefox\//i.test(ua)) browser = "firefox";
+        else if (/Chrome|Chromium/i.test(ua)) browser = "chrome";
+        else if (/Safari/i.test(ua)) browser = "safari";
+
+        let os = "other";
+        if (appleMobile) os = "ios";
+        else if (android) os = "android";
+        else if (windows) os = "windows";
+        else if (chromeOS) os = "chromeos";
+        else if (mac) os = "mac";
+        else if (linux) os = "linux";
+
+        return { ua, os, browser, appleMobile, android, windows, chromeOS, mac, linux };
+    }
+
     isMacSafari() {
-        return /Macintosh/i.test(navigator.userAgent)
-            && /Safari/i.test(navigator.userAgent)
-            && !/Chrome|Chromium|Edg|OPR/i.test(navigator.userAgent)
-            && !this.isAppleMobile();
+        const info = this.browserInfo();
+        return info.os === "mac" && info.browser === "safari";
+    }
+
+    installCopy() {
+        /*
+         * Browser/device-specific wording. Keep menu labels exact whenever the
+         * browser vendor publishes an official flow. Generic profiles are used
+         * only where mobile browser wording is known to vary between releases.
+         */
+        return {
+            "ios-safari": {
+                title: "Install on iPhone or iPad",
+                intro: "Add Many Offline Games to your Home Screen from Safari.",
+                steps: [
+                    "Tap Share (the square with the upward arrow). If your Safari layout hides it, tap the page/menu button first and then Share.",
+                    "Scroll down and tap Add to Home Screen.",
+                    "Keep Open as Web App enabled, then tap Add. Open the new Many Offline Games icon from your Home Screen."
+                ],
+                note: "Your arcade data is stored on this device. Do not clear this site's browser data if you want to keep local purchases and progress.",
+                manualButton: "Got it"
+            },
+            "ios-chrome": {
+                title: "Install from Chrome on iPhone or iPad",
+                intro: "Chrome can add this arcade directly to your Home Screen.",
+                steps: [
+                    "Tap Share to the right of the address bar.",
+                    "Tap Add to Home Screen.",
+                    "Confirm the name and tap Add, then open Many Offline Games from your Home Screen."
+                ],
+                note: "Install it from this same browser so you do not accidentally switch away from browser-local arcade data.",
+                manualButton: "Got it"
+            },
+            "ios-edge": {
+                title: "Install on iPhone or iPad",
+                intro: "Use the Share menu in Edge to add the arcade to your Home Screen.",
+                steps: [
+                    "Open Edge's Share menu for this page.",
+                    "Choose Add to Home Screen. If it is not visible, scroll through the share actions.",
+                    "Tap Add and open the new Many Offline Games icon from your Home Screen."
+                ],
+                note: "Edge menu wording can vary slightly by iOS version. Use this browser's Share menu first so your local arcade data stays in the same browser context.",
+                manualButton: "Got it"
+            },
+            "ios-firefox": {
+                title: "Install on iPhone or iPad",
+                intro: "Use Firefox's Share menu to add the arcade to your Home Screen.",
+                steps: [
+                    "Open the Share menu for this page.",
+                    "Choose Add to Home Screen.",
+                    "Tap Add and open the new Many Offline Games icon from your Home Screen."
+                ],
+                note: "If Add to Home Screen is not offered in your Firefox/iOS version, Safari or Chrome can install it, but browser-local purchases and progress may not transfer between browsers.",
+                manualButton: "Got it"
+            },
+            "android-chrome": {
+                title: "Install on Android",
+                intro: "Install Many Offline Games from Chrome.",
+                steps: [
+                    "Tap the three-dot menu to the right of the address bar.",
+                    "Tap Install and create shortcut, then tap Install.",
+                    "Confirm the installation and open Many Offline Games from your Home Screen or app launcher."
+                ],
+                note: "If Chrome shows an Install icon directly in the address bar, you can use that instead.",
+                manualButton: "Got it"
+            },
+            "android-firefox": {
+                title: "Install on Android",
+                intro: "Firefox for Android can install this web app from its menu.",
+                steps: [
+                    "Tap the three-dot menu.",
+                    "Tap Install.",
+                    "When Add to Home Screen appears, tap Add automatically or place the icon where you want it."
+                ],
+                note: "If Firefox shows Add to Home Screen instead of Install, use that option and confirm Add.",
+                manualButton: "Got it"
+            },
+            "android-samsung": {
+                title: "Add to your Samsung phone",
+                intro: "Use Samsung Internet's page menu to place the arcade on your Home Screen.",
+                steps: [
+                    "Open the Samsung Internet menu.",
+                    "Choose Add page to, then Home screen (wording can vary slightly by Samsung Internet version).",
+                    "Confirm Add, then open Many Offline Games from your Home Screen."
+                ],
+                note: "Samsung Internet changes some menu labels between versions, so the exact wording may differ slightly.",
+                manualButton: "Got it"
+            },
+            "android-edge": {
+                title: "Install on Android",
+                intro: "Use Edge's menu to add the arcade as an app or Home Screen item.",
+                steps: [
+                    "Open the Edge menu (…).",
+                    "Choose Install app or Add to Home screen if your Edge version shows it.",
+                    "Confirm, then open Many Offline Games from your Home Screen or app launcher."
+                ],
+                note: "Microsoft changes some Edge mobile menu labels between versions. If neither option appears, Chrome provides the most consistent Android install flow.",
+                manualButton: "Got it"
+            },
+            "windows-edge": {
+                title: "Install with Microsoft Edge",
+                intro: "Install this arcade as a Windows app from Edge.",
+                steps: [
+                    "Click the three dots (…) in the top-right corner of Edge.",
+                    "Go to More tools → Apps → Install this site as an app.",
+                    "Click Install in the confirmation window. You can then open Many Offline Games from Start, the taskbar, or edge://apps."
+                ],
+                note: "If Edge shows an App available / Install icon in the address bar, clicking that is an equivalent shortcut.",
+                manualButton: "Got it"
+            },
+            "desktop-edge": {
+                title: "Install with Microsoft Edge",
+                intro: "Install this arcade as an app from Edge.",
+                steps: [
+                    "Click the three dots (…) in the top-right corner of Edge.",
+                    "Go to More tools → Apps → Install this site as an app.",
+                    "Click Install in the confirmation window."
+                ],
+                note: "If Edge shows an App available / Install icon in the address bar, clicking that is an equivalent shortcut.",
+                manualButton: "Got it"
+            },
+            "desktop-chrome": {
+                title: "Install with Google Chrome",
+                intro: "Install Many Offline Games as a desktop web app from Chrome.",
+                steps: [
+                    "Click the three dots (⋮) in the top-right corner of Chrome.",
+                    "Choose Cast, save and share → Install page as app…",
+                    "Confirm Install. If Chrome shows an Install icon in the address bar, you can use that instead."
+                ],
+                note: "Chrome may translate these menu labels if your browser language is not English.",
+                manualButton: "Got it"
+            },
+            "mac-safari": {
+                title: "Add to Dock on Mac",
+                intro: "Safari can turn this arcade into a Mac web app.",
+                steps: [
+                    "In Safari's menu bar, choose File → Add to Dock. You can also use Share → Add to Dock.",
+                    "Check the name and click Add.",
+                    "Open Many Offline Games from the Dock, Applications, or Spotlight."
+                ],
+                note: "This requires a Safari/macOS version that supports web apps.",
+                manualButton: "Got it"
+            },
+            "windows-firefox": {
+                title: "Install with Firefox on Windows",
+                intro: "Firefox for Windows can add websites as web apps.",
+                steps: [
+                    "Click the web-app icon in Firefox's address bar.",
+                    "Firefox installs the site and adds it to the Windows taskbar.",
+                    "Open Many Offline Games from the taskbar or Start menu."
+                ],
+                note: "If the web-app icon is not available in your Firefox version, keep playing in Firefox or use Edge/Chrome for a traditional PWA install. Browser-local data may not transfer between browsers.",
+                manualButton: "Got it"
+            },
+            "desktop-firefox": {
+                title: "Save this arcade",
+                intro: "This Firefox platform does not expose the same reliable install flow as Chromium/Safari.",
+                steps: [
+                    "Check the address bar or browser menu for a web-app/install option.",
+                    "If no install option is available, keep using this browser, or open the site in Chrome/Edge (Safari on Mac) to install it.",
+                    "Remember: browser-local purchases and progress may not transfer when you change browsers."
+                ],
+                note: "The exact Firefox web-app feature set depends on operating system and Firefox version.",
+                manualButton: "Got it"
+            },
+            "generic": {
+                title: "Save Many Offline Games",
+                intro: "Use your browser's install or Home Screen command to save the arcade.",
+                steps: [
+                    "Open your browser's main menu or Share menu.",
+                    "Look for Install app, Install site, Add to Home Screen, or Add to Dock.",
+                    "Confirm the installation. If none of those options exists, your current browser may not support installing this site as an app."
+                ],
+                note: "Menu wording varies on less common browsers. Avoid switching browsers after buying unless necessary, because browser-local data may not transfer.",
+                manualButton: "Got it"
+            }
+        };
+    }
+
+    getInstallProfile() {
+        const info = this.browserInfo();
+        const copy = this.installCopy();
+
+        if (info.os === "ios") {
+            if (info.browser === "chrome") return { key: "ios-chrome", ...copy["ios-chrome"] };
+            if (info.browser === "edge") return { key: "ios-edge", ...copy["ios-edge"] };
+            if (info.browser === "firefox") return { key: "ios-firefox", ...copy["ios-firefox"] };
+            return { key: "ios-safari", ...copy["ios-safari"] };
+        }
+
+        if (info.os === "android") {
+            if (info.browser === "chrome") return { key: "android-chrome", ...copy["android-chrome"] };
+            if (info.browser === "firefox") return { key: "android-firefox", ...copy["android-firefox"] };
+            if (info.browser === "samsung") return { key: "android-samsung", ...copy["android-samsung"] };
+            if (info.browser === "edge") return { key: "android-edge", ...copy["android-edge"] };
+            return { key: "generic", ...copy.generic };
+        }
+
+        if (info.os === "mac" && info.browser === "safari") {
+            return { key: "mac-safari", ...copy["mac-safari"] };
+        }
+
+        if (info.browser === "edge") {
+            return { key: info.os === "windows" ? "windows-edge" : "desktop-edge", ...(info.os === "windows" ? copy["windows-edge"] : copy["desktop-edge"]) };
+        }
+
+        if (info.browser === "chrome") {
+            return { key: "desktop-chrome", ...copy["desktop-chrome"] };
+        }
+
+        if (info.browser === "firefox") {
+            return { key: info.os === "windows" ? "windows-firefox" : "desktop-firefox", ...(info.os === "windows" ? copy["windows-firefox"] : copy["desktop-firefox"]) };
+        }
+
+        return { key: "generic", ...copy.generic };
     }
 
     inStandalone() {
@@ -2508,7 +2973,10 @@ class InstallManager {
         this.finishDialog = finish;
         this.isOpen = true;
         this.shownThisSession = true;
-        this.manualInstructions = this.isAppleMobile();
+        // If the browser has not supplied a native install prompt, show the
+        // exact browser/device instructions immediately instead of making the
+        // user click Save twice.
+        this.manualInstructions = this.isAppleMobile() || !this.deferredPrompt;
         this.data.lastPromptAt = Date.now();
         this.data.lastPromptPurchase = this.data.purchases;
         // Count dismissals, Escape and backdrop clicks too, including after a reload.
@@ -2528,53 +2996,51 @@ class InstallManager {
     }
 
     instructions() {
-        if (this.isAppleMobile()) return [
-            "Open this page in Safari and tap Share (the square with an upward arrow).",
-            "Choose Add to Home Screen. If needed, scroll down or tap More to find it.",
-            "Keep Open as Web App enabled if shown, then tap Add. Open the new arcade icon."
-        ];
-        if (this.isMacSafari()) return [
-            "In Safari, choose File, then Add to Dock.",
-            "Confirm Add, then open the arcade from your Dock."
-        ];
-        if (/Android/i.test(navigator.userAgent)) return [
-            "Open your browser's menu and choose Install app or Add to Home screen.",
-            "Confirm, then open the arcade from your Home screen. If the option is missing, try Chrome."
-        ];
-        if (/Chrome|Chromium|Edg/i.test(navigator.userAgent)) return [
-            "Look for the install icon in the address bar, or open your browser's menu.",
-            "Choose Install Many Offline Games or Install this site as an app. The option may be under Apps or Cast, save and share."
-        ];
-        return [
-            "This browser does not offer installation from this button.",
-            "Use the browser's app-install menu if available, or open this arcade in Chrome or Edge. Progress is not automatically shared between browsers."
-        ];
+        return this.getInstallProfile().steps;
     }
 
     renderDialog() {
-        const apple = this.isAppleMobile();
+        const profile = this.getInstallProfile();
         const localFile = window.location.protocol === "file:";
+        const safariIphoneGuide = profile.key === "ios-safari";
+
         if (localFile) this.manualInstructions = true;
+
+        this.dom.title.textContent = localFile
+            ? "Open the live arcade first"
+            : profile.title;
+
         this.dom.intro.textContent = localFile
-            ? "Open the hosted arcade in your browser to add it as an app."
-            : apple
-                ? "Add Many Offline Games to your Home Screen. Follow the steps below."
-                : "Add Many Offline Games to your device and open your arcade like an app.";
-        this.dom.note.textContent = apple || this.isMacSafari()
-            ? "Installing does not copy this browser's purchases or progress to the app. Keep your browser data; installation is not a backup."
-            : "Progress is already saved in this browser. Installing is not a cloud backup; clearing site data can still remove it.";
+            ? "Installation only works from the hosted HTTPS version of Many Offline Games."
+            : profile.intro;
+
+        this.dom.note.textContent = localFile
+            ? "Open the live store in your normal browser, then use SAVE APP again."
+            : profile.note;
+
         this.dom.steps.replaceChildren();
-        for (const instruction of localFile ? ["Visit the live store over HTTPS, then tap the save icon again."] : this.instructions()) {
+        const instructions = localFile
+            ? ["Visit the live store over HTTPS.", "Tap SAVE APP again there and follow the instructions for your browser."]
+            : profile.steps;
+
+        for (const instruction of instructions) {
             const step = document.createElement("li");
             step.textContent = instruction;
             this.dom.steps.appendChild(step);
         }
+
         this.dom.steps.hidden = !this.manualInstructions;
-        this.dom.animation.hidden = !apple || localFile || this.gifFailed === true;
-        if (apple && !localFile && !this.dom.gif.getAttribute("src")) {
+        this.dom.animation.hidden = !safariIphoneGuide || localFile || this.gifFailed === true;
+
+        if (safariIphoneGuide && !localFile && !this.dom.gif.getAttribute("src")) {
             this.dom.gif.src = InstallManager.IPHONE_GUIDE;
         }
-        this.dom.save.textContent = this.nativeBusy ? "Opening..." : this.manualInstructions ? "OK" : "Save";
+
+        this.dom.save.textContent = this.nativeBusy
+            ? "Opening..."
+            : this.manualInstructions
+                ? (profile.manualButton || "Got it")
+                : "Install app";
         this.dom.save.disabled = this.nativeBusy;
         this.dom.later.hidden = this.manualInstructions;
     }
@@ -3413,6 +3879,16 @@ function closeModal(modal) {
         "true"
     );
     installManager.uiChanged();
+}
+
+function openPolicyModal() {
+    const modal = document.getElementById("policy-modal");
+    openModal(modal);
+    requestAnimationFrame(() => document.getElementById("policy-title")?.focus?.({ preventScroll: true }));
+}
+
+function closePolicyModal() {
+    closeModal(document.getElementById("policy-modal"));
 }
 
 function openRewardModal() {
@@ -5643,6 +6119,26 @@ async function initializeApp() {
         .getElementById("cancel-coin")
         ?.addEventListener("click", closeCoinModal);
 
+
+    document
+        .getElementById("open-policy")
+        ?.addEventListener("click", openPolicyModal);
+
+    document
+        .getElementById("close-policy")
+        ?.addEventListener("click", closePolicyModal);
+
+    document
+        .getElementById("policy-ok")
+        ?.addEventListener("click", closePolicyModal);
+
+    document
+        .getElementById("install-policy-link")
+        ?.addEventListener("click", () => {
+            installManager.dismiss?.();
+            openPolicyModal();
+        });
+
     document
         .getElementById("coin-store")
         ?.addEventListener("click", (event) => {
@@ -5755,6 +6251,10 @@ async function initializeApp() {
 
                         if (modal.id === "coin-modal") {
                             closeCoinModal();
+                        }
+
+                        if (modal.id === "policy-modal") {
+                            closePolicyModal();
                         }
 
                         if (
