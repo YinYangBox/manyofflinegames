@@ -1175,6 +1175,367 @@ body.game-modal-open {
     text-align: center;
 }
 
+
+.reward-progress-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 13px;
+    border: 1px solid rgba(85, 199, 255, 0.18);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(85, 199, 255, 0.07), rgba(255, 216, 92, 0.05));
+}
+
+.reward-progress-card__icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: rgba(85, 199, 255, 0.1);
+    border: 1px solid rgba(85, 199, 255, 0.16);
+    font-size: 1.35rem;
+}
+
+.reward-progress-card strong,
+.reward-progress-card span {
+    display: block;
+}
+
+.reward-progress-card strong {
+    font-size: 0.86rem;
+}
+
+.reward-progress-card span {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+.reward-progress-card .secondary-button {
+    min-height: 40px;
+    padding: 8px 11px;
+    border-radius: 11px;
+    font-size: 0.7rem;
+}
+
+.reward-info-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-top: 10px;
+}
+
+.reward-info-actions .secondary-button {
+    min-height: 42px;
+}
+
+.year-progress {
+    margin: 0 0 16px;
+    padding: 14px;
+    border: 1px solid rgba(85, 230, 165, 0.16);
+    border-radius: 16px;
+    background: rgba(85, 230, 165, 0.045);
+}
+
+.year-progress__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+}
+
+.year-progress__top strong {
+    font-size: 0.95rem;
+}
+
+.year-progress__top span {
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.year-progress__bar,
+.mega-progress__bar {
+    height: 8px;
+    margin-top: 11px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.year-progress__bar > i,
+.mega-progress__bar > i {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.35s ease;
+}
+
+.year-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+}
+
+.year-summary-card {
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid rgba(166, 190, 224, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.year-summary-card span,
+.year-summary-card strong {
+    display: block;
+}
+
+.year-summary-card span {
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.year-summary-card strong {
+    margin-top: 6px;
+    color: var(--muted-strong);
+    font-size: 1rem;
+}
+
+.year-milestones {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.year-milestone {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 12px;
+    border: 1px solid rgba(166, 190, 224, 0.09);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+    font-size: 0.76rem;
+}
+
+.year-milestone span:first-child {
+    color: var(--muted-strong);
+}
+
+.year-milestone span:last-child {
+    color: var(--gold);
+    font-weight: 900;
+    text-align: right;
+}
+
+#reward-modal .app-modal__panel,
+#year-rewards-modal .app-modal__panel,
+#mega-spin-modal .app-modal__panel {
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    display: flex;
+    flex-direction: column;
+}
+
+#reward-modal .reward-panel__body,
+#year-rewards-modal .reward-panel__body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.mega-panel__body {
+    padding: 20px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.mega-status {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.mega-status strong {
+    font-size: 1rem;
+}
+
+.mega-status span {
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.mega-stage {
+    position: relative;
+    width: min(310px, 78vw);
+    aspect-ratio: 1;
+    margin: 0 auto 16px;
+}
+
+.mega-pointer {
+    position: absolute;
+    z-index: 3;
+    top: -3px;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform: translateX(-50%);
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+    border-top: 24px solid var(--gold);
+    filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.45));
+}
+
+.mega-wheel {
+    position: absolute;
+    inset: 10px;
+    border: 7px solid rgba(255, 255, 255, 0.13);
+    border-radius: 50%;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.38), inset 0 0 0 2px rgba(255,255,255,0.08);
+    will-change: transform;
+}
+
+.mega-wheel::after {
+    content: "MEGA\A SPIN";
+    white-space: pre;
+    position: absolute;
+    inset: 34%;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: var(--text);
+    border: 5px solid rgba(255, 255, 255, 0.14);
+    border-radius: 50%;
+    background: #0b1728;
+    box-shadow: 0 10px 28px rgba(0,0,0,.42);
+    font-size: 0.72rem;
+    font-weight: 950;
+    line-height: 1.05;
+    letter-spacing: 0.08em;
+}
+
+.mega-result {
+    min-height: 54px;
+    display: grid;
+    place-items: center;
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 216, 92, 0.18);
+    border-radius: 14px;
+    color: var(--muted-strong);
+    background: rgba(255, 216, 92, 0.05);
+    text-align: center;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.mega-result strong {
+    color: var(--gold);
+}
+
+.mega-progress {
+    margin-bottom: 13px;
+}
+
+.mega-progress__copy {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.mega-actions {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 9px;
+}
+
+.mega-actions .primary-button,
+.mega-actions .secondary-button {
+    min-width: 0;
+}
+
+.mega-rewards-panel {
+    margin-top: 13px;
+    padding: 13px;
+    border: 1px solid rgba(166, 190, 224, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.mega-rewards-panel[hidden] {
+    display: none !important;
+}
+
+.mega-reward-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(166, 190, 224, 0.08);
+    font-size: 0.75rem;
+}
+
+.mega-reward-row:last-child {
+    border-bottom: 0;
+}
+
+.mega-reward-row span:first-child {
+    color: var(--muted-strong);
+}
+
+.mega-reward-row span:last-child {
+    color: var(--gold);
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.mega-note {
+    margin: 11px 0 0;
+    color: var(--muted);
+    font-size: 0.7rem;
+    line-height: 1.45;
+    text-align: center;
+}
+
+@media (max-width: 520px) {
+    .reward-progress-card {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+    .reward-progress-card .secondary-button {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+    .year-summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .mega-stage {
+        width: min(280px, 80vw);
+    }
+    .mega-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 360px) {
+    .year-summary-grid {
+        grid-template-columns: 1fr;
+    }
+    .mega-stage {
+        width: min(245px, 78vw);
+    }
+}
+
 .game-modal {
     z-index: 1100;
 }
@@ -2318,38 +2679,122 @@ body.install-cta-visible {
 
             <div class="reward-panel__body">
                 <div class="reward-hero">
-                    <div class="reward-hero__icon">
-                        🎁
-                    </div>
-
+                    <div class="reward-hero__icon">🎁</div>
                     <div>
-                        <strong id="reward-streak">
-                            Day 1 streak
-                        </strong>
-
-                        <span id="reward-next-text">
-                            Claim today to keep it going.
-                        </span>
+                        <strong id="reward-streak">Day 1 streak</strong>
+                        <span id="reward-next-text">Claim today to keep it going.</span>
                     </div>
                 </div>
 
-                <div
-                    id="reward-list"
-                    class="reward-list"
-                ></div>
+                <div class="reward-progress-card">
+                    <div class="reward-progress-card__icon">🎡</div>
+                    <div>
+                        <strong id="mega-progress-title">Mega Spin progress</strong>
+                        <span id="mega-progress-text">0 / 30 daily claims</span>
+                    </div>
+                    <button id="open-mega-spin" class="secondary-button" type="button">MEGA SPIN</button>
+                </div>
 
-                <button
-                    id="claim-daily"
-                    class="primary-button primary-button--wide"
-                    type="button"
-                >
+                <div id="reward-list" class="reward-list"></div>
+
+                <button id="claim-daily" class="primary-button primary-button--wide" type="button">
                     Claim today's reward
                 </button>
 
+                <div class="reward-info-actions">
+                    <button id="open-year-rewards" class="secondary-button" type="button">
+                        VIEW YEAR REWARDS
+                    </button>
+                </div>
+
                 <p class="reward-footnote">
-                    Miss a day and your streak starts over.
-                    Rewards repeat after day 7.
+                    Missing a day resets only the 7-day coin streak. Mega Spin and yearly progress never reset when you miss a day.
                 </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- YEAR REWARDS MODAL -->
+    <div id="year-rewards-modal" class="app-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="year-rewards-title">
+        <div class="app-modal__panel reward-panel">
+            <div class="app-modal__header">
+                <div>
+                    <span class="section-kicker">365-DAY REWARD TRACK</span>
+                    <h2 id="year-rewards-title">What you can earn in a year</h2>
+                </div>
+                <button id="close-year-rewards" class="icon-button" type="button" aria-label="Close yearly rewards">✕</button>
+            </div>
+            <div class="reward-panel__body">
+                <div class="year-progress">
+                    <div class="year-progress__top">
+                        <strong id="year-progress-title">0 / 365 claims</strong>
+                        <span id="year-progress-next">Start your yearly track</span>
+                    </div>
+                    <div class="year-progress__bar"><i id="year-progress-bar"></i></div>
+                </div>
+
+                <div class="year-summary-grid">
+                    <div class="year-summary-card"><span>Daily coins</span><strong>14,570 🪙</strong></div>
+                    <div class="year-summary-card"><span>Mega Spins</span><strong>12 🎡</strong></div>
+                    <div class="year-summary-card"><span>Free-game drops</span><strong>4 🎮</strong></div>
+                    <div class="year-summary-card"><span>Daily claims</span><strong>365 🎁</strong></div>
+                </div>
+
+                <div class="year-milestones">
+                    <div class="year-milestone"><span>Every 30 daily claims</span><span>+1 Mega Spin</span></div>
+                    <div class="year-milestone"><span>Day 90</span><span>Free game</span></div>
+                    <div class="year-milestone"><span>Day 180</span><span>Free game</span></div>
+                    <div class="year-milestone"><span>Day 270</span><span>Free game</span></div>
+                    <div class="year-milestone"><span>Day 365</span><span>Free game</span></div>
+                </div>
+
+                <p class="reward-footnote">
+                    The 14,570 coins come from the normal 7-day daily-reward cycle if you claim every day for 365 days. Mega Spin prizes are extra. If a free-game reward selects a game you already own, you receive 50% of that game's coin price instead.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MEGA SPIN MODAL -->
+    <div id="mega-spin-modal" class="app-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="mega-spin-title">
+        <div class="app-modal__panel reward-panel">
+            <div class="app-modal__header">
+                <div>
+                    <span class="section-kicker">MONTHLY-STYLE BONUS</span>
+                    <h2 id="mega-spin-title">Mega Spin</h2>
+                </div>
+                <button id="close-mega-spin" class="icon-button" type="button" aria-label="Close Mega Spin">✕</button>
+            </div>
+            <div class="mega-panel__body">
+                <div class="mega-status">
+                    <strong id="mega-spins-available">0 spins available</strong>
+                    <span id="mega-status-copy">Claim 30 daily rewards to unlock a spin.</span>
+                </div>
+
+                <div class="mega-stage" aria-hidden="true">
+                    <div class="mega-pointer"></div>
+                    <div id="mega-wheel" class="mega-wheel"></div>
+                </div>
+
+                <div id="mega-result" class="mega-result" aria-live="polite">
+                    Your next Mega Spin can award coins or free games.
+                </div>
+
+                <div class="mega-progress">
+                    <div class="mega-progress__copy">
+                        <span id="mega-progress-modal-copy">0 / 30 claims</span>
+                        <span>1 spin every 30 claims</span>
+                    </div>
+                    <div class="mega-progress__bar"><i id="mega-progress-modal-bar"></i></div>
+                </div>
+
+                <div class="mega-actions">
+                    <button id="spin-mega" class="primary-button" type="button">SPIN</button>
+                    <button id="toggle-mega-rewards" class="secondary-button" type="button">VIEW REWARDS</button>
+                </div>
+
+                <div id="mega-rewards-panel" class="mega-rewards-panel" hidden></div>
+                <p class="mega-note">Mega Spins are earned only from daily claims; they are not sold. Higher-value rewards are rarer.</p>
             </div>
         </div>
     </div>
@@ -3160,6 +3605,23 @@ const LOCAL_LEDGER_SLOTS = Object.freeze([
 const LOCAL_LEDGER_VERSION = 2;
 
 const DAILY_REWARDS = [10, 20, 30, 40, 50, 60, 70];
+const YEAR_TRACK_DAYS = 365;
+const MEGA_SPIN_EVERY = 30;
+const YEAR_FREE_GAME_DAYS = Object.freeze([90, 180, 270, 365]);
+const YEAR_DAILY_COIN_TOTAL = 14570;
+const MEGA_SPIN_PRIZES = Object.freeze([
+    { id: "c200", type: "coins", amount: 200, weight: 25, label: "200 coins", color: "#173f4e" },
+    { id: "c300", type: "coins", amount: 300, weight: 20, label: "300 coins", color: "#185348" },
+    { id: "c500", type: "coins", amount: 500, weight: 16, label: "500 coins", color: "#315041" },
+    { id: "c800", type: "coins", amount: 800, weight: 12, label: "800 coins", color: "#5a4c2b" },
+    { id: "c1200", type: "coins", amount: 1200, weight: 8, label: "1,200 coins", color: "#6a432a" },
+    { id: "c2000", type: "coins", amount: 2000, weight: 5, label: "2,000 coins", color: "#663448" },
+    { id: "c3000", type: "coins", amount: 3000, weight: 2.5, label: "3,000 coins", color: "#4c3c70" },
+    { id: "g1", type: "games", count: 1, weight: 7, label: "1 free game", color: "#24486c" },
+    { id: "g2", type: "games", count: 2, weight: 2.5, label: "2-game pack", color: "#2d356f" },
+    { id: "g3", type: "games", count: 3, weight: 1.5, label: "3-game pack", color: "#633b73" },
+    { id: "jackpot", type: "coins", amount: 10000, weight: 0.5, label: "10,000 JACKPOT", color: "#7b5d16" }
+]);
 const CREDIT_PACKS = [
     { credits: 100, coins: 10 },
     { credits: 300, coins: 25 },
@@ -3184,6 +3646,8 @@ const DEFAULT_STATE = {
     coins: 0,
     lastDailyClaim: "",
     dailyStreak: 0,
+    dailyClaimsTotal: 0,
+    megaSpins: 0,
     unlocked: [],
     codeUnlocked: []
 };
@@ -3254,6 +3718,8 @@ document.addEventListener("keydown", (event) => {
         closePackModal();
         closeCoinModal();
         closeRewardModal();
+        closeYearRewardsModal();
+        closeMegaSpinModal();
         closeGameModal();
     }
 });
@@ -3279,6 +3745,18 @@ function normalizeState(data) {
 
     const lastDailyClaim = String(
         data?.lastDailyClaim || ""
+    );
+
+    const hasDailyClaimsTotal = data && Object.prototype.hasOwnProperty.call(data, "dailyClaimsTotal");
+    const dailyClaimsTotal = Math.max(
+        0,
+        Math.floor(Number(hasDailyClaimsTotal ? data.dailyClaimsTotal : dailyStreak) || 0)
+    );
+
+    const hasMegaSpins = data && Object.prototype.hasOwnProperty.call(data, "megaSpins");
+    const megaSpins = Math.max(
+        0,
+        Math.floor(Number(hasMegaSpins ? data.megaSpins : Math.floor(dailyClaimsTotal / MEGA_SPIN_EVERY)) || 0)
     );
 
     const unlocked = Array.isArray(data?.unlocked)
@@ -3307,6 +3785,8 @@ function normalizeState(data) {
         coins: 0,
         lastDailyClaim,
         dailyStreak,
+        dailyClaimsTotal,
+        megaSpins,
         unlocked,
         codeUnlocked
     };
@@ -3316,6 +3796,8 @@ function getCachedStateSnapshot() {
     return JSON.stringify({
         lastDailyClaim: appState.lastDailyClaim,
         dailyStreak: appState.dailyStreak,
+        dailyClaimsTotal: appState.dailyClaimsTotal,
+        megaSpins: appState.megaSpins,
         unlocked: appState.unlocked,
         codeUnlocked: appState.codeUnlocked
     });
@@ -3776,6 +4258,108 @@ function getNextRewardForToday() {
 }
 
 
+function getYearTrackDay(totalClaims = appState.dailyClaimsTotal) {
+    const total = Math.max(0, Math.floor(Number(totalClaims) || 0));
+    if (total === 0) return 0;
+    const remainder = total % YEAR_TRACK_DAYS;
+    return remainder === 0 ? YEAR_TRACK_DAYS : remainder;
+}
+
+function getMegaSpinProgress(totalClaims = appState.dailyClaimsTotal) {
+    const total = Math.max(0, Math.floor(Number(totalClaims) || 0));
+    return total % MEGA_SPIN_EVERY;
+}
+
+function secureRandomUnit() {
+    try {
+        if (globalThis.crypto?.getRandomValues) {
+            const value = new Uint32Array(1);
+            globalThis.crypto.getRandomValues(value);
+            return value[0] / 0x100000000;
+        }
+    } catch (_) {}
+    return Math.random();
+}
+
+function chooseMegaSpinPrize() {
+    const totalWeight = MEGA_SPIN_PRIZES.reduce((sum, prize) => sum + prize.weight, 0);
+    let roll = secureRandomUnit() * totalWeight;
+    for (const prize of MEGA_SPIN_PRIZES) {
+        if (roll < prize.weight) return prize;
+        roll -= prize.weight;
+    }
+    return MEGA_SPIN_PRIZES[0];
+}
+
+function getPrizeSegmentCenter(prizeId) {
+    const totalWeight = MEGA_SPIN_PRIZES.reduce((sum, prize) => sum + prize.weight, 0);
+    let cumulative = 0;
+    for (const prize of MEGA_SPIN_PRIZES) {
+        const start = cumulative / totalWeight * 360;
+        cumulative += prize.weight;
+        const end = cumulative / totalWeight * 360;
+        if (prize.id === prizeId) return (start + end) / 2;
+    }
+    return 0;
+}
+
+function buildMegaWheelGradient() {
+    const totalWeight = MEGA_SPIN_PRIZES.reduce((sum, prize) => sum + prize.weight, 0);
+    let cumulative = 0;
+    const stops = MEGA_SPIN_PRIZES.map((prize) => {
+        const start = cumulative / totalWeight * 100;
+        cumulative += prize.weight;
+        const end = cumulative / totalWeight * 100;
+        return `${prize.color} ${start.toFixed(3)}% ${end.toFixed(3)}%`;
+    });
+    return `conic-gradient(${stops.join(",")})`;
+}
+
+function getRandomDistinctGames(count) {
+    const pool = [...defaultGames];
+    const selected = [];
+    while (pool.length && selected.length < count) {
+        const index = Math.floor(secureRandomUnit() * pool.length);
+        selected.push(pool.splice(index, 1)[0]);
+    }
+    return selected;
+}
+
+function awardGameReward(count = 1) {
+    const games = getRandomDistinctGames(count);
+    const unlockedNames = [];
+    const duplicateNames = [];
+    let compensation = 0;
+
+    for (const game of games) {
+        const gameId = getGameIdentifier(game);
+        if (isGameUnlocked(gameId)) {
+            const refund = Math.max(1, Math.floor(getGameCost(game) * 0.5));
+            compensation += refund;
+            duplicateNames.push(`${game.name || gameId} (+${refund} coins)`);
+        } else {
+            appState.unlocked = [...new Set([...appState.unlocked, gameId])];
+            unlockedNames.push(game.name || gameId);
+        }
+    }
+
+    if (compensation > 0) appState.coins += compensation;
+
+    return { games, unlockedNames, duplicateNames, compensation };
+}
+
+function formatGameRewardResult(result) {
+    const parts = [];
+    if (result.unlockedNames.length) {
+        parts.push(`Unlocked: ${result.unlockedNames.join(", ")}`);
+    }
+    if (result.duplicateNames.length) {
+        parts.push(`Already owned → 50% back: ${result.duplicateNames.join(", ")}`);
+    }
+    return parts.join(" • ") || "Game reward added.";
+}
+
+
 // ======================================================
 // UI STATE
 // ======================================================
@@ -3933,6 +4517,159 @@ function closeRewardModal() {
 }
 
 
+function openYearRewardsModal() {
+    renderYearRewards();
+    openModal(document.getElementById("year-rewards-modal"));
+}
+
+function closeYearRewardsModal() {
+    closeModal(document.getElementById("year-rewards-modal"));
+}
+
+let megaWheelRotation = 0;
+let megaSpinBusy = false;
+
+function openMegaSpinModal() {
+    renderMegaSpin();
+    openModal(document.getElementById("mega-spin-modal"));
+}
+
+function closeMegaSpinModal() {
+    if (megaSpinBusy) {
+        showToast("Wait for the Mega Spin to finish.", "info");
+        return;
+    }
+    closeModal(document.getElementById("mega-spin-modal"));
+}
+
+function renderYearRewards() {
+    const day = getYearTrackDay();
+    const progress = day / YEAR_TRACK_DAYS * 100;
+    const title = document.getElementById("year-progress-title");
+    const next = document.getElementById("year-progress-next");
+    const bar = document.getElementById("year-progress-bar");
+
+    if (title) title.textContent = `${day} / ${YEAR_TRACK_DAYS} claims`;
+    if (bar) bar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+
+    if (next) {
+        const upcoming = YEAR_FREE_GAME_DAYS.find((milestone) => milestone > day);
+        if (day === YEAR_TRACK_DAYS) {
+            next.textContent = "Year track complete — the next claim starts a new track";
+        } else if (upcoming) {
+            next.textContent = `${upcoming - day} claims to the next free-game drop`;
+        } else {
+            next.textContent = "Keep claiming daily rewards";
+        }
+    }
+}
+
+function renderMegaSpinRewardsPanel() {
+    const panel = document.getElementById("mega-rewards-panel");
+    if (!panel) return;
+    panel.innerHTML = MEGA_SPIN_PRIZES.map((prize) => `
+        <div class="mega-reward-row">
+            <span>${prize.label}</span>
+            <span>${prize.weight}%</span>
+        </div>
+    `).join("") + `
+        <p class="mega-note">If a game reward gives you a game you already own, you receive 50% of that game's coin price instead.</p>
+    `;
+}
+
+function renderMegaSpin() {
+    const wheel = document.getElementById("mega-wheel");
+    const available = document.getElementById("mega-spins-available");
+    const copy = document.getElementById("mega-status-copy");
+    const spin = document.getElementById("spin-mega");
+    const progressCopy = document.getElementById("mega-progress-modal-copy");
+    const progressBar = document.getElementById("mega-progress-modal-bar");
+    const progress = getMegaSpinProgress();
+
+    if (wheel && !wheel.dataset.ready) {
+        wheel.style.background = buildMegaWheelGradient();
+        wheel.dataset.ready = "1";
+    }
+
+    if (available) {
+        available.textContent = `${appState.megaSpins} spin${appState.megaSpins === 1 ? "" : "s"} available`;
+    }
+
+    if (copy) {
+        copy.textContent = appState.megaSpins > 0
+            ? "Your Mega Spin is ready. Good luck."
+            : `${MEGA_SPIN_EVERY - progress} more daily claim${MEGA_SPIN_EVERY - progress === 1 ? "" : "s"} to unlock the next spin.`;
+    }
+
+    if (spin) {
+        spin.disabled = megaSpinBusy || appState.megaSpins < 1;
+        spin.textContent = megaSpinBusy ? "SPINNING…" : appState.megaSpins > 0 ? "SPIN NOW" : "LOCKED";
+    }
+
+    if (progressCopy) progressCopy.textContent = `${progress} / ${MEGA_SPIN_EVERY} claims`;
+    if (progressBar) progressBar.style.width = `${progress / MEGA_SPIN_EVERY * 100}%`;
+
+    renderMegaSpinRewardsPanel();
+}
+
+async function performMegaSpin() {
+    if (megaSpinBusy || appState.megaSpins < 1) return;
+
+    if (!defaultGames.length) {
+        await loadGamesList();
+    }
+
+    const prize = chooseMegaSpinPrize();
+    const wheel = document.getElementById("mega-wheel");
+    const resultNode = document.getElementById("mega-result");
+    const spinButton = document.getElementById("spin-mega");
+
+    megaSpinBusy = true;
+    appState.megaSpins -= 1;
+
+    let resultText = "";
+    let libraryChanged = false;
+
+    if (prize.type === "coins") {
+        appState.coins += prize.amount;
+        resultText = `You won ${prize.amount.toLocaleString("en-US")} coins!`;
+    } else {
+        const rewardResult = awardGameReward(prize.count);
+        libraryChanged = rewardResult.unlockedNames.length > 0;
+        resultText = formatGameRewardResult(rewardResult);
+    }
+
+    await saveState();
+
+    if (resultNode) resultNode.innerHTML = "Spinning…";
+    if (spinButton) {
+        spinButton.disabled = true;
+        spinButton.textContent = "SPINNING…";
+    }
+
+    if (wheel) {
+        const centerAngle = getPrizeSegmentCenter(prize.id);
+        const currentMod = ((megaWheelRotation % 360) + 360) % 360;
+        const delta = (360 - centerAngle - currentMod + 360) % 360;
+        megaWheelRotation += 1800 + delta;
+        wheel.style.transition = "transform 4.8s cubic-bezier(.12,.72,.12,1)";
+        wheel.style.transform = `rotate(${megaWheelRotation}deg)`;
+    }
+
+    window.setTimeout(() => {
+        megaSpinBusy = false;
+        renderCoins();
+        if (libraryChanged) renderLibraries();
+        renderRewardList();
+        renderMegaSpin();
+        if (resultNode) {
+            resultNode.innerHTML = `<strong>${prize.label}</strong><br>${resultText}`;
+        }
+        showToast(`Mega Spin: ${prize.label}!`, "success");
+    }, 4900);
+}
+
+
 // ======================================================
 // DAILY REWARD UI
 // ======================================================
@@ -4029,6 +4766,33 @@ function renderRewardList() {
             ).join("");
     }
 
+    const megaProgress = getMegaSpinProgress();
+    const megaTitle = document.getElementById("mega-progress-title");
+    const megaText = document.getElementById("mega-progress-text");
+    const megaButton = document.getElementById("open-mega-spin");
+    const yearButton = document.getElementById("open-year-rewards");
+    const yearDay = getYearTrackDay();
+
+    if (megaTitle) {
+        megaTitle.textContent = appState.megaSpins > 0
+            ? "MEGA SPIN READY"
+            : `${MEGA_SPIN_EVERY - megaProgress} claims to Mega Spin`;
+    }
+
+    if (megaText) {
+        megaText.textContent = `${megaProgress} / ${MEGA_SPIN_EVERY} daily claims • ${appState.megaSpins} spin${appState.megaSpins === 1 ? "" : "s"} saved`;
+    }
+
+    if (megaButton) {
+        megaButton.textContent = appState.megaSpins > 0
+            ? `SPIN NOW${appState.megaSpins > 1 ? ` (${appState.megaSpins})` : ""}`
+            : "VIEW MEGA SPIN";
+    }
+
+    if (yearButton) {
+        yearButton.textContent = `VIEW YEAR REWARDS • ${yearDay}/${YEAR_TRACK_DAYS}`;
+    }
+
     if (claimButton) {
         claimButton.disabled =
             status.claimedToday;
@@ -4064,37 +4828,55 @@ function updateRewardButton() {
 }
 
 async function claimDailyReward() {
-    const status =
-        getDailyStatus();
+    const status = getDailyStatus();
 
     if (status.claimedToday) {
-        showToast(
-            "You already claimed today's reward.",
-            "info"
-        );
-
+        showToast("You already claimed today's reward.", "info");
         return;
     }
 
-    const reward =
-        getNextRewardForToday();
+    const reward = getNextRewardForToday();
+    const nextClaimsTotal = appState.dailyClaimsTotal + 1;
+    const yearDay = getYearTrackDay(nextClaimsTotal);
+    const unlocksMegaSpin = nextClaimsTotal % MEGA_SPIN_EVERY === 0;
+    const freeGameMilestone = YEAR_FREE_GAME_DAYS.includes(yearDay);
 
-    appState.coins +=
-        reward;
+    if (freeGameMilestone && !defaultGames.length) {
+        await loadGamesList();
+    }
 
-    appState.lastDailyClaim =
-        status.today;
+    appState.coins += reward;
+    appState.lastDailyClaim = status.today;
+    appState.dailyStreak = status.streak;
+    appState.dailyClaimsTotal = nextClaimsTotal;
 
-    appState.dailyStreak =
-        status.streak;
+    if (unlocksMegaSpin) {
+        appState.megaSpins += 1;
+    }
+
+    let bonusText = "";
+    let libraryChanged = false;
+
+    if (freeGameMilestone && defaultGames.length) {
+        const gameReward = awardGameReward(1);
+        libraryChanged = gameReward.unlockedNames.length > 0;
+        bonusText = formatGameRewardResult(gameReward);
+    }
 
     renderCoins();
+    if (libraryChanged) renderLibraries();
     renderRewardList();
+    renderYearRewards();
+    renderMegaSpin();
 
     await saveState();
 
+    const extras = [];
+    if (unlocksMegaSpin) extras.push("Mega Spin unlocked!");
+    if (bonusText) extras.push(bonusText);
+
     showToast(
-        `Daily reward claimed: +${reward} coins!`,
+        `Daily reward: +${reward} coins${extras.length ? ` • ${extras.join(" • ")}` : ""}`,
         "success"
     );
 }
@@ -6027,6 +6809,8 @@ async function initializeApp() {
 
     renderCoins();
     renderRewardList();
+    renderYearRewards();
+    renderMegaSpin();
     updateConnectionStatus();
 
     window.addEventListener(
@@ -6092,6 +6876,31 @@ async function initializeApp() {
             "click",
             claimDailyReward
         );
+
+
+    document.getElementById("open-year-rewards")
+        ?.addEventListener("click", openYearRewardsModal);
+
+    document.getElementById("close-year-rewards")
+        ?.addEventListener("click", closeYearRewardsModal);
+
+    document.getElementById("open-mega-spin")
+        ?.addEventListener("click", openMegaSpinModal);
+
+    document.getElementById("close-mega-spin")
+        ?.addEventListener("click", closeMegaSpinModal);
+
+    document.getElementById("spin-mega")
+        ?.addEventListener("click", performMegaSpin);
+
+    document.getElementById("toggle-mega-rewards")
+        ?.addEventListener("click", () => {
+            const panel = document.getElementById("mega-rewards-panel");
+            const button = document.getElementById("toggle-mega-rewards");
+            if (!panel) return;
+            panel.hidden = !panel.hidden;
+            if (button) button.textContent = panel.hidden ? "VIEW REWARDS" : "HIDE REWARDS";
+        });
 
     document
         .getElementById(
@@ -6267,6 +7076,14 @@ async function initializeApp() {
                             "reward-modal"
                         ) {
                             closeRewardModal();
+                        }
+
+                        if (modal.id === "year-rewards-modal") {
+                            closeYearRewardsModal();
+                        }
+
+                        if (modal.id === "mega-spin-modal") {
+                            closeMegaSpinModal();
                         }
 
                         if (modal.id === "pack-modal") {
