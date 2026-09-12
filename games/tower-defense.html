@@ -8,7 +8,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#07111d">
     <title>
       Tower Defense Arcade
@@ -33,31 +33,44 @@
       box-sizing: border-box;
     }
     html, body {
+      width: 100%;
+      min-width: 0;
       margin: 0;
       min-height: 100%;
       background: var(--bg);
       color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
     body {
       overflow-x: hidden;
-      background:  radial-gradient(circle at 12% 10%, rgba(48, 132, 159, .17), transparent 32%), radial-gradient(circle at 88% 90%,
+      overscroll-behavior-x: none;
+      background: radial-gradient(circle at 12% 10%, rgba(48, 132, 159, .17), transparent 32%), radial-gradient(circle at 88% 90%,
       rgba(232, 153, 54, .11), transparent 30%), var(--bg);
     }
     button {
       font: inherit;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     button:focus-visible {
       outline: 2px solid var(--cyan);
       outline-offset: 2px;
     }
     .app {
+      min-height: 100vh;
       min-height: 100dvh;
     }
     .screen {
       display: none;
+      min-height: 100vh;
       min-height: 100dvh;
-      padding: 20px;
+      padding:
+        max(20px, env(safe-area-inset-top))
+        max(20px, env(safe-area-inset-right))
+        max(20px, env(safe-area-inset-bottom))
+        max(20px, env(safe-area-inset-left));
     }
     .screen.active {
       display: block;
@@ -137,6 +150,7 @@
     }
     .home {
       max-width: 1180px;
+      min-height: calc(100vh - 98px);
       min-height: calc(100dvh - 98px);
       display: grid;
       grid-template-columns: 1.1fr .9fr;
@@ -650,6 +664,7 @@
       padding: 0;
     }
     .game-layout {
+      min-height: 100vh;
       min-height: 100dvh;
       display: grid;
       grid-template-columns: minmax(0, 1fr) 328px;
@@ -720,20 +735,27 @@
     }
     .canvas-shell {
       position: relative;
+      width: min(100%, calc((100vh - 96px) * 1.6));
       width: min(100%, calc((100dvh - 96px) * 1.6));
+      max-width: 100%;
       aspect-ratio: 16/10;
       border: 1px solid rgba(255, 255, 255, .15);
       border-radius: 18px;
       overflow: hidden;
       background: #142537;
       box-shadow: var(--shadow);
-      touch-action: none
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     .canvas-shell canvas {
       display: block;
       width: 100%;
       height: 100%;
-      cursor: crosshair
+      cursor: crosshair;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     .wave-banner {
       position: absolute;
@@ -775,11 +797,16 @@
       font-size: 10px
     }
     .game-side {
+      position: relative;
+      min-width: 0;
+      min-height: 100vh;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
       gap: 12px;
       padding: 18px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       border-left: 1px solid var(--line);
       background: rgba(8, 15, 27, .8);
     }
@@ -952,8 +979,8 @@
     .toast-stack {
       position: fixed;
       z-index: 30;
-      right: 18px;
-      bottom: 18px;
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(18px, env(safe-area-inset-bottom));
       display: grid;
       gap: 8px;
       pointer-events: none
@@ -1099,19 +1126,15 @@
         min-height: 100px
       }
       .wave-card {
-        position: absolute;
-        z-index: 5;
-        left: 58px;
-        right: 8px;
-        top: 11px;
-        pointer-events: none
+        position: static;
+        pointer-events: none;
       }
       .game-bar {
         padding-right: 3px
       }
-      .game-bar .hud-item:nth-of-type(3) {
-        display: none
-      }
+      /* Keep Lives, Energy and Wave visible on tablets/phones.
+         The previous nth-of-type selector accidentally hid ENERGY because
+         .game-name is also a div inside .game-bar. */
       .side-actions {
         grid-template-columns: repeat(4, 1fr)
       }
@@ -1124,13 +1147,18 @@
     }
     @media(max-width:600px) {
       .screen {
-        padding: 10px
+        padding:
+          max(10px, env(safe-area-inset-top))
+          max(10px, env(safe-area-inset-right))
+          max(10px, env(safe-area-inset-bottom))
+          max(10px, env(safe-area-inset-left));
       }
       .topbar {
         height: 50px
       }
       .home {
-        min-height: calc(100dvh - 60px)
+        min-height: calc(100vh - 60px);
+        min-height: calc(100dvh - 60px);
       }
       .hero {
         min-height: 245px
@@ -1189,6 +1217,15 @@
       .game-bar .credit-chip {
         display: none
       }
+      .game-name {
+        flex: 1 1 52px;
+        overflow: hidden;
+      }
+      .game-name strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
       .canvas-shell {
         border-radius: 10px
       }
@@ -1200,32 +1237,70 @@
         padding: 6px
       }
       .tower-card strong {
-        font-size: 7px
+        font-size: 9px
       }
       .tower-card b {
-        font-size: 7px
+        font-size: 8px
       }
       .selection h3 {
         font-size: 13px
       }
       .selection p {
-        font-size: 7px
+        font-size: 10px
       }
       .modal {
         padding: 20px
       }
     }
+
+    @media(max-width:380px) {
+      .game-main {
+        padding-left: max(4px, env(safe-area-inset-left));
+        padding-right: max(4px, env(safe-area-inset-right));
+      }
+      .game-bar {
+        gap: 5px;
+      }
+      .game-bar .back {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+      }
+      .game-name {
+        flex-basis: 30px;
+      }
+      .game-name strong {
+        font-size: 8px;
+      }
+      .hud-item {
+        min-width: 43px;
+      }
+      .hud-item span {
+        font-size: 5.5px;
+        letter-spacing: .35px;
+      }
+      .hud-item strong {
+        font-size: 10px;
+      }
+    }
+
     @media(orientation:landscape) and (max-height:560px) {
       .game-layout {
-        grid-template-columns: minmax(0, 1fr) 285px
+        grid-template-columns: minmax(0, 1fr) clamp(215px, 38vw, 285px);
       }
       .game-main {
-        height: 100dvh
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
       }
       .game-side {
+        min-height: 100vh;
         min-height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
         padding: 8px;
-        gap: 6px
+        gap: 6px;
+        overflow-y: auto;
       }
       .side-head {
         display: none
@@ -1234,10 +1309,10 @@
         grid-template-columns: repeat(3, 1fr)
       }
       .tower-list {
-        grid-template-columns: repeat(5, 1fr)
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .tower-card {
-        min-height: 54px
+        min-height: 48px
       }
       .tower-card span, .tower-dot {
         display: none
@@ -1255,9 +1330,72 @@
         height: 43px
       }
       .canvas-shell {
-        width: min(100%, calc((100dvh - 58px)*1.6))
+        width: min(100%, calc((100vh - 58px)*1.6));
+        width: min(100%, calc((100dvh - 58px)*1.6));
       }
     }
+    @media (pointer: coarse) {
+      .btn, .back, .difficulty, .selected-map, .tower-card, .target-row button {
+        min-height: 44px;
+      }
+      .tower-card {
+        touch-action: manipulation;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .hero h1 {
+        font-size: 48px;
+        letter-spacing: -3px;
+      }
+      .setup {
+        padding: 13px;
+      }
+      .difficulty-grid, .quick {
+        gap: 7px;
+      }
+      .selected-map {
+        grid-template-columns: 44px minmax(0, 1fr) auto;
+        gap: 9px;
+      }
+      .map-emblem {
+        width: 44px;
+        height: 44px;
+        font-size: 24px;
+      }
+      .game-name {
+        display: none;
+      }
+      .hud-item {
+        min-width: 44px;
+      }
+      .side-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .side-actions .next-wave {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 420px) {
+      .game-side .label {
+        margin-bottom: 4px;
+      }
+      .selection {
+        min-height: 76px;
+        padding: 9px;
+      }
+      .selection p {
+        display: none;
+      }
+      .wave-stat {
+        padding: 6px 3px;
+      }
+      .side-actions .btn {
+        min-height: 40px;
+      }
+    }
+
     @media(prefers-reduced-motion:reduce) {
       * {
         animation-duration: .01ms!important;
@@ -1947,13 +2085,48 @@
   let lastTime = 0;
   let nextId = 1;
   let audio = null;
+  let canvasScale = 1;
+  let hudTimer = 0;
+  const soundGate = Object.create(null);
+
+  function syncCanvasResolution() {
+    const rect = ui.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height)return;
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    const desired = Math.max(1, Math.min(2, rect.width*dpr/W));
+    const width = Math.round(W*desired);
+    const height = Math.round(H*desired);
+    if (ui.canvas.width === width && ui.canvas.height === height)return;
+    ui.canvas.width = width;
+    ui.canvas.height = height;
+    canvasScale = desired;
+    if (state)draw()
+  }
+
+  function roundRectPath(context, x, y, width, height, radius) {
+    const r = Math.max(0, Math.min(radius, Math.abs(width)/2, Math.abs(height)/2));
+    context.beginPath();
+    context.moveTo(x+r, y);
+    context.lineTo(x+width-r, y);
+    context.quadraticCurveTo(x+width, y, x+width, y+r);
+    context.lineTo(x+width, y+height-r);
+    context.quadraticCurveTo(x+width, y+height, x+width-r, y+height);
+    context.lineTo(x+r, y+height);
+    context.quadraticCurveTo(x, y+height, x, y+height-r);
+    context.lineTo(x, y+r);
+    context.quadraticCurveTo(x, y, x+r, y);
+    context.closePath()
+  }
   function refreshCredits(data = save.data) {
     document.querySelectorAll("[data-credits]").forEach(e => e.textContent = (data?.credits || 0).toLocaleString("en-US"))
   }
   function showScreen(id) {
     document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
     ui.game.style.display = id === "game-screen" ? "block": "none";
-    if (id !== "game-screen")refreshAll()
+    const scroller = document.scrollingElement || document.documentElement;
+    if (scroller)scroller.scrollTop = 0;
+    if (id === "game-screen")requestAnimationFrame(syncCanvasResolution);
+    else refreshAll()
   }
   function toast(msg) {
     const e = document.createElement("div");
@@ -1964,8 +2137,15 @@
   }
   function sound(type) {
     if (!save.data.sound)return;
+    const now = performance.now();
+    const minGap = type === "shot" ? 45: type === "kill" ? 30: type === "hit" ? 24: 0;
+    if (minGap && now-(soundGate[type] || 0)<minGap)return;
+    soundGate[type] = now;
     try {
-      audio ||= new (window.AudioContext || window.webkitAudioContext)();
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor)return;
+      audio ||= new AudioCtor();
+      if (audio.state === "suspended")audio.resume?.().catch?.(() => {});
       const o = audio.createOscillator(), g = audio.createGain();
       const f = {
         shot: 300, hit: 130, kill: 520, buy: 670, wave: 430, error: 90, win: 760, lose: 70
@@ -2135,6 +2315,8 @@
     $("game-map").textContent = MAPS[state.map].name.toUpperCase();
     $("game-difficulty").textContent = DIFFICULTIES[state.difficulty].name.toUpperCase();
     lastTime = performance.now();
+    hudTimer = 0;
+    syncCanvasResolution();
     raf = requestAnimationFrame(loop);
     refreshGameUI()
   }
@@ -2165,7 +2347,7 @@
     return entries
   }
   function startWave() {
-    if (!state || state.waveActive || state.wave >= 20 || state.over)return;
+    if (!state || state.paused || state.waveActive || state.wave >= 20 || state.over)return;
     state.waveActive = true;
     state.waveKillsSeen = 0;
     state.spawnQueue = waveComposition(state.wave+1);
@@ -2328,10 +2510,7 @@
         }
       }
     }
-    if (state.over) {
-      refreshGameUI();
-      return
-    }
+    if (state.over)return;
     for (const t of state.towers) {
       t.cooldown = (t.cooldown || 0)-dt;
       if (t.cooldown <= 0) {
@@ -2380,7 +2559,11 @@
       toast(`<b>Wave ${state.wave}</b> cleared · energy restored`);
       if (state.wave >= 20)finish(true)
     }
-    refreshGameUI()
+    hudTimer += dt;
+    if (hudTimer >= .1) {
+      hudTimer = 0;
+      refreshGameUI()
+    }
   }
   function finish(win) {
     if (!state || state.over)return;
@@ -2399,6 +2582,7 @@
     $("result-kills").textContent = state.kills;
     $("result-credits").textContent = `+${state.earned}`;
     ui.result.classList.remove("closed");
+    refreshGameUI();
     sound(win ? "win": "lose")
   }
   /* ---------- Building and tower controls ---------- */
@@ -2439,8 +2623,8 @@
     refreshSelection();
     refreshGameUI()
   }
-  function selectAt(x, y) {
-    const t = state.towers.filter(t => Math.hypot(t.x-x, t.y-y)<28).sort((a, b) => Math.hypot(a.x-x, a.y-y)-Math.hypot(b.x-x, b.y-y))[0];
+  function selectAt(x, y, hitRadius = 28) {
+    const t = state.towers.filter(t => Math.hypot(t.x-x, t.y-y)<hitRadius).sort((a, b) => Math.hypot(a.x-x, a.y-y)-Math.hypot(b.x-x, b.y-y))[0];
     if (t) {
       state.selectedTower = t.id;
       state.selectedBuild = null;
@@ -2521,7 +2705,7 @@
     ui.enemyCount.textContent = state.enemies.length+state.spawnQueue.length;
     ui.killCount.textContent = state.kills;
     ui.earnedCount.textContent = `C ${state.earned}`;
-    ui.nextWave.disabled = state.waveActive || state.wave >= 20;
+    ui.nextWave.disabled = state.paused || state.waveActive || state.wave >= 20;
     ui.nextWave.textContent = state.waveActive ? "WAVE IN PROGRESS": `START WAVE ${state.wave+1}`;
     ui.speed.textContent = `SPEED ${state.speed}×`;
     ui.speed.classList.toggle("active", state.speed === 2);
@@ -2687,8 +2871,7 @@
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = c;
-      ctx.beginPath();
-      ctx.roundRect(0, -7, 43, 14, 6);
+      roundRectPath(ctx, 0, -7, 43, 14, 6);
       ctx.fill()
     }
     ctx.rotate(-(t.angle || 0));
@@ -2748,8 +2931,7 @@
       ctx.fillStyle = "#f07359";
       ctx.strokeStyle = "#ffcb5e";
       ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.roundRect(-e.radius, -e.radius, e.radius*2, e.radius*2, 5);
+      roundRectPath(ctx, -e.radius, -e.radius, e.radius*2, e.radius*2, 5);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#263346";
@@ -2793,6 +2975,7 @@
   }
   function draw() {
     if (!state)return;
+    ctx.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
     drawMap();
     if (state.hover && state.selectedBuild) {
       ctx.fillStyle = validPlacement(state.hover.x, state.hover.y) ? "rgba(101,230,165,.24)": "rgba(255,105,126,.25)";
@@ -2838,7 +3021,7 @@
     lastTime = now;
     update(dt);
     draw();
-    raf = requestAnimationFrame(loop)
+    if (state && !state.over)raf = requestAnimationFrame(loop)
   }
   function pointer(e) {
     const r = ui.canvas.getBoundingClientRect();
@@ -2848,16 +3031,29 @@
   }
   /* ---------- Input and menu events ---------- */
   ui.canvas.addEventListener("pointermove", e => {
-    if (state)state.hover = pointer(e)
+    if (state && e.isPrimary !== false)state.hover = pointer(e)
   });
   ui.canvas.addEventListener("pointerleave", () => {
     if (state)state.hover = null
   });
+  ui.canvas.addEventListener("pointercancel", () => {
+    if (state)state.hover = null
+  });
+  ui.canvas.addEventListener("pointerup", e => {
+    if (state && e.pointerType === "touch")state.hover = null
+  });
+  ui.canvas.addEventListener("contextmenu", e => e.preventDefault());
   ui.canvas.addEventListener("pointerdown", e => {
-    if (!state || state.paused || state.over)return;
+    if (!state || state.paused || state.over || e.isPrimary === false)return;
+    if (e.pointerType === "mouse" && e.button !== 0)return;
     e.preventDefault();
     const p = pointer(e);
-    selectAt(p.x, p.y)
+    const bounds = ui.canvas.getBoundingClientRect();
+    const physicalRadius = e.pointerType === "mouse" ? 28: 24;
+    const hitRadius = e.pointerType === "mouse"
+      ? 28
+      : Math.max(34, Math.min(64, physicalRadius*W/Math.max(1, bounds.width)));
+    selectAt(p.x, p.y, hitRadius)
   });
   document.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => showScreen(b.dataset.open)));
   $("map-select").onclick = () => showScreen("maps-screen");
@@ -2913,12 +3109,14 @@
   $("game-menu").onclick = $("quit-button").onclick = () => {
     if (state && !state.over) {
       state.paused = true;
-      ui.confirm.classList.remove("closed")
+      ui.confirm.classList.remove("closed");
+      refreshGameUI()
     }
   };
   $("confirm-no").onclick = () => {
     ui.confirm.classList.add("closed");
-    state.paused = false
+    if (state)state.paused = false;
+    refreshGameUI()
   };
   $("confirm-yes").onclick = () => {
     ui.confirm.classList.add("closed");
@@ -2938,6 +3136,13 @@
   });
   window.addEventListener("keydown", e => {
     if (!state)return;
+    const confirmOpen = !ui.confirm.classList.contains("closed");
+    const resultOpen = !ui.result.classList.contains("closed");
+    if (confirmOpen) {
+      if (e.key === "Escape")$("confirm-no").click();
+      return
+    }
+    if (resultOpen)return;
     if (e.key === " ") {
       e.preventDefault();
       startWave()
@@ -2948,6 +3153,13 @@
       refreshGameUI()
     }
   });
+  const onViewportChange = () => requestAnimationFrame(syncCanvasResolution);
+  window.addEventListener("resize", onViewportChange, {passive: true});
+  window.addEventListener("orientationchange", onViewportChange, {passive: true});
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(onViewportChange).observe(ui.shell)
+  }
+
   /* ---------- Startup ---------- */
   function boot() {
     ui.game.style.display = "none";

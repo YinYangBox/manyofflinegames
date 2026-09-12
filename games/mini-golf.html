@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#071810">
   <title>Mini Golf</title>
   <style>
@@ -34,7 +34,10 @@
       overscroll-behavior: none;
     }
     button, input { font: inherit; }
-    button { -webkit-tap-highlight-color: transparent; }
+    button {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
     .hidden { display: none !important; }
 
     .app {
@@ -536,6 +539,8 @@
     .toast.show { transform: translate(-50%, 0); opacity: 1; }
 
     @media (max-width: 900px) {
+      html.embedded body[data-screen="game"] .topbar { display: none; }
+      html.embedded body[data-screen="game"] #gameScreen { padding-top: 6px; }
       .hero { grid-template-columns: 1fr; }
       .course-preview { min-height: 330px; }
       .shop-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -597,8 +602,18 @@
     }
     @media (max-height: 650px) and (orientation: landscape) {
       .topbar { position: relative; min-height: 54px; padding-top: 8px; padding-bottom: 8px; }
+      html.embedded body[data-screen="game"] .topbar { display: none; }
       #gameScreen { padding-top: 8px; }
       .game-shell { grid-template-columns: minmax(0,1fr) 235px; gap: 8px; }
+      .canvas-card {
+        width: min(100%, calc((100vh - 78px) * 1.6));
+        width: min(100%, calc((100dvh - 78px) * 1.6));
+        justify-self: center;
+      }
+      html.embedded body[data-screen="game"] .canvas-card {
+        width: min(100%, calc((100vh - 18px) * 1.6));
+        width: min(100%, calc((100dvh - 18px) * 1.6));
+      }
       .side-hud { display: flex; flex-direction: column; gap: 7px; }
       .hud-card, .power-box { padding: 10px; }
       .hud-stats { margin-top: 7px; grid-template-columns: repeat(2,1fr); gap: 5px; }
@@ -722,6 +737,12 @@
 
   <script>
   "use strict";
+
+  try {
+    if (window.self !== window.top) document.documentElement.classList.add("embedded");
+  } catch (_) {
+    document.documentElement.classList.add("embedded");
+  }
 
   /* ================================================================
      MINI GOLF
@@ -2685,6 +2706,7 @@
       const target = screens[name] || screens.home;
       target.classList.remove("hidden");
       this.currentScreen = screens[name] ? name : "home";
+      document.body.dataset.screen = this.currentScreen;
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       if (name === "shop") this.renderShop();

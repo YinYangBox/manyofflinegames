@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#08111f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,13 +40,21 @@ html {
     background: var(--bg-0);
     user-select: none;
     -webkit-user-select: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 body {
     position: relative;
     min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
     padding: 22px 20px 72px;
+    padding:
+        max(22px, env(safe-area-inset-top))
+        max(20px, env(safe-area-inset-right))
+        max(72px, env(safe-area-inset-bottom))
+        max(20px, env(safe-area-inset-left));
     overflow-x: hidden;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--text);
@@ -65,6 +73,7 @@ iframe {
 
 button {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 button:disabled {
@@ -73,6 +82,11 @@ button:disabled {
 
 [hidden] {
     display: none !important;
+}
+
+body.game-modal-open {
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 .background-orb {
@@ -110,6 +124,7 @@ button:disabled {
 
 .coin-badge,
 .reward-badge {
+    min-width: 0;
     min-height: 58px;
     display: inline-flex;
     align-items: center;
@@ -338,13 +353,13 @@ button:disabled {
 
 .game-hub {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(245px, 100%), 1fr));
     gap: 18px;
 }
 
 .store-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
     gap: 16px;
 }
 
@@ -1166,6 +1181,7 @@ button:disabled {
 
 .game-modal__panel {
     width: min(1440px, 98vw);
+    height: min(94vh, 1040px);
     height: min(94dvh, 1040px);
     display: flex;
     flex-direction: column;
@@ -1184,11 +1200,22 @@ button:disabled {
 .game-modal.is-maximized .game-modal__panel,
 .game-modal__panel:fullscreen {
     width: 100vw;
+    height: 100vh;
     height: 100dvh;
     max-width: none;
     max-height: none;
+    padding-bottom: env(safe-area-inset-bottom);
     border: 0;
     border-radius: 0;
+}
+
+.game-modal.is-maximized .game-modal__header,
+.game-modal__panel:fullscreen .game-modal__header {
+    padding:
+        max(11px, env(safe-area-inset-top))
+        max(14px, env(safe-area-inset-right))
+        11px
+        max(14px, env(safe-area-inset-left));
 }
 
 .game-modal__fullscreen-button {
@@ -1197,20 +1224,32 @@ button:disabled {
 }
 
 #game-frame {
+    display: block;
     width: 100%;
+    height: 100%;
     flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     border: 0;
-    background: #ffffff;
+    background: #070e18;
 }
 
 @media (max-width: 780px) {
     body {
         padding: 15px 13px 58px;
+        padding:
+            max(15px, env(safe-area-inset-top))
+            max(13px, env(safe-area-inset-right))
+            max(58px, env(safe-area-inset-bottom))
+            max(13px, env(safe-area-inset-left));
     }
 
     .topbar {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .topbar > * {
+        min-width: 0;
     }
 
     .topbar__status {
@@ -1228,6 +1267,7 @@ button:disabled {
 
     .store-tab {
         flex: 1 1 0;
+        min-width: 0;
         padding-inline: 5px;
         font-size: 0.58rem;
     }
@@ -1259,14 +1299,149 @@ button:disabled {
         grid-template-columns: 1fr;
     }
 
+    /* On phones the game gets the whole usable viewport. */
     .game-modal {
-        padding: 10px;
+        padding: 0;
     }
 
     .game-modal__panel {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        max-width: none;
+        max-height: none;
+        padding-bottom: env(safe-area-inset-bottom);
+        border: 0;
+        border-radius: 0;
+    }
+
+    .game-modal__header {
+        flex: 0 0 auto;
+        padding:
+            max(11px, env(safe-area-inset-top))
+            max(12px, env(safe-area-inset-right))
+            11px
+            max(12px, env(safe-area-inset-left));
+    }
+
+    .game-modal__header h2 {
+        max-width: 52vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .coin-badge,
+    .reward-badge {
+        min-height: 50px;
+        gap: 7px;
+        padding: 7px 9px;
+        border-radius: 14px;
+    }
+
+    .coin-badge__icon,
+    .reward-badge__icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        font-size: 1rem;
+    }
+
+    .coin-badge__label,
+    .reward-badge__label {
+        font-size: 0.56rem;
+        letter-spacing: 0.08em;
+    }
+
+    .coin-badge strong,
+    .reward-badge strong {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        font-size: 0.88rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .store-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .store-tab {
         width: 100%;
-        height: 96dvh;
-        border-radius: 16px;
+        min-height: 42px;
+        padding: 7px 5px;
+        line-height: 1.15;
+        white-space: normal;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .library-count {
+        max-width: 100%;
+        white-space: normal;
+    }
+}
+
+@media (max-width: 360px) {
+    body {
+        padding-left: max(9px, env(safe-area-inset-left));
+        padding-right: max(9px, env(safe-area-inset-right));
+    }
+
+    .hero {
+        padding-inline: 13px;
+    }
+
+    .game-card,
+    .store-card {
+        padding: 15px;
+    }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .game-modal {
+        padding: 0;
+    }
+
+    .game-modal__panel {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        max-width: none;
+        max-height: none;
+        padding-bottom: env(safe-area-inset-bottom);
+        border: 0;
+        border-radius: 0;
+    }
+
+    .game-modal__header {
+        padding:
+            max(6px, env(safe-area-inset-top))
+            max(10px, env(safe-area-inset-right))
+            6px
+            max(10px, env(safe-area-inset-left));
+    }
+
+    .game-modal__header .section-kicker {
+        display: none;
+    }
+
+    .game-modal__header h2 {
+        margin-top: 0;
+        font-size: 1rem;
+    }
+
+    .icon-button {
+        width: 36px;
+        height: 36px;
     }
 }
 
@@ -1280,41 +1455,130 @@ button:disabled {
     }
 }
 
-/* Install prompt: separate from checkout and game dialogs. */
+/* Install CTA: intentionally prominent because installation is part of the store funnel. */
 .install-launcher {
     position: fixed;
-    right: max(18px, env(safe-area-inset-right));
-    bottom: max(18px, env(safe-area-inset-bottom));
-    z-index: 80;
-    display: grid;
-    place-items: center;
-    width: 50px;
-    height: 50px;
-    padding: 12px;
-    border: 1px solid rgba(85, 230, 165, 0.4);
-    border-radius: 16px;
-    background: #102c29;
-    color: #9df6c9;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.32);
+    right: max(16px, calc(env(safe-area-inset-right) + 10px));
+    bottom: max(16px, calc(env(safe-area-inset-bottom) + 10px));
+    z-index: 900;
+    min-width: 148px;
+    min-height: 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 9px 15px 9px 12px;
+    border: 1px solid rgba(85, 230, 165, 0.58);
+    border-radius: 17px;
+    background: linear-gradient(145deg, rgba(16, 55, 48, 0.98), rgba(12, 37, 35, 0.98));
+    color: #b9ffda;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(85, 230, 165, 0.08) inset;
     cursor: pointer;
-    transition: background 0.18s ease, transform 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .install-launcher:hover {
-    background: #1b4038;
+    background: linear-gradient(145deg, rgba(26, 77, 64, 0.99), rgba(15, 50, 45, 0.99));
+    border-color: rgba(85, 230, 165, 0.82);
     transform: translateY(-2px);
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.46), 0 0 0 1px rgba(85, 230, 165, 0.13) inset;
+}
+
+.install-launcher:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .install-launcher svg {
     display: block;
-    width: 24px;
-    height: 24px;
+    width: 25px;
+    height: 25px;
+    flex: 0 0 auto;
+}
+
+.install-launcher__copy {
+    min-width: 0;
+    display: grid;
+    gap: 1px;
+    text-align: left;
+    line-height: 1.05;
+}
+
+.install-launcher__copy strong {
+    color: #eafff4;
+    font-size: 0.78rem;
+    font-weight: 950;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.install-launcher__copy small {
+    color: #9ed8be;
+    font-size: 0.66rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+body.install-cta-visible {
+    padding-bottom: max(94px, calc(env(safe-area-inset-bottom) + 82px));
 }
 
 .install-launcher:focus-visible,
 .install-panel button:focus-visible {
     outline: 3px solid var(--accent-2);
     outline-offset: 4px;
+}
+
+/* Phone portrait: a full-width CTA is much harder to miss and avoids notch/home-indicator collisions. */
+@media (max-width: 520px) {
+    .install-launcher {
+        left: max(10px, calc(env(safe-area-inset-left) + 8px));
+        right: max(10px, calc(env(safe-area-inset-right) + 8px));
+        bottom: max(10px, calc(env(safe-area-inset-bottom) + 8px));
+        width: auto;
+        min-width: 0;
+        min-height: 52px;
+        border-radius: 15px;
+        padding: 8px 14px;
+    }
+
+    .install-launcher__copy {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .install-launcher__copy strong { font-size: 0.8rem; }
+    .install-launcher__copy small { font-size: 0.68rem; }
+
+    body.install-cta-visible {
+        padding-bottom: max(104px, calc(env(safe-area-inset-bottom) + 92px));
+    }
+}
+
+/* Very small phones: keep the benefit visible, but remove anything nonessential. */
+@media (max-width: 350px) {
+    .install-launcher { min-height: 50px; padding-inline: 10px; gap: 8px; }
+    .install-launcher svg { width: 23px; height: 23px; }
+    .install-launcher__copy small { display: none; }
+}
+
+/* Short landscape phones: compact it so it does not consume scarce vertical space. */
+@media (orientation: landscape) and (max-height: 520px) {
+    .install-launcher {
+        left: auto;
+        right: max(10px, calc(env(safe-area-inset-right) + 8px));
+        bottom: max(10px, calc(env(safe-area-inset-bottom) + 8px));
+        width: auto;
+        min-width: 124px;
+        min-height: 46px;
+        padding: 7px 11px;
+        border-radius: 14px;
+    }
+    .install-launcher__copy small { display: none; }
+    body.install-cta-visible { padding-bottom: 68px; }
 }
 
 .install-modal {
@@ -1963,19 +2227,24 @@ button:disabled {
             <iframe
                 id="game-frame"
                 title="Game"
+                tabindex="0"
                 allow="autoplay; fullscreen"
             ></iframe>
         </div>
     </div>
     <!-- Available manually, but hidden during games, checkout and installed use. -->
     <button id="install-launcher" class="install-launcher" type="button"
-        aria-label="Save the arcade as an app" title="Save as an app"
+        aria-label="Save Many Offline Games as an app for quick offline access" title="Save app · Play offline"
         aria-haspopup="dialog" aria-controls="install-modal" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 3h13l4 4v14H3V4a1 1 0 0 1 1-1Z"/>
             <path d="M7 3v6h9V3M7 21v-8h10v8M13 5v2"/>
         </svg>
+        <span class="install-launcher__copy" aria-hidden="true">
+            <strong>Save app</strong>
+            <small>Play offline</small>
+        </span>
     </button>
 
     <div id="install-modal" class="install-modal" role="dialog" aria-modal="true"
@@ -1986,7 +2255,7 @@ button:disabled {
                     <img src="./icons/arcade-192.png" alt="" width="52" height="52">
                     <div><strong>Many Offline Games</strong><span>Your arcade, one tap away</span></div>
                 </div>
-                <h2 id="install-title" tabindex="-1">Want to save your progress?</h2>
+                <h2 id="install-title" tabindex="-1">Save the arcade to your device</h2>
                 <p id="install-intro" class="install-intro"></p>
                 <figure id="install-animation" class="install-animation" hidden>
                     <!-- Loaded only on Apple mobile devices when the dialog opens. -->
@@ -2116,7 +2385,12 @@ class InstallManager {
     }
 
     shouldHide() {
-        return this.inStandalone() || this.data.installed || this.awaitingInstallation;
+        if (this.inStandalone() || this.awaitingInstallation) return true;
+        // iOS/iPadOS Safari has no reliable API to tell whether a Home Screen web app
+        // was later removed. Do not permanently hide the CTA in the browser based on a
+        // stale localStorage flag; showing it again is safer than losing the install path.
+        if (this.isAppleMobile()) return false;
+        return this.data.installed;
     }
 
     checkInstallation() {
@@ -2170,8 +2444,9 @@ class InstallManager {
 
     uiChanged() {
         if (!this.dom) return;
-        this.dom.launcher.hidden = this.shouldHide() || this.isOpen || this.nativeBusy
-            || !this.canPresent();
+        const hideLauncher = this.shouldHide() || this.isOpen || this.nativeBusy || !this.canPresent();
+        this.dom.launcher.hidden = hideLauncher;
+        document.body.classList.toggle("install-cta-visible", !hideLauncher);
         // Let one dialog finish closing before opening the next. Never interrupt play.
         clearTimeout(this.flushTimer);
         this.flushTimer = setTimeout(() => this.flushPending(), 0);
@@ -4582,6 +4857,9 @@ function prepareGameHtml(
             sourceUrl
         )}">`;
 
+    const viewportTag =
+        `<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">`;
+
     const protection = `
         <!-- MANY OFFLINE GAMES PROTECTION -->
         <style id="many-offline-games-protection">
@@ -4622,7 +4900,7 @@ function prepareGameHtml(
         if (documentHtml.includes("many-offline-games-protection")) {
             return documentHtml;
         }
-        const injection = `${/<base\s/i.test(documentHtml) ? "" : baseTag}${protection}`;
+        const injection = `${/<base\s/i.test(documentHtml) ? "" : baseTag}${/<meta[^>]+name=["']viewport["']/i.test(documentHtml) ? "" : viewportTag}${protection}`;
         if (/<head[\s>]/i.test(documentHtml)) {
             return documentHtml.replace(
                 /<head([^>]*)>/i,
@@ -4798,8 +5076,22 @@ async function openGameModal(
     frame.dataset.gameSource =
         getGameSourceUrl(game);
 
+    frame.addEventListener(
+        "load",
+        () => {
+            try {
+                frame.focus({ preventScroll: true });
+            } catch (_) {
+                frame.focus();
+            }
+        },
+        { once: true }
+    );
+
     frame.srcdoc =
         preparedHtml;
+
+    document.body.classList.add("game-modal-open");
 
     openModal(
         document.getElementById(
@@ -4812,6 +5104,7 @@ function closeGameModal() {
     exitGameFullscreen();
     currentFrameGameId =
         "";
+    document.body.classList.remove("game-modal-open");
 
     cleanupFrame();
 
