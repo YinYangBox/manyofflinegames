@@ -286,5 +286,95 @@
 		"cost": 2000,
 		"icon": "Images/pool.png",
 		"path": "/api/proxy?game=pool"
+	},
+	{
+		"id": "basketball",
+		"name": "Basketball",
+		"description": "Fast-Paced Basketball Challenge",
+		"features": ["Timed shooting", "Combo scoring", "Difficulty modes", "Ball skins"],
+		"cost": 1800,
+		"icon": "Images/basketball.png",
+		"path": "/api/proxy?game=basketball"
+	},
+	{
+		"id": "bubble-shooter",
+		"name": "Bubble Shooter",
+		"description": "Match and Pop Colorful Bubbles",
+		"features": ["Progressive levels", "Combo shots", "Power bubbles", "Best-score tracking"],
+		"cost": 2200,
+		"icon": "Images/bubble-shooter.png",
+		"path": "/api/proxy?game=bubble-shooter"
+	},
+	{
+		"id": "connect-four",
+		"name": "Four in a Row",
+		"description": "Classic Connect Four Strategy",
+		"features": ["VS Bot", "2 Player mode", "Difficulty settings", "Match stats"],
+		"cost": 1400,
+		"icon": "Images/connect-four.png",
+		"path": "/api/proxy?game=connect-four"
+	},
+	{
+		"id": "drift-circuit",
+		"name": "Drift Circuit",
+		"description": "Master High-Speed Drifting",
+		"features": ["Circuit races", "Drift scoring", "Time trials", "Car skins"],
+		"cost": 2700,
+		"icon": "Images/drift-circuit.png",
+		"path": "/api/proxy?game=drift-circuit"
+	},
+	{
+		"id": "fishing",
+		"name": "Fishing",
+		"description": "Relaxing Fishing Adventure",
+		"features": ["Multiple fishing spots", "Fish collection", "Equipment upgrades", "Catch stats"],
+		"cost": 2400,
+		"icon": "Images/fishing.png",
+		"path": "/api/proxy?game=fishing"
+	},
+	{
+		"id": "freecell",
+		"name": "FreeCell",
+		"description": "Classic FreeCell Solitaire",
+		"features": ["Classic deal rules", "Undo and hints", "Move tracking", "Card skins"],
+		"cost": 1600,
+		"icon": "Images/freecell.png",
+		"path": "/api/proxy?game=freecell"
+	},
+	{
+		"id": "nonogram",
+		"name": "Nonogram",
+		"description": "Solve Picture Logic Puzzles",
+		"features": ["Multiple grid sizes", "Hints and notes", "Puzzle progression", "Completion stats"],
+		"cost": 1900,
+		"icon": "Images/nonogram.png",
+		"path": "/api/proxy?game=nonogram"
+	},
+	{
+		"id": "reversi",
+		"name": "Reversi",
+		"description": "Classic Reversi Strategy Match",
+		"features": ["VS Bot", "2 Player mode", "Difficulty settings", "Match stats"],
+		"cost": 1800,
+		"icon": "Images/reversi.png",
+		"path": "/api/proxy?game=reversi"
+	},
+	{
+		"id": "solitaire",
+		"name": "Solitaire",
+		"description": "Classic Klondike Solitaire",
+		"features": ["Draw 1 and Draw 3", "Undo and hints", "Move tracking", "Card skins"],
+		"cost": 1600,
+		"icon": "Images/solitaire.png",
+		"path": "/api/proxy?game=solitaire"
+	},
+	{
+		"id": "word-search",
+		"name": "Word Search",
+		"description": "Find Hidden Words and Themes",
+		"features": ["Multiple word themes", "Timed challenges", "Difficulty modes", "Best-time tracking"],
+		"cost": 1400,
+		"icon": "Images/word-search.png",
+		"path": "/api/proxy?game=word-search"
 	}
 ]
