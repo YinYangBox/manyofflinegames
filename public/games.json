@@ -306,13 +306,13 @@
 		"path": "/api/proxy?game=bubble-shooter"
 	},
 	{
-		"id": "connect-four",
+		"id": "connect-4",
 		"name": "Four in a Row",
 		"description": "Classic Connect Four Strategy",
 		"features": ["VS Bot", "2 Player mode", "Difficulty settings", "Match stats"],
 		"cost": 1400,
 		"icon": "Images/connect-four.png",
-		"path": "/api/proxy?game=connect-four"
+		"path": "/api/proxy?game=connect-4"
 	},
 	{
 		"id": "drift-circuit",
@@ -376,5 +376,59 @@
 		"cost": 1400,
 		"icon": "Images/word-search.png",
 		"path": "/api/proxy?game=word-search"
+	},
+	{
+		"id": "block-blast",
+		"name": "Block Blast",
+		"description": "Clear Blocks and Chase High Scores",
+		"features": ["Endless puzzle mode", "Combo scoring", "Multiple block shapes", "Best-score tracking"],
+		"cost": 1800,
+		"icon": "Images/block-blast.png",
+		"path": "/api/proxy?game=block-blast"
+	},
+	{
+		"id": "color-lines",
+		"name": "Color Lines",
+		"description": "Arrange Colors and Clear the Board",
+		"features": ["Progressive boards", "Combo lines", "Undo moves", "Best-score tracking"],
+		"cost": 1700,
+		"icon": "Images/colour-lines.png",
+		"path": "/api/proxy?game=color-lines"
+	},
+	{
+		"id": "hex-puzzle",
+		"name": "Hex Puzzle",
+		"description": "Fit Hexagonal Pieces and Clear Lines",
+		"features": ["Endless puzzle mode", "Combo scoring", "Hexagonal board", "Best-score tracking"],
+		"cost": 1900,
+		"icon": "Images/hex-puzzle.png",
+		"path": "/api/proxy?game=hex-puzzle"
+	},
+	{
+		"id": "klotski",
+		"name": "Klotski",
+		"description": "Slide Blocks to Solve Classic Puzzles",
+		"features": ["Multiple puzzle layouts", "Move counter", "Undo moves", "Completion stats"],
+		"cost": 2100,
+		"icon": "Images/klotski.png",
+		"path": "/api/proxy?game=klotski"
+	},
+	{
+		"id": "mahjong",
+		"name": "Mahjong Solitaire",
+		"description": "Match Tiles and Clear the Board",
+		"features": ["Multiple layouts", "Hints and undo", "Timed challenges", "Tile skins"],
+		"cost": 2200,
+		"icon": "Images/mahjong.png",
+		"path": "/api/proxy?game=mahjong"
+	},
+	{
+		"id": "sliding-puzzle",
+		"name": "Sliding Puzzle",
+		"description": "Arrange the Tiles in the Correct Order",
+		"features": ["Multiple grid sizes", "Move counter", "Undo moves", "Best-time tracking"],
+		"cost": 1500,
+		"icon": "Images/sliding-puzzle.png",
+		"path": "/api/proxy?game=sliding-puzzle"
 	}
 ]
