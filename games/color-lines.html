@@ -1,0 +1,2298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#10151b" />
+    <title>Color Lines</title>
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --panel: #141b22;
+        --panel2: #1c2630;
+        --line: rgba(255, 255, 255, 0.09);
+        --ink: #f4f7fb;
+        --muted: #8e9baa;
+        --cyan: #61d9ff;
+        --gold: #ffd16a;
+        --green: #6de1a9;
+        --bad: #ff7585;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+        --board: 600px;
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 15% 10%,
+            rgba(97, 217, 255, 0.11),
+            transparent 30rem
+          ),
+          radial-gradient(
+            circle at 85% 82%,
+            rgba(255, 209, 106, 0.08),
+            transparent 30rem
+          ),
+          linear-gradient(145deg, #080b10, #111821 55%, #090d12);
+        color: var(--ink);
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        user-select: none;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        border: 0;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 3px solid rgba(97, 217, 255, 0.65);
+        outline-offset: 3px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .app {
+        height: 100dvh;
+        max-width: 1240px;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        height: 66px;
+        flex: 0 0 66px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(8, 12, 16, 0.82);
+        backdrop-filter: blur(14px);
+        z-index: 30;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-weight: 1000;
+        letter-spacing: -0.4px;
+      }
+      .brandmark {
+        width: 37px;
+        height: 37px;
+        border-radius: 12px;
+        background: linear-gradient(145deg, #61d9ff, #967dff);
+        box-shadow: 0 0 20px rgba(97, 217, 255, 0.18);
+        position: relative;
+      }
+      .brandmark:before,
+      .brandmark:after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+      }
+      .brandmark:before {
+        width: 12px;
+        height: 12px;
+        background: #ffd16a;
+        left: 7px;
+        top: 7px;
+      }
+      .brandmark:after {
+        width: 9px;
+        height: 9px;
+        background: #ff7585;
+        right: 7px;
+        bottom: 7px;
+      }
+      .wallet {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid rgba(255, 209, 106, 0.25);
+        border-radius: 999px;
+        background: rgba(255, 209, 106, 0.06);
+        font-size: 13px;
+        font-weight: 900;
+      }
+      .coin {
+        width: 18px;
+        height: 18px;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--gold);
+        border-radius: 50%;
+        color: var(--gold);
+        font-size: 9px;
+      }
+      .screen {
+        flex: 1;
+        min-height: 0;
+        display: none;
+      }
+      .screen.active {
+        display: block;
+      }
+      #menuScreen {
+        overflow: auto;
+        padding: 20px;
+      }
+      .menuWrap {
+        width: min(950px, 100%);
+        margin: auto;
+      }
+      .hero {
+        min-height: 255px;
+        display: grid;
+        grid-template-columns: 1.06fr 0.94fr;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        overflow: hidden;
+        background: linear-gradient(145deg, #1a232d, #10161d 62%);
+        box-shadow: var(--shadow);
+      }
+      .heroCopy {
+        padding: 34px;
+        z-index: 2;
+      }
+      .eyebrow {
+        color: var(--cyan);
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .hero h1 {
+        margin: 9px 0 11px;
+        font-size: clamp(44px, 8vw, 74px);
+        line-height: 0.9;
+        letter-spacing: -4px;
+      }
+      .hero p {
+        max-width: 470px;
+        color: #b3bdc7;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .primary,
+      .secondary {
+        min-height: 47px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 950;
+      }
+      .primary {
+        background: linear-gradient(135deg, #61d9ff, #9c82ff);
+        color: #091016;
+        box-shadow: 0 10px 24px rgba(97, 217, 255, 0.15);
+      }
+      .secondary {
+        background: #1b252e;
+        border: 1px solid var(--line);
+      }
+      .hero .primary {
+        min-width: 175px;
+        padding: 0 22px;
+      }
+      .heroArt {
+        position: relative;
+        min-height: 255px;
+        background: radial-gradient(
+          circle at center,
+          rgba(97, 217, 255, 0.14),
+          transparent 58%
+        );
+      }
+      .artGrid {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 255px;
+        height: 255px;
+        transform: translate(-50%, -50%) rotate(-5deg);
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+        padding: 9px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        background: #0c1218;
+        box-shadow: 0 20px 40px #0006;
+      }
+      .artCell {
+        border-radius: 8px;
+        background: #17202a;
+        position: relative;
+      }
+      .artBall {
+        position: absolute;
+        inset: 7px;
+        border-radius: 50%;
+        background: var(--c);
+        box-shadow:
+          inset 0 4px 7px #ffffff55,
+          inset 0 -6px 9px #0005,
+          0 7px 12px #0005;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .panel {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(19, 26, 33, 0.95);
+      }
+      .panel h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+      .diffGrid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 7px;
+      }
+      .diffBtn {
+        min-height: 42px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        background: #0e141a;
+        color: #a0adb8;
+        font-size: 10px;
+        font-weight: 900;
+      }
+      .diffBtn.active {
+        color: #091016;
+        background: linear-gradient(135deg, #61d9ff, #9c82ff);
+        border-color: transparent;
+      }
+      .desc {
+        min-height: 36px;
+        margin: 11px 0;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .menuBtns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .statGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .stat {
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 11px;
+        background: #0e141a;
+      }
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+      .stat strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 20px;
+      }
+      .shopStrip {
+        margin-top: 12px;
+        padding: 15px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid rgba(97, 217, 255, 0.16);
+        border-radius: 16px;
+        background: linear-gradient(
+          110deg,
+          rgba(97, 217, 255, 0.06),
+          rgba(156, 130, 255, 0.05)
+        );
+      }
+      .shopStrip strong {
+        display: block;
+        font-size: 13px;
+      }
+      .shopStrip span {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+
+      #gameScreen.active {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+      }
+      .gameMain {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+        border-right: 1px solid var(--line);
+      }
+      .hud {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 7px;
+        margin-bottom: 8px;
+      }
+      .hudCard {
+        padding: 7px 9px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 11px;
+        background: #10171e;
+      }
+      .hudCard span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .hudCard strong {
+        display: block;
+        margin-top: 3px;
+        font-size: 15px;
+      }
+      .boardWrap {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at center, #1d2b35, transparent 68%), #0b1117;
+      }
+      .board {
+        width: 100px;
+        height: 100px;
+        aspect-ratio: 1;
+        display: grid;
+        gap: 5px;
+        padding: 8px;
+        border-radius: 18px;
+        background: #0f161e;
+        box-shadow: 0 20px 45px #0006;
+        flex: 0 0 auto;
+      }
+      .cell {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        border-radius: 9px;
+        border: 1px solid rgba(255, 255, 255, 0.045);
+        background: #1a242e;
+        box-shadow: inset 0 3px 7px #0004;
+        cursor: pointer;
+      }
+      .cell:hover {
+        background: #202d38;
+      }
+      .cell.path {
+        box-shadow: inset 0 0 0 2px rgba(97, 217, 255, 0.33);
+      }
+      .ball {
+        position: absolute;
+        inset: 11%;
+        border-radius: 50%;
+        background: var(--ball);
+        box-shadow:
+          inset 0 5px 9px #ffffff4d,
+          inset 0 -8px 12px #0005,
+          0 7px 12px #0007;
+        transition:
+          transform 0.14s,
+          opacity 0.16s;
+      }
+      .ball.selected {
+        transform: translateY(-8%) scale(1.07);
+        outline: 3px solid rgba(255, 255, 255, 0.82);
+        outline-offset: 2px;
+      }
+      .ball.pop {
+        animation: pop 0.25s ease both;
+      }
+      @keyframes pop {
+        to {
+          transform: scale(0.15);
+          opacity: 0;
+        }
+      }
+      .ball[data-skin="neon"] {
+        box-shadow:
+          inset 0 0 0 2px #ffffff55,
+          0 0 16px var(--ball),
+          0 6px 12px #0007;
+      }
+      .ball[data-skin="slime"] {
+        border-radius: 48% 52% 46% 54%/55% 47% 53% 45%;
+        box-shadow:
+          inset 5px 7px 8px #ffffff52,
+          inset -5px -8px 10px #0004,
+          0 7px 12px #0007;
+      }
+      .ball[data-skin="tech"] {
+        border-radius: 32%;
+        clip-path: polygon(
+          22% 0,
+          78% 0,
+          100% 22%,
+          100% 78%,
+          78% 100%,
+          22% 100%,
+          0 78%,
+          0 22%
+        );
+        box-shadow:
+          inset 0 0 0 3px #ffffff33,
+          0 6px 12px #0007;
+      }
+      .ball[data-skin="planet"] {
+        box-shadow:
+          inset -8px -10px 16px #0007,
+          inset 7px 7px 10px #ffffff55,
+          0 7px 12px #0007;
+      }
+      .ball[data-skin="candy"] {
+        background: repeating-linear-gradient(
+          135deg,
+          var(--ball) 0 8px,
+          #ffffff66 8px 11px,
+          var(--ball) 11px 19px
+        );
+      }
+      .ball[data-skin="crystal"] {
+        border-radius: 20%;
+        clip-path: polygon(
+          50% 0,
+          87% 14%,
+          100% 53%,
+          75% 100%,
+          25% 100%,
+          0 53%,
+          13% 14%
+        );
+        box-shadow:
+          inset 7px 7px 10px #ffffff55,
+          0 7px 12px #0007;
+      }
+      .side {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 15px;
+        background: #0f151b;
+      }
+      .side h2 {
+        margin: 0;
+        font-size: 27px;
+        letter-spacing: -1px;
+      }
+      .side p {
+        margin: 6px 0 13px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+      .nextCard {
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: #151e26;
+      }
+      .nextLabel {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .nextBalls {
+        display: flex;
+        gap: 9px;
+        margin-top: 10px;
+      }
+      .nextBall {
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+        background: var(--ball);
+        box-shadow:
+          inset 0 4px 7px #ffffff55,
+          inset 0 -5px 8px #0004,
+          0 4px 8px #0005;
+      }
+      .infoLine {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        font-size: 10px;
+      }
+      .infoLine:last-child {
+        border: 0;
+      }
+      .infoLine span {
+        color: var(--muted);
+      }
+      .sideSpacer {
+        flex: 1;
+      }
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+      .actions button {
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #19232c;
+        font-size: 9px;
+        font-weight: 950;
+      }
+      .actions .wide {
+        grid-column: 1/-1;
+      }
+      .actions .accent {
+        background: linear-gradient(135deg, #61d9ff, #9c82ff);
+        color: #091016;
+        border: 0;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        background: rgba(3, 6, 9, 0.8);
+        backdrop-filter: blur(10px);
+      }
+      .modal {
+        width: min(430px, 100%);
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 21px;
+        background: #151d25;
+        box-shadow: var(--shadow);
+        text-align: center;
+      }
+      .modal h2 {
+        margin: 0;
+        font-size: 34px;
+        letter-spacing: -1px;
+      }
+      .modal p {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .resultGrid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+        margin: 16px 0;
+      }
+      .result {
+        padding: 11px 4px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        background: #0e141a;
+      }
+      .result span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        text-transform: uppercase;
+      }
+      .result strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 19px;
+      }
+      .modalBtns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .modalBtns button {
+        min-height: 44px;
+        border-radius: 10px;
+        font-weight: 900;
+      }
+      .shopModal {
+        width: min(760px, 100%);
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+      }
+      .shopHead {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 13px;
+      }
+      .shopHead h2 {
+        font-size: 27px;
+      }
+      .shopWallet {
+        padding: 7px 10px;
+        border: 1px solid rgba(255, 209, 106, 0.25);
+        border-radius: 999px;
+        color: var(--gold);
+        font-weight: 900;
+      }
+      .shopGrid {
+        min-height: 0;
+        overflow: auto;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 9px;
+      }
+      .shopItem {
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: #10171e;
+      }
+      .shopItem.active {
+        border-color: var(--cyan);
+        box-shadow: inset 0 0 0 1px rgba(97, 217, 255, 0.14);
+      }
+      .preview {
+        height: 78px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border-radius: 9px;
+        background: #0b1117;
+        margin-bottom: 9px;
+      }
+      .previewBall {
+        width: 35px;
+        height: 35px;
+        position: relative;
+      }
+      .shopItem strong {
+        font-size: 12px;
+      }
+      .shopItem small {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        margin: 4px 0 9px;
+        min-height: 26px;
+      }
+      .shopItem button {
+        width: 100%;
+        min-height: 34px;
+        border-radius: 8px;
+        background: #1d2730;
+        border: 1px solid var(--line);
+        font-size: 9px;
+        font-weight: 900;
+      }
+      .shopItem button.buy {
+        background: linear-gradient(135deg, #61d9ff, #9c82ff);
+        color: #091016;
+        border: 0;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        z-index: 160;
+        transform: translateX(-50%);
+        padding: 11px 14px;
+        border-radius: 10px;
+        background: #19232b;
+        border: 1px solid var(--line);
+        font-size: 10px;
+        font-weight: 850;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.2s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, -5px);
+      }
+      @media (max-width: 820px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+        .heroArt {
+          display: none;
+        }
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+        #gameScreen.active {
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+        }
+        .gameMain {
+          flex: 1 1 auto;
+          min-height: 0;
+          border-right: 0;
+          padding: 6px;
+        }
+        .boardWrap {
+          min-height: 0;
+        }
+        .side {
+          flex: 0 0 auto;
+          padding: 6px 8px;
+        }
+        .side h2,
+        .side p,
+        .infoLine {
+          display: none;
+        }
+        .sideSpacer {
+          display: none;
+        }
+        .nextCard {
+          padding: 5px 8px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 39px;
+        }
+        .nextBalls {
+          margin: 0;
+          gap: 6px;
+        }
+        .nextBall {
+          width: 25px;
+          height: 25px;
+        }
+        .actions {
+          grid-template-columns: repeat(4, 1fr);
+          margin-top: 5px;
+          gap: 5px;
+        }
+        .actions .wide {
+          grid-column: auto;
+        }
+        .actions button {
+          min-height: 34px;
+          padding: 0 3px;
+          font-size: 8px;
+        }
+        .shopGrid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 520px) {
+        .topbar {
+          height: 54px;
+          flex-basis: 54px;
+          padding: 0 9px;
+        }
+        .brand {
+          font-size: 12px;
+        }
+        .brandmark {
+          width: 29px;
+          height: 29px;
+        }
+        .wallet {
+          padding: 6px 9px;
+        }
+        #menuScreen {
+          padding: 9px;
+        }
+        .heroCopy {
+          padding: 23px 18px;
+        }
+        .hero h1 {
+          font-size: 49px;
+        }
+        .diffGrid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .menuBtns {
+          grid-template-columns: 1fr;
+        }
+        .hud {
+          gap: 3px;
+          margin-bottom: 5px;
+        }
+        .hudCard {
+          padding: 5px;
+        }
+        .hudCard span {
+          font-size: 7px;
+        }
+        .hudCard strong {
+          font-size: 12px;
+        }
+        .board {
+          gap: 3px;
+          padding: 5px;
+          border-radius: 12px;
+        }
+        .cell {
+          border-radius: 5px;
+        }
+        .ball {
+          inset: 9%;
+        }
+        .nextLabel {
+          font-size: 8px;
+        }
+      }
+
+      @media (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
+        .topbar {
+          height: 46px;
+          flex-basis: 46px;
+        }
+        #gameScreen.active {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 190px;
+        }
+        .gameMain {
+          padding: 4px;
+          border-right: 1px solid var(--line);
+        }
+        .hud {
+          grid-template-columns: repeat(4, 1fr);
+          gap: 3px;
+          margin-bottom: 3px;
+        }
+        .hudCard {
+          padding: 3px 5px;
+          border-radius: 7px;
+        }
+        .hudCard span {
+          font-size: 6px;
+        }
+        .hudCard strong {
+          font-size: 10px;
+          margin-top: 1px;
+        }
+        .side {
+          padding: 5px;
+        }
+        .side h2,
+        .side p,
+        .infoLine {
+          display: none;
+        }
+        .nextCard {
+          padding: 5px;
+          min-height: 34px;
+          display: block;
+        }
+        .nextLabel {
+          font-size: 7px;
+        }
+        .nextBalls {
+          margin-top: 4px;
+          gap: 4px;
+        }
+        .nextBall {
+          width: 20px;
+          height: 20px;
+        }
+        .actions {
+          grid-template-columns: 1fr 1fr;
+          margin-top: 5px;
+          gap: 4px;
+        }
+        .actions button {
+          min-height: 29px;
+          font-size: 7px;
+        }
+        .board {
+          gap: 2px;
+          padding: 4px;
+          border-radius: 10px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+      button:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 3px solid #ffd279;
+        outline-offset: 2px;
+      }
+      .helperOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: #03070bdd;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        backdrop-filter: blur(7px);
+      }
+      .helperCard {
+        width: min(100%, 400px);
+        padding: 24px;
+        border: 1px solid #ffffff30;
+        border-radius: 20px;
+        background: #19232c;
+        color: #f3f7fa;
+        text-align: center;
+      }
+      .helperCard h2 {
+        margin: 0 0 12px;
+      }
+      .helperCard p {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .helperCard > div {
+        display: flex;
+        gap: 10px;
+      }
+      .helperCard button {
+        flex: 1;
+        min-height: 46px;
+        border-radius: 10px;
+        background: #334f60;
+        color: white;
+        border: 1px solid #ffffff25;
+        font: inherit;
+        cursor: pointer;
+      }
+      .helperCard button:last-child {
+        background: #92e0c6;
+        color: #08261c;
+      }
+      #saveWarning {
+        position: fixed;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        z-index: 250;
+        padding: 12px;
+        border: 1px solid #e7b44b;
+        border-radius: 12px;
+        background: #20170b;
+        color: #ffe0a0;
+        font: 12px/1.5 system-ui;
+      }
+      .pauseControl {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid #ffffff30;
+        background: #ffffff12;
+        color: inherit;
+        cursor: pointer;
+      }
+      #board button.cell,
+      #board button.tile,
+      button.pieceCard {
+        font-family: inherit;
+        padding: 0;
+      }
+      .boardWrap,
+      .tableWrap {
+        min-width: 0;
+        min-height: 0;
+      }
+      .hud > * {
+        min-width: 0;
+      }
+      .tile.correct {
+        box-shadow: inset 0 0 0 2px #76d7b66b;
+      }
+      .tile.movable {
+        cursor: pointer;
+      }
+      @media (max-width: 520px) {
+        .shopGrid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .gameTop,
+        .gameHeader {
+          gap: 6px;
+        }
+        .hud {
+          gap: 4px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+      .actions .pauseControl,
+      .controls .pauseControl {
+        grid-column: 1 / -1;
+      }
+      @media (max-width: 900px) and (orientation: portrait) {
+        .actions,
+        .controls {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 4px;
+        }
+        .actions .pauseControl,
+        .controls .pauseControl {
+          grid-column: auto;
+        }
+        .actions button,
+        .controls button {
+          min-width: 0;
+          min-height: 42px;
+          padding: 5px 2px;
+          font-size: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brandmark"></div>
+          <span>COLOR LINES</span>
+        </div>
+        <div class="wallet">
+          <span class="coin">C</span><span id="credits">0</span>
+        </div>
+      </header>
+
+      <section id="menuScreen" class="screen active">
+        <div class="menuWrap">
+          <div class="hero">
+            <div class="heroCopy">
+              <div class="eyebrow">Classic strategy puzzle</div>
+              <h1>Line them up.</h1>
+              <p>
+                Move colored balls through open paths. Build long lines before
+                the board fills up. Every move that does not clear a line adds
+                new balls.
+              </p>
+              <button id="newBtn" class="primary">NEW GAME</button>
+            </div>
+            <div class="heroArt">
+              <div class="artGrid" id="artGrid"></div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="panel">
+              <h2>Difficulty</h2>
+              <div class="diffGrid">
+                <button class="diffBtn active" data-diff="easy">EASY</button>
+                <button class="diffBtn" data-diff="normal">NORMAL</button>
+                <button class="diffBtn" data-diff="hard">HARD</button>
+                <button class="diffBtn" data-diff="master">MASTER</button>
+              </div>
+              <div id="diffDesc" class="desc"></div>
+              <div class="menuBtns">
+                <button id="continueBtn" class="secondary hidden">
+                  CONTINUE
+                </button>
+                <button id="shopBtn" class="secondary">BALL SHOP</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h2>Records</h2>
+              <div class="statGrid">
+                <div class="stat">
+                  <span>Games</span><strong id="statGames">0</strong>
+                </div>
+                <div class="stat">
+                  <span>Best score</span><strong id="statBest">0</strong>
+                </div>
+                <div class="stat">
+                  <span>Lines cleared</span><strong id="statLines">0</strong>
+                </div>
+                <div class="stat">
+                  <span>Credits earned</span><strong id="statEarned">0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="shopStrip">
+            <div>
+              <strong>Ball skins</strong
+              ><span
+                >Spend credits on Neon, Slime, Tech, Planet, Candy and Crystal
+                sets.</span
+              >
+            </div>
+            <button id="shopStripBtn" class="primary" style="padding: 0 18px">
+              OPEN SHOP
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="gameScreen" class="screen">
+        <div class="gameMain">
+          <div class="hud">
+            <div class="hudCard">
+              <span>Score</span><strong id="hudScore">0</strong>
+            </div>
+            <div class="hudCard">
+              <span>Best</span><strong id="hudBest">0</strong>
+            </div>
+            <div class="hudCard">
+              <span>Cleared</span><strong id="hudCleared">0</strong>
+            </div>
+            <div class="hudCard">
+              <span>Difficulty</span><strong id="hudDiff">Normal</strong>
+            </div>
+          </div>
+          <div class="boardWrap"><div id="board" class="board"></div></div>
+        </div>
+
+        <aside class="side">
+          <h2>Next move</h2>
+          <p>
+            Select a ball, then choose an empty cell connected by a clear
+            orthogonal path.
+          </p>
+          <div class="nextCard">
+            <div class="nextLabel">Next balls</div>
+            <div id="nextBalls" class="nextBalls"></div>
+          </div>
+          <div class="infoLine">
+            <span>Line length</span><strong id="lineLength">5</strong>
+          </div>
+          <div class="infoLine">
+            <span>Spawn count</span><strong id="spawnCount">3</strong>
+          </div>
+          <div class="infoLine">
+            <span>Ball set</span><strong id="skinLabel">Classic</strong>
+          </div>
+          <div class="sideSpacer"></div>
+          <div class="actions">
+            <button id="hintBtn">HINT</button>
+            <button id="shopGameBtn">SHOP</button>
+            <button id="newGameBtn">NEW</button>
+            <button id="menuBtn" class="accent">MENU</button>
+          </div>
+        </aside>
+      </section>
+    </div>
+
+    <div id="gameOver" class="overlay hidden">
+      <div class="modal">
+        <div class="eyebrow">No space left</div>
+        <h2>Game over.</h2>
+        <p>The board is full and no more moves are possible.</p>
+        <div class="resultGrid">
+          <div class="result">
+            <span>Score</span><strong id="finalScore">0</strong>
+          </div>
+          <div class="result">
+            <span>Lines</span><strong id="finalLines">0</strong>
+          </div>
+          <div class="result">
+            <span>Credits</span><strong id="finalCredits">+0</strong>
+          </div>
+        </div>
+        <div class="modalBtns">
+          <button id="overMenu" class="secondary">MENU</button>
+          <button id="overAgain" class="primary">PLAY AGAIN</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="shopModal" class="overlay hidden">
+      <div class="modal shopModal">
+        <div class="shopHead">
+          <div>
+            <div class="eyebrow">Cosmetics</div>
+            <h2>Ball Shop</h2>
+          </div>
+          <div class="shopWallet">C <span id="shopCredits">0</span></div>
+        </div>
+        <div id="shopGrid" class="shopGrid"></div>
+        <button
+          id="closeShop"
+          class="secondary"
+          style="width: 100%; margin-top: 10px"
+        >
+          BACK
+        </button>
+      </div>
+    </div>
+    <div id="toast" class="toast"></div>
+
+    <div
+      id="pausePanel"
+      class="helperOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pauseTitle"
+      hidden
+    >
+      <div class="helperCard">
+        <h2 id="pauseTitle">Paused</h2>
+        <p>Resume when you are ready.</p>
+        <div>
+          <button id="pauseMenu">MENU</button
+          ><button id="resumeGame">RESUME</button>
+        </div>
+      </div>
+    </div>
+    <div
+      id="askPanel"
+      class="helperOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="askTitle"
+      hidden
+    >
+      <div class="helperCard">
+        <h2 id="askTitle">Replace this game?</h2>
+        <p id="askCopy"></p>
+        <div>
+          <button id="askNo">CANCEL</button><button id="askYes">CONFIRM</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      (() => {
+        "use strict";
+
+        const $ = (id) => document.getElementById(id);
+        const COLORS = [
+          "#ff6577",
+          "#61d9ff",
+          "#ffd15e",
+          "#70dc9e",
+          "#a984ff",
+          "#ff9c5e",
+          "#f26bd0",
+        ];
+        const DIFF = {
+          easy: {
+            label: "Easy",
+            size: 9,
+            spawn: 2,
+            line: 5,
+            colors: 5,
+            desc: "9×9 · 2 new balls per move · 5 colors · line of 5.",
+          },
+          normal: {
+            label: "Normal",
+            size: 9,
+            spawn: 3,
+            line: 5,
+            colors: 7,
+            desc: "9×9 · classic rules · 3 balls · 7 colors · line of 5.",
+          },
+          hard: {
+            label: "Hard",
+            size: 9,
+            spawn: 3,
+            line: 6,
+            colors: 7,
+            desc: "9×9 · 3 balls per move · lines must reach 6.",
+          },
+          master: {
+            label: "Master",
+            size: 10,
+            spawn: 4,
+            line: 6,
+            colors: 7,
+            desc: "10×10 · 4 new balls per move · line of 6.",
+          },
+        };
+        const SKINS = [
+          {
+            id: "classic",
+            name: "Classic",
+            cost: 0,
+            desc: "Glossy arcade spheres.",
+          },
+          {
+            id: "neon",
+            name: "Neon",
+            cost: 350,
+            desc: "Bright glowing energy balls.",
+          },
+          {
+            id: "slime",
+            name: "Slime",
+            cost: 650,
+            desc: "Soft irregular blobs.",
+          },
+          {
+            id: "tech",
+            name: "Tech",
+            cost: 950,
+            desc: "Octagonal cyber cores.",
+          },
+          {
+            id: "planet",
+            name: "Planets",
+            cost: 1300,
+            desc: "Deep shaded planetary orbs.",
+          },
+          {
+            id: "candy",
+            name: "Candy",
+            cost: 1650,
+            desc: "Striped sugary spheres.",
+          },
+          {
+            id: "crystal",
+            name: "Crystal",
+            cost: 2200,
+            desc: "Faceted gem pieces.",
+          },
+        ];
+
+        function number(value) {
+          const n = Number(value);
+          return Number.isFinite(n)
+            ? Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.floor(n)))
+            : 0;
+        }
+        function record(v) {
+          return v && typeof v === "object" && !Array.isArray(v);
+        }
+        function cloneValue(v) {
+          return JSON.parse(JSON.stringify(v));
+        }
+        function coord(c) {
+          return (
+            Array.isArray(c) &&
+            c.length === 2 &&
+            c.every((n) => Number.isInteger(n) && Math.abs(n) <= 20)
+          );
+        }
+        function validateCurrent(raw) {
+          try {
+            return validateCurrentData(raw);
+          } catch {
+            return null;
+          }
+        }
+        function validateCurrentData(raw) {
+          if (
+            !record(raw) ||
+            raw.done ||
+            typeof raw.diff !== "string" ||
+            !Object.hasOwn(DIFF, raw.diff)
+          )
+            return null;
+          const r = cloneValue(raw),
+            cfg = DIFF[r.diff];
+          if (
+            r.size !== cfg.size ||
+            !Array.isArray(r.grid) ||
+            r.grid.length !== cfg.size * cfg.size ||
+            !r.grid.every(
+              (v) =>
+                v === null || (Number.isInteger(v) && v >= 0 && v < cfg.colors),
+            )
+          )
+            return null;
+          if (
+            !Array.isArray(r.next) ||
+            r.next.length !== cfg.spawn ||
+            !r.next.every(
+              (v) => Number.isInteger(v) && v >= 0 && v < cfg.colors,
+            )
+          )
+            return null;
+          for (const field of [
+            "elapsed",
+            "moves",
+            "score",
+            "lines",
+            "cleared",
+            "combo",
+            "placed",
+            "hints",
+            "matches",
+          ])
+            if (field in r) r[field] = number(r[field]);
+          r.done = false;
+          r.seed = String(r.seed || "Saved").slice(0, 30);
+          return r;
+        }
+
+        class SaveManager {
+          static ROOT = "ARCADE_GAMES";
+          static KEY = "color-lines";
+          constructor() {
+            this.defaults = {
+              version: 1,
+              credits: 0,
+              difficulty: "normal",
+              owned: ["classic"],
+              equipped: "classic",
+              stats: { games: 0, bestScore: 0, lines: 0, creditsEarned: 0 },
+              current: null,
+            };
+            let root = {};
+            try {
+              root = this.read();
+            } catch {
+              this.report(false);
+            }
+            const input = record(root[SaveManager.KEY])
+                ? root[SaveManager.KEY]
+                : {},
+              d = cloneValue(this.defaults);
+            d.credits = number(input.credits);
+            if (
+              typeof input.difficulty === "string" &&
+              Object.hasOwn(DIFF, input.difficulty)
+            )
+              d.difficulty = input.difficulty;
+            d.owned = [
+              ...new Set([
+                "classic",
+                ...(Array.isArray(input.owned) ? input.owned : []).filter(
+                  (id) => SKINS.some((s) => s.id === id),
+                ),
+              ]),
+            ];
+            if (d.owned.includes(input.equipped)) d.equipped = input.equipped;
+            for (const key of Object.keys(d.stats))
+              d.stats[key] =
+                d.stats[key] === null
+                  ? input.stats?.[key] == null
+                    ? null
+                    : number(input.stats[key])
+                  : number(input.stats?.[key]);
+            d.current = validateCurrent(input.current);
+            this.data = d;
+            this.baseline = d.credits;
+          }
+          read() {
+            const raw = localStorage.getItem(SaveManager.ROOT),
+              root = raw === null ? {} : JSON.parse(raw);
+            if (!record(root)) throw Error("Invalid save");
+            return root;
+          }
+          report(ok) {
+            let node = $("saveWarning");
+            if (!node) {
+              node = document.createElement("div");
+              node.id = "saveWarning";
+              node.setAttribute("role", "status");
+              node.textContent =
+                "Saving is unavailable. Keep this tab open; progress will be retried.";
+              document.body.append(node);
+            }
+            node.hidden = ok;
+            if (ok) {
+              clearTimeout(this.retry);
+              this.retry = null;
+            } else if (!this.retry)
+              this.retry = setTimeout(() => {
+                this.retry = null;
+                if (this.data) this.persist();
+              }, 5000);
+          }
+          syncCredits() {
+            try {
+              const latest = this.read()[SaveManager.KEY];
+              if (record(latest)) {
+                const balance = number(latest.credits);
+                this.data.credits = number(
+                  balance + this.data.credits - this.baseline,
+                );
+                this.baseline = balance;
+              }
+            } catch {
+              this.report(false);
+            }
+          }
+          persist(refresh = true) {
+            try {
+              const root = this.read(),
+                latest = root[SaveManager.KEY],
+                balance = record(latest)
+                  ? number(
+                      number(latest.credits) +
+                        this.data.credits -
+                        this.baseline,
+                    )
+                  : this.data.credits;
+              root[SaveManager.KEY] = { ...this.data, credits: balance };
+              localStorage.setItem(SaveManager.ROOT, JSON.stringify(root));
+              this.data.credits = balance;
+              this.baseline = balance;
+              this.report(true);
+            } catch {
+              this.report(false);
+            }
+            if (refresh) updateMenuUI();
+          }
+        }
+        const save = new SaveManager();
+        let state = null,
+          selected = -1,
+          hintMove = null,
+          animating = false;
+        const board = $("board"),
+          toast = $("toast");
+
+        let paused = false,
+          actionPending = null;
+        function playing() {
+          return !!(
+            state &&
+            !state.done &&
+            !paused &&
+            $("gameScreen").classList.contains("active") &&
+            $("shopModal").classList.contains("hidden") &&
+            $("pausePanel").hidden &&
+            $("askPanel").hidden
+          );
+        }
+        function syncClock() {
+          if (state && !paused && !state.done && "elapsed" in state)
+            state.elapsed = Math.max(
+              0,
+              Math.floor((Date.now() - state.start) / 1000),
+            );
+        }
+        function freeze() {
+          syncClock();
+          paused = true;
+        }
+        function unfreeze() {
+          if (!state || state.done) return;
+          paused = false;
+          if ("elapsed" in state)
+            state.start = Date.now() - state.elapsed * 1000;
+        }
+        function askAction(message, action) {
+          freeze();
+          saveCurrent();
+          actionPending = action;
+          $("askCopy").textContent = message;
+          $("askPanel").hidden = false;
+          $("askNo").focus();
+        }
+        function pauseGame() {
+          if (!playing()) return;
+          freeze();
+          saveCurrent();
+          $("pausePanel").hidden = false;
+          $("resumeGame").focus();
+        }
+        $("resumeGame").onclick = () => {
+          $("pausePanel").hidden = true;
+          unfreeze();
+        };
+        $("pauseMenu").onclick = () => {
+          $("pausePanel").hidden = true;
+          showMenu();
+        };
+        $("askNo").onclick = () => {
+          $("askPanel").hidden = true;
+          actionPending = null;
+          if ($("gameScreen").classList.contains("active")) unfreeze();
+        };
+        $("askYes").onclick = () => {
+          const action = actionPending;
+          actionPending = null;
+          $("askPanel").hidden = true;
+          action?.();
+        };
+        const pauseButton = document.createElement("button");
+        pauseButton.className = "pauseControl";
+        pauseButton.textContent = "PAUSE";
+        pauseButton.setAttribute("aria-label", "Pause game");
+        pauseButton.onclick = pauseGame;
+        $("menuBtn").insertAdjacentElement("afterend", pauseButton);
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) pauseGame();
+        });
+        window.addEventListener("pagehide", () => {
+          freeze();
+          saveCurrent();
+        });
+        window.addEventListener("pageshow", (e) => {
+          if (
+            e.persisted &&
+            state &&
+            !state.done &&
+            $("gameScreen").classList.contains("active")
+          ) {
+            $("pausePanel").hidden = false;
+          }
+        });
+        window.addEventListener("storage", (e) => {
+          if (e.key === SaveManager.ROOT) {
+            save.syncCredits();
+            updateMenuUI();
+          }
+        });
+        window.addEventListener(
+          "keydown",
+          (e) => {
+            const modal = !$("pausePanel").hidden
+              ? $("pausePanel")
+              : !$("askPanel").hidden
+                ? $("askPanel")
+                : null;
+            if (!modal) return;
+            const buttons = [...modal.querySelectorAll("button")];
+            if (e.key === "Tab") {
+              if (e.shiftKey && document.activeElement === buttons[0]) {
+                e.preventDefault();
+                buttons.at(-1).focus();
+              } else if (
+                !e.shiftKey &&
+                document.activeElement === buttons.at(-1)
+              ) {
+                e.preventDefault();
+                buttons[0].focus();
+              }
+            }
+            if (e.key === "Escape") {
+              e.stopImmediatePropagation();
+              e.preventDefault();
+              modal === $("askPanel")
+                ? $("askNo").click()
+                : $("resumeGame").click();
+            }
+          },
+          true,
+        );
+        function rand(n) {
+          return Math.floor(Math.random() * n);
+        }
+        function shuffle(a) {
+          for (let i = a.length - 1; i > 0; i--) {
+            const j = rand(i + 1);
+            [a[i], a[j]] = [a[j], a[i]];
+          }
+          return a;
+        }
+        function toastMsg(msg) {
+          toast.textContent = msg;
+          toast.classList.add("show");
+          clearTimeout(toast._t);
+          toast._t = setTimeout(() => toast.classList.remove("show"), 1400);
+        }
+        function newGrid(n) {
+          return Array(n * n).fill(null);
+        }
+        function idx(x, y, n) {
+          return y * n + x;
+        }
+        function xy(i, n) {
+          return [i % n, Math.floor(i / n)];
+        }
+        function neighbors(i, n) {
+          const [x, y] = xy(i, n),
+            out = [];
+          if (x > 0) out.push(i - 1);
+          if (x < n - 1) out.push(i + 1);
+          if (y > 0) out.push(i - n);
+          if (y < n - 1) out.push(i + n);
+          return out;
+        }
+        function emptyIndices(g) {
+          const a = [];
+          for (let i = 0; i < g.length; i++) if (g[i] == null) a.push(i);
+          return a;
+        }
+        function makeNext() {
+          const cfg = DIFF[state.diff];
+          state.next = Array.from({ length: cfg.spawn }, () =>
+            rand(cfg.colors),
+          );
+        }
+        function randomPlace(count, useNext = true) {
+          const empties = shuffle(emptyIndices(state.grid));
+          const colors = useNext
+            ? state.next.slice()
+            : Array.from({ length: count }, () =>
+                rand(DIFF[state.diff].colors),
+              );
+          let placed = 0;
+          for (let i = 0; i < Math.min(count, empties.length); i++) {
+            state.grid[empties[i]] = colors[i % colors.length];
+            placed++;
+          }
+          return placed;
+        }
+        function pathfind(from, to, g = state.grid) {
+          if (from === to) return [from];
+          if (g[to] != null) return null;
+          const n = state.size,
+            q = [from],
+            prev = new Map([[from, -1]]);
+          for (let qi = 0; qi < q.length; qi++) {
+            const cur = q[qi];
+            for (const nb of neighbors(cur, n)) {
+              if (prev.has(nb) || g[nb] != null) continue;
+              prev.set(nb, cur);
+              if (nb === to) {
+                const p = [to];
+                let c = cur;
+                while (c !== -1) {
+                  p.push(c);
+                  c = prev.get(c);
+                }
+                return p.reverse();
+              }
+              q.push(nb);
+            }
+          }
+          return null;
+        }
+        function collectLinesAt(i, g = state.grid) {
+          if (g[i] == null) return [];
+          const n = state.size,
+            [x, y] = xy(i, n),
+            color = g[i],
+            need = DIFF[state.diff].line;
+          const dirs = [
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [1, -1],
+          ];
+          const union = new Set();
+          for (const [dx, dy] of dirs) {
+            const cells = [i];
+            for (const sign of [-1, 1]) {
+              let cx = x + dx * sign,
+                cy = y + dy * sign;
+              while (
+                cx >= 0 &&
+                cy >= 0 &&
+                cx < n &&
+                cy < n &&
+                g[idx(cx, cy, n)] === color
+              ) {
+                cells.push(idx(cx, cy, n));
+                cx += dx * sign;
+                cy += dy * sign;
+              }
+            }
+            if (cells.length >= need) cells.forEach((v) => union.add(v));
+          }
+          return [...union];
+        }
+        function clearAllLines() {
+          const all = new Set();
+          let lines = 0;
+          const n = state.size,
+            need = DIFF[state.diff].line;
+          for (let y = 0; y < n; y++)
+            for (let x = 0; x < n; x++) {
+              const color = state.grid[idx(x, y, n)];
+              if (color == null) continue;
+              for (const [dx, dy] of [
+                [1, 0],
+                [0, 1],
+                [1, 1],
+                [1, -1],
+              ]) {
+                const px = x - dx,
+                  py = y - dy;
+                if (
+                  px >= 0 &&
+                  py >= 0 &&
+                  px < n &&
+                  py < n &&
+                  state.grid[idx(px, py, n)] === color
+                )
+                  continue;
+                const run = [];
+                let xx = x,
+                  yy = y;
+                while (
+                  xx >= 0 &&
+                  yy >= 0 &&
+                  xx < n &&
+                  yy < n &&
+                  state.grid[idx(xx, yy, n)] === color
+                ) {
+                  run.push(idx(xx, yy, n));
+                  xx += dx;
+                  yy += dy;
+                }
+                if (run.length >= need) {
+                  lines++;
+                  run.forEach((i) => all.add(i));
+                }
+              }
+            }
+          if (!all.size) return 0;
+          all.forEach((i) => (state.grid[i] = null));
+          state.cleared += all.size;
+          state.lines += lines;
+          save.data.stats.lines += lines;
+          state.score += all.size * 10 + Math.max(0, all.size - need) * 5;
+          return all.size;
+        }
+        function serialize() {
+          return state ? JSON.parse(JSON.stringify(state)) : null;
+        }
+        function saveCurrent() {
+          if (state && !state.done) {
+            save.data.current = serialize();
+            save.persist();
+          }
+        }
+        function startGame(diff = save.data.difficulty, force = false) {
+          if (!Object.hasOwn(DIFF, diff)) return;
+          if (save.data.current && !force) {
+            askAction("Your saved game will be replaced.", () =>
+              startGame(diff, true),
+            );
+            return;
+          }
+          freeze();
+          paused = false;
+          const cfg = DIFF[diff];
+          state = {
+            diff,
+            size: cfg.size,
+            grid: newGrid(cfg.size),
+            score: 0,
+            cleared: 0,
+            lines: 0,
+            moves: 0,
+            next: [],
+          };
+          makeNext();
+          randomPlace(Math.min(5, cfg.spawn + 2), false);
+          makeNext();
+          selected = -1;
+          hintMove = null;
+          save.data.difficulty = diff;
+          save.data.current = serialize();
+          save.persist();
+          showGame();
+          render();
+        }
+        function continueGame() {
+          if (!save.data.current) return startGame();
+          state = JSON.parse(JSON.stringify(save.data.current));
+          if (!state || !DIFF[state.diff] || !Array.isArray(state.grid))
+            return startGame();
+          selected = -1;
+          hintMove = null;
+          paused = false;
+          showGame();
+          render();
+          if (state.grid.every((v) => v != null)) endGame();
+        }
+        function showGame() {
+          $("menuScreen").classList.remove("active");
+          $("gameScreen").classList.add("active");
+        }
+        function showMenu() {
+          freeze();
+          saveCurrent();
+          $("gameScreen").classList.remove("active");
+          $("menuScreen").classList.add("active");
+          updateMenuUI();
+        }
+        function endGame() {
+          if (!playing() || !state.grid.every((v) => v != null)) return;
+          freeze();
+          state.done = true;
+          const filled = state.grid.filter((v) => v != null).length;
+          if (filled < state.grid.length) return;
+          const reward = Math.max(5, Math.floor(state.score / 120));
+          save.data.credits += reward;
+          save.data.stats.creditsEarned += reward;
+          save.data.stats.games++;
+          if (state.score > save.data.stats.bestScore)
+            save.data.stats.bestScore = state.score;
+          save.data.current = null;
+          save.persist();
+          $("finalScore").textContent = state.score;
+          $("finalLines").textContent = state.lines;
+          $("finalCredits").textContent = "+" + reward;
+          $("gameOver").classList.remove("hidden");
+        }
+        function selectCell(i) {
+          if (!playing()) return;
+          if (animating) return;
+          if (state.grid[i] != null) {
+            selected = selected === i ? -1 : i;
+            hintMove = null;
+            render();
+            return;
+          }
+          if (selected < 0) return;
+          const path = pathfind(selected, i);
+          if (!path) {
+            toastMsg("No open path to that cell.");
+            return;
+          }
+          const color = state.grid[selected];
+          state.grid[selected] = null;
+          state.grid[i] = color;
+          state.moves++;
+          selected = -1;
+          hintMove = null;
+          const cleared = collectLinesAt(i);
+          if (cleared.length) {
+            clearAllLines();
+          } else {
+            randomPlace(DIFF[state.diff].spawn, true);
+            makeNext();
+            clearAllLines();
+          }
+          if (state.score > save.data.stats.bestScore)
+            save.data.stats.bestScore = state.score;
+          render();
+          if (state.grid.every((v) => v != null)) endGame();
+          else saveCurrent();
+        }
+        function findHint() {
+          const balls = [];
+          const empties = emptyIndices(state.grid);
+          for (let i = 0; i < state.grid.length; i++)
+            if (state.grid[i] != null) balls.push(i);
+          // First search a move that immediately clears.
+          for (const from of balls) {
+            const color = state.grid[from];
+            for (const to of empties) {
+              const path = pathfind(from, to);
+              if (!path) continue;
+              const g = state.grid.slice();
+              g[from] = null;
+              g[to] = color;
+              if (collectLinesSim(to, g).length) {
+                hintMove = { from, to, path };
+                return;
+              }
+            }
+          }
+          // Otherwise any reachable move, preferring movement toward same color.
+          let best = null,
+            bestScore = -1;
+          for (const from of balls) {
+            const color = state.grid[from],
+              [fx, fy] = xy(from, state.size);
+            for (const to of empties) {
+              const path = pathfind(from, to);
+              if (!path) continue;
+              const [tx, ty] = xy(to, state.size);
+              let s = 0;
+              for (let i = 0; i < state.grid.length; i++)
+                if (i !== from && state.grid[i] === color) {
+                  const [x, y] = xy(i, state.size);
+                  const d = Math.abs(x - tx) + Math.abs(y - ty);
+                  s += Math.max(0, 6 - d);
+                }
+              if (s > bestScore) {
+                bestScore = s;
+                best = { from, to, path };
+              }
+            }
+          }
+          hintMove = best;
+        }
+        function collectLinesSim(i, g) {
+          if (g[i] == null) return [];
+          const n = state.size,
+            [x, y] = xy(i, n),
+            color = g[i],
+            need = DIFF[state.diff].line,
+            dirs = [
+              [1, 0],
+              [0, 1],
+              [1, 1],
+              [1, -1],
+            ],
+            u = new Set();
+          for (const [dx, dy] of dirs) {
+            const cells = [i];
+            for (const sign of [-1, 1]) {
+              let cx = x + dx * sign,
+                cy = y + dy * sign;
+              while (
+                cx >= 0 &&
+                cy >= 0 &&
+                cx < n &&
+                cy < n &&
+                g[idx(cx, cy, n)] === color
+              ) {
+                cells.push(idx(cx, cy, n));
+                cx += dx * sign;
+                cy += dy * sign;
+              }
+            }
+            if (cells.length >= need) cells.forEach((v) => u.add(v));
+          }
+          return [...u];
+        }
+        function hint() {
+          if (!playing()) return;
+          findHint();
+          if (!hintMove) {
+            toastMsg("No legal move found.");
+            return;
+          }
+          selected = hintMove.from;
+          render();
+          toastMsg("Highlighted a useful move.");
+        }
+        function ballHTML(colorIndex, skin = save.data.equipped, extra = "") {
+          return `<div class="ball ${extra}" data-skin="${skin}" style="--ball:${COLORS[colorIndex]}"></div>`;
+        }
+        function fitBoard() {
+          const wrap = document.querySelector(".boardWrap");
+          if (!wrap) return;
+          const rect = wrap.getBoundingClientRect();
+          const maxSize = Math.max(
+            80,
+            Math.floor(Math.min(rect.width - 10, rect.height - 10, 600)),
+          );
+          board.style.width = maxSize + "px";
+          board.style.height = maxSize + "px";
+        }
+        function render() {
+          const cfg = DIFF[state.diff];
+          board.style.gridTemplateColumns = `repeat(${state.size},1fr)`;
+          board.innerHTML = "";
+          const hintPath = new Set(hintMove?.path || []);
+          for (let i = 0; i < state.grid.length; i++) {
+            const cell = document.createElement("button");
+            cell.type = "button";
+            cell.setAttribute(
+              "aria-label",
+              `Row ${Math.floor(i / state.size) + 1}, column ${(i % state.size) + 1}, ${state.grid[i] == null ? "empty" : "color " + (state.grid[i] + 1)}`,
+            );
+            cell.className = "cell" + (hintPath.has(i) ? " path" : "");
+            if (state.grid[i] != null)
+              cell.innerHTML = ballHTML(
+                state.grid[i],
+                save.data.equipped,
+                selected === i ? "selected" : "",
+              );
+            cell.onclick = () => selectCell(i);
+            board.append(cell);
+          }
+          $("hudScore").textContent = state.score;
+          $("hudBest").textContent = Math.max(
+            save.data.stats.bestScore,
+            state.score,
+          );
+          $("hudCleared").textContent = state.cleared;
+          $("hudDiff").textContent = cfg.label;
+          $("lineLength").textContent = cfg.line;
+          $("spawnCount").textContent = cfg.spawn;
+          $("skinLabel").textContent = (
+            SKINS.find((s) => s.id === save.data.equipped) || SKINS[0]
+          ).name;
+          const nb = $("nextBalls");
+          nb.innerHTML = "";
+          for (const c of state.next) {
+            const e = document.createElement("div");
+            e.className = "nextBall";
+            e.style.setProperty("--ball", COLORS[c]);
+            e.style.background = COLORS[c];
+            nb.append(e);
+          }
+          requestAnimationFrame(fitBoard);
+        }
+        function updateMenuUI() {
+          $("credits").textContent = save.data.credits;
+          $("shopCredits").textContent = save.data.credits;
+          $("statGames").textContent = save.data.stats.games | 0;
+          $("statBest").textContent = save.data.stats.bestScore | 0;
+          $("statLines").textContent = save.data.stats.lines | 0;
+          $("statEarned").textContent = save.data.stats.creditsEarned | 0;
+          $("continueBtn").classList.toggle("hidden", !save.data.current);
+          document
+            .querySelectorAll(".diffBtn")
+            .forEach((b) =>
+              b.classList.toggle(
+                "active",
+                b.dataset.diff === save.data.difficulty,
+              ),
+            );
+          $("diffDesc").textContent = DIFF[save.data.difficulty].desc;
+          renderShop();
+        }
+        function renderShop() {
+          const grid = $("shopGrid");
+          if (!grid) return;
+          grid.innerHTML = "";
+          for (const skin of SKINS) {
+            const item = document.createElement("div");
+            item.className =
+              "shopItem" + (save.data.equipped === skin.id ? " active" : "");
+            const prev = document.createElement("div");
+            prev.className = "preview";
+            [0, 1, 2].forEach((c) => {
+              const wrap = document.createElement("div");
+              wrap.className = "previewBall";
+              wrap.innerHTML = ballHTML(c, skin);
+              prev.append(wrap);
+            });
+            const owned = save.data.owned.includes(skin.id),
+              btn = document.createElement("button");
+            if (save.data.equipped === skin.id) {
+              btn.textContent = "EQUIPPED";
+              btn.disabled = true;
+            } else if (owned) {
+              btn.textContent = "EQUIP";
+            } else {
+              btn.textContent = `BUY · ${skin.cost} C`;
+              btn.className = "buy";
+            }
+            btn.onclick = () => {
+              save.syncCredits();
+              if (!save.data.owned.includes(skin.id)) {
+                if (save.data.credits < skin.cost) {
+                  toastMsg("Not enough credits.");
+                  return;
+                }
+                save.data.credits -= skin.cost;
+                save.data.owned.push(skin.id);
+              }
+              save.data.equipped = skin.id;
+              save.persist();
+              renderShop();
+              if (state) render();
+            };
+            const st = document.createElement("strong");
+            st.textContent = skin.name;
+            const sm = document.createElement("small");
+            sm.textContent = skin.desc;
+            item.append(prev, st, sm, btn);
+            grid.append(item);
+          }
+        }
+        function openShop() {
+          freeze();
+          saveCurrent();
+          $("shopModal").classList.remove("hidden");
+          renderShop();
+        }
+        function closeShop() {
+          $("shopModal").classList.add("hidden");
+          if ($("gameScreen").classList.contains("active")) unfreeze();
+        }
+        function initArt() {
+          const a = $("artGrid");
+          a.innerHTML = "";
+          for (let i = 0; i < 25; i++) {
+            const c = document.createElement("div");
+            c.className = "artCell";
+            if ([2, 6, 7, 8, 12, 16, 17, 18, 22].includes(i)) {
+              const b = document.createElement("div");
+              b.className = "artBall";
+              b.style.setProperty("--c", COLORS[(i * 3) % COLORS.length]);
+              c.append(b);
+            }
+            a.append(c);
+          }
+        }
+
+        $("newBtn").onclick = () => startGame(save.data.difficulty);
+        $("continueBtn").onclick = continueGame;
+        $("menuBtn").onclick = showMenu;
+        $("hintBtn").onclick = hint;
+        $("shopBtn").onclick = openShop;
+        $("shopStripBtn").onclick = openShop;
+        $("shopGameBtn").onclick = openShop;
+        $("closeShop").onclick = closeShop;
+        $("newGameBtn").onclick = () => startGame(save.data.difficulty);
+        $("overMenu").onclick = () => {
+          $("gameOver").classList.add("hidden");
+          showMenu();
+        };
+        $("overAgain").onclick = () => {
+          $("gameOver").classList.add("hidden");
+          startGame(save.data.difficulty);
+        };
+        document.querySelectorAll(".diffBtn").forEach(
+          (b) =>
+            (b.onclick = () => {
+              save.data.difficulty = b.dataset.diff;
+              save.persist();
+            }),
+        );
+        const boardResizeObserver = new ResizeObserver(() => {
+          if (state && $("gameScreen").classList.contains("active")) fitBoard();
+        });
+        boardResizeObserver.observe(document.querySelector(".boardWrap"));
+        window.addEventListener(
+          "resize",
+          () => {
+            if (state && $("gameScreen").classList.contains("active"))
+              requestAnimationFrame(fitBoard);
+          },
+          { passive: true },
+        );
+
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            if (!$("shopModal").classList.contains("hidden")) closeShop();
+            else if ($("gameScreen").classList.contains("active")) showMenu();
+          }
+        });
+        initArt();
+        updateMenuUI();
+      })();
+    </script>
+  </body>
+</html>
