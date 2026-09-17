@@ -1,0 +1,2410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>Sokoban</title>
+    <style>
+      :root {
+        --bg: #0a0e12;
+        --p: #141b21;
+        --p2: #1c262d;
+        --line: #ffffff16;
+        --ink: #f3f6f8;
+        --muted: #91a0a8;
+        --gold: #f0bf62;
+        --green: #67dca3;
+        --red: #ff7278;
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 12% 12%, #32433544, transparent 28rem),
+          radial-gradient(circle at 85% 85%, #53372133, transparent 28rem),
+          var(--bg);
+        color: var(--ink);
+        font-family: Inter, system-ui, sans-serif;
+        user-select: none;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        border: 0;
+        cursor: pointer;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .app {
+        height: 100dvh;
+        max-width: 1240px;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .top {
+        height: 60px;
+        flex: 0 0 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+        border-bottom: 1px solid var(--line);
+        background: #090d11e8;
+      }
+      .brand {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-weight: 950;
+      }
+      .mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: linear-gradient(145deg, #e1a957, #8b5d2e);
+        position: relative;
+        box-shadow: inset 0 0 0 3px #ffffff16;
+      }
+      .mark:before {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border: 2px solid #38220f;
+        border-radius: 3px;
+      }
+      .wallet {
+        padding: 7px 10px;
+        border: 1px solid #f0bf6244;
+        border-radius: 999px;
+        color: var(--gold);
+        font-weight: 900;
+      }
+      .screen {
+        display: none;
+        flex: 1;
+        min-height: 0;
+      }
+      .screen.active {
+        display: block;
+      }
+      #menu {
+        padding: 18px;
+        overflow: auto;
+      }
+      .wrap {
+        width: min(930px, 100%);
+        margin: auto;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        min-height: 245px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        overflow: hidden;
+        background: linear-gradient(145deg, #1c252a, #10161a);
+      }
+      .copy {
+        padding: 31px;
+      }
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 900;
+      }
+      .hero h1 {
+        font-size: clamp(43px, 8vw, 70px);
+        line-height: 0.9;
+        letter-spacing: -4px;
+        margin: 10px 0;
+      }
+      .hero p {
+        color: #b5bfc4;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .primary,
+      .secondary {
+        min-height: 44px;
+        border-radius: 11px;
+        font-size: 11px;
+        font-weight: 950;
+      }
+      .primary {
+        background: linear-gradient(135deg, #f0bf62, #dd8746);
+        color: #171006;
+      }
+      .secondary {
+        background: #1c252b;
+        border: 1px solid var(--line);
+      }
+      .art {
+        position: relative;
+        background: linear-gradient(135deg, #253027, #161d19);
+        overflow: hidden;
+      }
+      .floorArt {
+        position: absolute;
+        inset: 28px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        gap: 4px;
+        transform: rotate(-5deg);
+      }
+      .fa {
+        background: #35463b;
+        border: 1px solid #ffffff10;
+        position: relative;
+      }
+      .fa.box:before {
+        content: "";
+        position: absolute;
+        inset: 8%;
+        background: #c18b45;
+        border: 3px solid #795124;
+        box-shadow: inset 0 0 0 3px #e0b06e;
+      }
+      .fa.goal:after {
+        content: "";
+        position: absolute;
+        inset: 26%;
+        border-radius: 50%;
+        border: 3px solid #f0bf62;
+        box-shadow: 0 0 10px #f0bf6277;
+      }
+      .fa.player:before {
+        content: "";
+        position: absolute;
+        inset: 18%;
+        border-radius: 50% 50% 40% 40%;
+        background: #6fc9d8;
+        box-shadow: inset 0 0 0 3px #1b5965;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 11px;
+        margin-top: 11px;
+      }
+      .panel {
+        padding: 17px;
+        border: 1px solid var(--line);
+        border-radius: 17px;
+        background: #12191e;
+      }
+      .panel h2 {
+        margin: 0 0 11px;
+        font-size: 15px;
+      }
+      .diffs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .diff {
+        min-height: 40px;
+        border-radius: 9px;
+        background: #0b1115;
+        border: 1px solid #ffffff10;
+        color: #9ba8ae;
+        font-size: 9px;
+        font-weight: 900;
+      }
+      .diff.active {
+        background: linear-gradient(135deg, #f0bf62, #dd8746);
+        color: #171006;
+        border: 0;
+      }
+      .desc {
+        min-height: 32px;
+        margin: 10px 0;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .twob {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+      .stat {
+        padding: 11px;
+        border-radius: 10px;
+        background: #0b1115;
+        border: 1px solid #ffffff0d;
+      }
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        text-transform: uppercase;
+      }
+      .stat strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 19px;
+      }
+      .shopline {
+        margin-top: 11px;
+        padding: 14px 17px;
+        border: 1px solid #f0bf6222;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: #f0bf6208;
+      }
+      .shopline strong {
+        display: block;
+        font-size: 12px;
+      }
+      .shopline span {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        margin-top: 3px;
+      }
+      #game.active {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 285px;
+      }
+      .main {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 7px;
+        border-right: 1px solid var(--line);
+      }
+      .hud {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+        margin-bottom: 5px;
+      }
+      .hc {
+        padding: 6px 7px;
+        border-radius: 9px;
+        background: #10171c;
+        border: 1px solid #ffffff0e;
+      }
+      .hc span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+        text-transform: uppercase;
+      }
+      .hc strong {
+        font-size: 13px;
+      }
+      .bw {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        place-items: center;
+        border: 1px solid #ffffff0d;
+        border-radius: 15px;
+        background:
+          radial-gradient(circle at center, #27332b, transparent 72%), #0b100d;
+        overflow: hidden;
+      }
+      .board {
+        display: grid;
+        gap: 2px;
+        padding: 4px;
+        background: #111713;
+        border-radius: 12px;
+        box-shadow: 0 18px 40px #0008;
+      }
+      .cell {
+        position: relative;
+        border-radius: 4px;
+        background: #35443a;
+        border: 1px solid #ffffff0d;
+      }
+      .wall {
+        background: repeating-linear-gradient(
+          45deg,
+          #31383a 0 8px,
+          #252b2d 8px 16px
+        );
+        box-shadow: inset 0 0 0 2px #171b1d;
+      }
+      .goal:after {
+        content: "";
+        position: absolute;
+        inset: 30%;
+        border-radius: 50%;
+        border: 3px solid var(--goal, #f0bf62);
+        box-shadow: 0 0 8px #f0bf6266;
+      }
+      .box:before {
+        content: "";
+        position: absolute;
+        inset: 9%;
+        border-radius: 5px;
+        background: var(--box, #bd8644);
+        border: 3px solid var(--edge, #765026);
+        box-shadow:
+          inset 0 0 0 3px #ffffff18,
+          0 5px 8px #0005;
+        z-index: 2;
+      }
+      .box.ongoal:before {
+        box-shadow:
+          inset 0 0 0 3px #ffffff20,
+          0 0 0 3px #67dca3,
+          0 5px 8px #0005;
+      }
+      .player:before {
+        content: "";
+        position: absolute;
+        inset: 16%;
+        border-radius: 48% 48% 42% 42%;
+        background: var(--player, #6fc9d8);
+        border: 3px solid #173f47;
+        box-shadow:
+          inset 0 4px 5px #ffffff35,
+          0 4px 8px #0005;
+        z-index: 3;
+      }
+      .hintCell {
+        outline: 3px solid #f0bf62;
+        outline-offset: -4px;
+      }
+      .side {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 13px;
+        background: #0e1418;
+      }
+      .side h2 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .side p {
+        font-size: 10px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+      .info {
+        padding: 11px;
+        border-radius: 11px;
+        background: #141d22;
+        border: 1px solid var(--line);
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid #ffffff0b;
+        font-size: 9px;
+      }
+      .row:last-child {
+        border: 0;
+      }
+      .row span {
+        color: var(--muted);
+      }
+      .spacer {
+        flex: 1;
+      }
+      .dpad {
+        display: grid;
+        grid-template-columns: repeat(3, 40px);
+        grid-template-rows: repeat(2, 36px);
+        gap: 4px;
+        justify-content: center;
+        margin: 8px 0;
+      }
+      .dpad button {
+        border-radius: 8px;
+        background: #1d282d;
+        border: 1px solid var(--line);
+        font-weight: 900;
+      }
+      .up {
+        grid-column: 2;
+      }
+      .left {
+        grid-column: 1;
+      }
+      .down {
+        grid-column: 2;
+      }
+      .right {
+        grid-column: 3;
+      }
+      .acts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .acts button {
+        min-height: 37px;
+        border-radius: 9px;
+        background: #192329;
+        border: 1px solid var(--line);
+        font-size: 8px;
+        font-weight: 950;
+      }
+      .acts .accent {
+        background: linear-gradient(135deg, #f0bf62, #dd8746);
+        color: #171006;
+        border: 0;
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        padding: 14px;
+        background: #030506d8;
+        backdrop-filter: blur(9px);
+      }
+      .modal {
+        width: min(430px, 100%);
+        padding: 22px;
+        border: 1px solid #ffffff18;
+        border-radius: 18px;
+        background: #141c21;
+        text-align: center;
+      }
+      .modal h2 {
+        margin: 0;
+        font-size: 30px;
+      }
+      .modal p {
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .results {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin: 14px 0;
+      }
+      .res {
+        padding: 10px;
+        border-radius: 9px;
+        background: #0b1115;
+        border: 1px solid #ffffff0d;
+      }
+      .res span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+      }
+      .res strong {
+        font-size: 18px;
+      }
+      .mb {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+      .mb button {
+        min-height: 41px;
+        border-radius: 9px;
+      }
+      .shopModal {
+        width: min(750px, 100%);
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+      }
+      .shopgrid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        overflow: auto;
+        margin: 12px 0;
+      }
+      .shopitem {
+        padding: 10px;
+        border-radius: 11px;
+        background: #0f161a;
+        border: 1px solid var(--line);
+      }
+      .shopitem.active {
+        border-color: var(--gold);
+      }
+      .preview {
+        height: 68px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: #0a0f12;
+        margin-bottom: 8px;
+      }
+      .pb {
+        width: 45px;
+        height: 45px;
+        border-radius: 6px;
+        background: var(--box);
+        border: 4px solid var(--edge);
+        box-shadow: inset 0 0 0 3px #ffffff18;
+      }
+      .shopitem small {
+        display: block;
+        min-height: 24px;
+        color: var(--muted);
+        font-size: 8px;
+        margin: 4px 0 8px;
+      }
+      .shopitem button {
+        width: 100%;
+        min-height: 31px;
+        border-radius: 7px;
+        background: #1c262c;
+        border: 1px solid var(--line);
+        font-size: 8px;
+        font-weight: 900;
+      }
+      .buy {
+        background: linear-gradient(135deg, #f0bf62, #dd8746) !important;
+        color: #171006 !important;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 14px;
+        z-index: 150;
+        transform: translateX(-50%);
+        padding: 9px 12px;
+        border-radius: 9px;
+        background: #182228;
+        border: 1px solid var(--line);
+        font-size: 9px;
+        opacity: 0;
+        transition: 0.2s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, -4px);
+      }
+      @media (max-width: 820px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+        .art {
+          display: none;
+        }
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+        #game.active {
+          display: flex;
+          flex-direction: column;
+        }
+        .main {
+          flex: 1;
+          min-height: 0;
+          border-right: 0;
+          padding: 5px;
+        }
+        .side {
+          flex: 0 0 auto;
+          padding: 5px 7px;
+        }
+        .side h2,
+        .side p,
+        .info {
+          display: none;
+        }
+        .spacer {
+          display: none;
+        }
+        .dpad {
+          grid-template-columns: repeat(3, 42px);
+          grid-template-rows: repeat(2, 31px);
+          margin: 3px auto;
+        }
+        .acts {
+          grid-template-columns: repeat(4, 1fr);
+          gap: 4px;
+        }
+        .acts button {
+          min-height: 31px;
+          font-size: 7px;
+        }
+        .shopgrid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 520px) {
+        .top {
+          height: 50px;
+          flex-basis: 50px;
+        }
+        .brand {
+          font-size: 12px;
+        }
+        .mark {
+          width: 28px;
+          height: 28px;
+        }
+        #menu {
+          padding: 8px;
+        }
+        .copy {
+          padding: 21px 16px;
+        }
+        .hero h1 {
+          font-size: 47px;
+        }
+        .diffs {
+          grid-template-columns: 1fr 1fr;
+        }
+        .twob {
+          grid-template-columns: 1fr;
+        }
+        .hud {
+          gap: 3px;
+        }
+        .hc {
+          padding: 4px;
+        }
+        .hc strong {
+          font-size: 10px;
+        }
+        .board {
+          gap: 1px;
+          padding: 3px;
+        }
+        .dpad {
+          grid-template-columns: repeat(3, 38px);
+          grid-template-rows: repeat(2, 28px);
+        }
+      }
+      @media (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
+        .top {
+          height: 42px;
+          flex-basis: 42px;
+        }
+        #game.active {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 175px;
+        }
+        .main {
+          border-right: 1px solid var(--line);
+          padding: 3px;
+        }
+        .side {
+          padding: 4px;
+        }
+        .dpad {
+          grid-template-columns: repeat(3, 32px);
+          grid-template-rows: repeat(2, 25px);
+          margin: 2px auto;
+        }
+        .acts {
+          grid-template-columns: 1fr 1fr;
+        }
+        .acts button {
+          min-height: 25px;
+        }
+      }
+
+      html,
+      body {
+        overflow: auto;
+        min-height: 100%;
+      }
+      .app {
+        min-height: 100svh;
+        height: auto;
+      }
+      #menu.active {
+        overflow: visible;
+        flex: 1;
+      }
+      #game.active {
+        min-height: calc(100svh - 60px);
+      }
+      .main,
+      .side,
+      .hc {
+        min-width: 0;
+      }
+      .bw {
+        min-height: 260px;
+      }
+      button {
+        touch-action: manipulation;
+      }
+      button:focus-visible,
+      #board:focus-visible {
+        outline: 3px solid #6fe4d1;
+        outline-offset: 3px;
+      }
+      .acts button {
+        min-height: 44px;
+        font-size: 10px;
+      }
+      .acts #menuBtn {
+        grid-column: auto !important;
+      }
+      .hc span {
+        font-size: 9px;
+        font-weight: 750;
+        letter-spacing: 0.06em;
+      }
+      .hc strong {
+        font-size: 16px;
+      }
+      .top {
+        padding-top: env(safe-area-inset-top);
+      }
+      .side {
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+      }
+      .board {
+        overflow: hidden;
+        box-shadow: 0 12px 36px #0005;
+      }
+      .cell {
+        min-width: 0;
+        min-height: 0;
+        padding: 0;
+      }
+      .board .cell:focus-visible {
+        outline-offset: -3px;
+        z-index: 6;
+      }
+      .overlay {
+        overflow: auto;
+      }
+      .modal,
+      .shopbox {
+        max-height: calc(100dvh - 28px);
+        overflow: auto;
+      }
+      #actionDialog {
+        max-width: min(400px, calc(100vw - 24px));
+        border: 1px solid #ffffff30;
+        border-radius: 18px;
+        padding: 24px;
+        background: #142027;
+        color: #f3f6f8;
+        box-shadow: 0 24px 80px #0008;
+      }
+      #actionDialog::backdrop {
+        background: #020609ce;
+        backdrop-filter: blur(6px);
+      }
+      #actionDialog h2 {
+        margin-top: 0;
+      }
+      #actionText {
+        line-height: 1.5;
+      }
+      #actionDialog button {
+        min-height: 44px;
+        padding: 8px 18px;
+        border-radius: 9px;
+        background: #263640;
+      }
+      #actionYes {
+        background: #78dac5 !important;
+        color: #07291f;
+        font-weight: 800;
+      }
+      #saveWarning {
+        position: fixed;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: calc(100vw - 24px);
+        padding: 12px 18px;
+        background: #5b3921;
+        color: white;
+        border-radius: 12px;
+        z-index: 300;
+        font-size: 12px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      #playNote {
+        margin: 8px 0;
+        color: #b7cbd1;
+        font-size: 12px;
+        line-height: 1.4;
+        min-height: 1.4em;
+      }
+      @media (max-width: 900px) {
+        #game.active {
+          display: flex;
+          flex-direction: column;
+        }
+        .main {
+          flex: 1;
+          min-height: calc(100svh - 225px);
+          border-right: 0;
+        }
+        .side {
+          flex: none;
+        }
+        .bw {
+          min-height: 220px;
+        }
+        .acts {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .side h2,
+        .side > p,
+        .info,
+        .spacer {
+          display: none;
+        }
+        .shopgrid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-height: 500px) and (min-width: 650px) {
+        #game.active {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 225px;
+        }
+        .main {
+          min-height: 340px;
+        }
+        .bw {
+          min-height: 260px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+      #board {
+        touch-action: none;
+      }
+      .dpad button {
+        min-height: 42px;
+        min-width: 42px;
+      }
+      .walkHint::after {
+        content: "";
+        position: absolute;
+        inset: 40%;
+        border-radius: 50%;
+        background: #97efe0;
+        box-shadow: 0 0 8px #97efe0;
+      }
+      .hintCell::after {
+        content: attr(data-arrow);
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: clamp(18px, 4vw, 30px);
+        font-weight: 900;
+        color: #fff;
+        text-shadow: 0 2px 5px #000;
+      }
+      .box.ongoal::after {
+        content: "✓";
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #dcffed;
+        font-size: clamp(16px, 3vw, 28px);
+        font-weight: 900;
+        text-shadow: 0 1px 4px #143e28;
+      }
+      .dpad {
+        margin: 6px auto;
+      }
+      @media (max-width: 900px) {
+        .main {
+          min-height: calc(100svh - 300px);
+        }
+        .dpad {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 8px;
+          width: min(280px, 100%);
+        }
+        .dpad button {
+          grid-area: auto !important;
+        }
+      }
+      .box.ongoal::after,
+      .hintCell::after {
+        z-index: 4;
+        border: 0;
+        box-shadow: none;
+        border-radius: 0;
+      }
+      .box.ongoal.hintCell::after {
+        content: attr(data-arrow);
+      }
+      @media (max-width: 900px) {
+        .dpad {
+          grid-template-rows: 44px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <div class="brand">
+          <div class="mark"></div>
+          <span>SOKOBAN</span>
+        </div>
+        <div class="wallet">C <span id="credits">0</span></div>
+      </header>
+      <section id="menu" class="screen active">
+        <div class="wrap">
+          <div class="hero">
+            <div class="copy">
+              <div class="eyebrow">Warehouse puzzle</div>
+              <h1>Push with care.</h1>
+              <p>
+                Push every crate onto a goal. Crates cannot be pulled, so one
+                careless push can trap the entire level. Generated levels are
+                scrambled from solved states, so they always have a valid route
+                back.
+              </p>
+              <button id="newBtn" class="primary" style="padding: 0 20px">
+                NEW LEVEL
+              </button>
+            </div>
+            <div class="art"><div id="floorArt" class="floorArt"></div></div>
+          </div>
+          <div class="grid2">
+            <div class="panel">
+              <h2>Difficulty</h2>
+              <div class="diffs">
+                <button class="diff active" data-d="easy">EASY</button
+                ><button class="diff" data-d="normal">NORMAL</button
+                ><button class="diff" data-d="hard">HARD</button
+                ><button class="diff" data-d="master">MASTER</button>
+              </div>
+              <div id="desc" class="desc"></div>
+              <div class="twob">
+                <button id="continueBtn" class="secondary hidden">
+                  CONTINUE</button
+                ><button id="shopBtn" class="secondary">CRATE SHOP</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h2>Records</h2>
+              <div class="stats">
+                <div class="stat">
+                  <span>Solved</span><strong id="stSolved">0</strong>
+                </div>
+                <div class="stat">
+                  <span>Best pushes</span><strong id="stBest">—</strong>
+                </div>
+                <div class="stat">
+                  <span>Total pushes</span><strong id="stPushes">0</strong>
+                </div>
+                <div class="stat">
+                  <span>Credits</span><strong id="stEarned">0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="shopline">
+            <div>
+              <strong>Crate skins</strong
+              ><span>Warehouse, Night, Slime, Tech, Candy, Lava and Ice.</span>
+            </div>
+            <button id="shopLineBtn" class="primary" style="padding: 0 15px">
+              OPEN SHOP
+            </button>
+          </div>
+        </div>
+      </section>
+      <section id="game" class="screen">
+        <div class="main">
+          <div class="hud">
+            <div class="hc">
+              <span>Moves</span><strong id="moves">0</strong>
+            </div>
+            <div class="hc">
+              <span>Pushes</span><strong id="pushes">0</strong>
+            </div>
+            <div class="hc">
+              <span>Crates</span><strong id="crates">0/0</strong>
+            </div>
+            <div class="hc">
+              <span>Difficulty</span><strong id="gdiff">Easy</strong>
+            </div>
+          </div>
+          <div class="bw">
+            <div
+              id="board"
+              class="board"
+              tabindex="0"
+              aria-label="Sokoban board. Use arrow keys or WASD to move."
+            ></div>
+          </div>
+        </div>
+        <aside class="side">
+          <h2>Warehouse</h2>
+          <p>
+            Use arrows/WASD, swipe on the board, or the controls below. Push
+            every crate onto a glowing target.
+          </p>
+          <div class="info">
+            <div class="row">
+              <span>Crate set</span><strong id="skinName">Warehouse</strong>
+            </div>
+            <div class="row">
+              <span>Level</span><strong id="seed">#000000</strong>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="dpad">
+            <button class="up" data-m="0,-1">▲</button
+            ><button class="left" data-m="-1,0">◀</button
+            ><button class="down" data-m="0,1">▼</button
+            ><button class="right" data-m="1,0">▶</button>
+          </div>
+          <div id="playNote" role="status" aria-live="polite"></div>
+          <div class="acts">
+            <button id="pauseBtn">PAUSE</button>
+            <button id="undoBtn">UNDO</button><button id="hintBtn">HINT</button
+            ><button id="resetBtn">RESET</button
+            ><button id="gameShop">SHOP</button
+            ><button id="menuBtn" class="accent" style="grid-column: 1/-1">
+              MENU
+            </button>
+          </div>
+        </aside>
+      </section>
+    </div>
+    <div
+      id="win"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Puzzle complete"
+    >
+      <div class="modal">
+        <div class="eyebrow">Warehouse cleared</div>
+        <h2>All crates parked.</h2>
+        <p>Every crate is on a target.</p>
+        <div class="results">
+          <div class="res">
+            <span>Moves</span><strong id="fMoves">0</strong>
+          </div>
+          <div class="res">
+            <span>Pushes</span><strong id="fPushes">0</strong>
+          </div>
+          <div class="res">
+            <span>Credits</span><strong id="fCredits">+0</strong>
+          </div>
+        </div>
+        <div class="mb">
+          <button id="winMenu" class="secondary">MENU</button
+          ><button id="winNext" class="primary">NEXT</button>
+        </div>
+      </div>
+    </div>
+    <div
+      id="shop"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Skins shop"
+    >
+      <div class="modal shopModal">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <div>
+            <div class="eyebrow">Cosmetics</div>
+            <h2>Crate Shop</h2>
+          </div>
+          <strong style="color: var(--gold)"
+            >C <span id="shopCredits">0</span></strong
+          >
+        </div>
+        <div id="shopGrid" class="shopgrid"></div>
+        <button id="closeShop" class="secondary" style="width: 100%">
+          BACK
+        </button>
+      </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <dialog id="actionDialog" aria-labelledby="actionTitle">
+      <h2 id="actionTitle">Sokoban</h2>
+      <p id="actionText"></p>
+      <div class="mb">
+        <button id="actionNo">CANCEL</button
+        ><button id="actionYes">CONFIRM</button>
+      </div>
+    </dialog>
+    <script>
+      (() => {
+        "use strict";
+        const $ = (i) => document.getElementById(i),
+          DIR = [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ],
+          DIFF = {
+            easy: {
+              label: "Easy",
+              n: 7,
+              b: 2,
+              w: 2,
+              s: 7,
+              r: 24,
+              desc: "7×7 · 2 crates · short scramble.",
+            },
+            normal: {
+              label: "Normal",
+              n: 8,
+              b: 3,
+              w: 4,
+              s: 13,
+              r: 38,
+              desc: "8×8 · 3 crates · more planning.",
+            },
+            hard: {
+              label: "Hard",
+              n: 9,
+              b: 4,
+              w: 7,
+              s: 21,
+              r: 56,
+              desc: "9×9 · 4 crates · longer push chains.",
+            },
+            master: {
+              label: "Master",
+              n: 10,
+              b: 5,
+              w: 10,
+              s: 30,
+              r: 78,
+              desc: "10×10 · 5 crates · dense warehouse.",
+            },
+          },
+          SKINS = [
+            {
+              id: "classic",
+              name: "Warehouse",
+              cost: 0,
+              box: "#bd8644",
+              edge: "#765026",
+              player: "#6fc9d8",
+              goal: "#f0bf62",
+              desc: "Classic wooden crates.",
+            },
+            {
+              id: "night",
+              name: "Night",
+              cost: 350,
+              box: "#35394f",
+              edge: "#171a29",
+              player: "#8795ff",
+              goal: "#aab4ff",
+              desc: "Dark midnight storage.",
+            },
+            {
+              id: "slime",
+              name: "Slime",
+              cost: 650,
+              box: "#69b955",
+              edge: "#2e6d2a",
+              player: "#9eff79",
+              goal: "#8dff75",
+              desc: "Green goo crates.",
+            },
+            {
+              id: "tech",
+              name: "Tech",
+              cost: 950,
+              box: "#26798b",
+              edge: "#123d49",
+              player: "#62f1dc",
+              goal: "#62f1dc",
+              desc: "Cyber cargo cells.",
+            },
+            {
+              id: "candy",
+              name: "Candy",
+              cost: 1250,
+              box: "#e58baa",
+              edge: "#943f67",
+              player: "#ffd0e4",
+              goal: "#ff9bc5",
+              desc: "Pastel warehouse.",
+            },
+            {
+              id: "lava",
+              name: "Lava",
+              cost: 1650,
+              box: "#9a482a",
+              edge: "#4b1d10",
+              player: "#ff9b55",
+              goal: "#ff7a3c",
+              desc: "Volcanic cargo.",
+            },
+            {
+              id: "ice",
+              name: "Ice",
+              cost: 2200,
+              box: "#8fc9dc",
+              edge: "#3e7588",
+              player: "#d7f7ff",
+              goal: "#9eeeff",
+              desc: "Frozen crystal crates.",
+            },
+          ];
+
+        const copy = (v) => JSON.parse(JSON.stringify(v));
+        function number(v) {
+          return Number.isFinite(Number(v))
+            ? Math.max(
+                0,
+                Math.min(Number.MAX_SAFE_INTEGER, Math.floor(Number(v))),
+              )
+            : 0;
+        }
+        function record(v) {
+          return !!v && typeof v === "object" && !Array.isArray(v);
+        }
+        function cloneValue(v) {
+          return copy(v);
+        }
+        function point(p, n) {
+          return (
+            record(p) &&
+            Number.isInteger(p.x) &&
+            Number.isInteger(p.y) &&
+            p.x >= 0 &&
+            p.y >= 0 &&
+            p.x < n &&
+            p.y < n
+          );
+        }
+        function validateCurrent(raw) {
+          try {
+            if (
+              !record(raw) ||
+              raw.done ||
+              !Object.hasOwn(DIFF, raw.diff) ||
+              raw.n !== DIFF[raw.diff].n
+            )
+              return null;
+            const s = copy(raw),
+              n = s.n;
+            const k = (p) => p.x + "," + p.y,
+              unique = (a) => new Set(a.map(k)).size === a.length;
+            if (
+              !Array.isArray(s.walls) ||
+              s.walls.length > n * n ||
+              !s.walls.every(
+                (w) =>
+                  typeof w === "string" &&
+                  /^\d+,\d+$/.test(w) &&
+                  w.split(",").every((v) => +v < n),
+              )
+            )
+              return null;
+            const walls = new Set(s.walls);
+            for (let i = 0; i < n; i++)
+              if (
+                !walls.has(i + ",0") ||
+                !walls.has(i + "," + (n - 1)) ||
+                !walls.has("0," + i) ||
+                !walls.has(n - 1 + "," + i)
+              )
+                return null;
+            const floor = (p) => point(p, n) && !walls.has(k(p)),
+              snapshot = (v) =>
+                record(v) &&
+                Array.isArray(v.boxes) &&
+                v.boxes.length === DIFF[s.diff].b &&
+                v.boxes.every(floor) &&
+                unique(v.boxes) &&
+                floor(v.player) &&
+                !v.boxes.some((b) => k(b) === k(v.player));
+            if (
+              !Array.isArray(s.goals) ||
+              s.goals.length !== DIFF[s.diff].b ||
+              !s.goals.every(floor) ||
+              !unique(s.goals) ||
+              !snapshot(s) ||
+              !snapshot(s.initial)
+            )
+              return null;
+            s.pushes = number(s.pushes);
+            s.undo = (Array.isArray(s.undo) ? s.undo : [])
+              .slice(-80)
+              .filter(snapshot)
+              .map((v) => ({
+                ...v,
+                moves: number(v.moves),
+                pushes: number(v.pushes),
+              }));
+            s.solution =
+              Array.isArray(s.solution) &&
+              s.solution.length <= 200 &&
+              s.solution.every(
+                (a) =>
+                  record(a) &&
+                  floor(a.boxFrom) &&
+                  record(a.dir) &&
+                  Number.isInteger(a.dir.x) &&
+                  Number.isInteger(a.dir.y) &&
+                  Math.abs(a.dir.x) + Math.abs(a.dir.y) === 1,
+              )
+                ? s.solution
+                : [];
+
+            s.moves = number(s.moves);
+            s.done = false;
+            s.seed = String(s.seed || "Saved").slice(0, 30);
+            return s;
+          } catch {
+            return null;
+          }
+        }
+        class Save {
+          static R = "ARCADE_GAMES";
+          static K = "sokoban";
+          constructor() {
+            this.defaults = {
+              credits: 0,
+              difficulty: "easy",
+              owned: ["classic"],
+              equipped: "classic",
+              stats: { solved: 0, best: null, pushes: 0, earned: 0 },
+              current: null,
+            };
+            let root = {};
+            try {
+              root = this.read();
+            } catch {
+              this.report(false);
+            }
+            const input = record(root[Save.K]) ? root[Save.K] : {},
+              d = cloneValue(this.defaults);
+            d.credits = number(input.credits);
+            if (
+              typeof input.difficulty === "string" &&
+              Object.hasOwn(DIFF, input.difficulty)
+            )
+              d.difficulty = input.difficulty;
+            d.owned = [
+              ...new Set([
+                "classic",
+                ...(Array.isArray(input.owned) ? input.owned : []).filter(
+                  (id) => SKINS.some((s) => s.id === id),
+                ),
+              ]),
+            ];
+            if (d.owned.includes(input.equipped)) d.equipped = input.equipped;
+            for (const key of Object.keys(d.stats))
+              d.stats[key] =
+                d.stats[key] === null
+                  ? input.stats?.[key] == null
+                    ? null
+                    : number(input.stats[key])
+                  : number(input.stats?.[key]);
+            d.current = validateCurrent(input.current);
+            this.data = d;
+            this.baseline = d.credits;
+          }
+          read() {
+            const raw = localStorage.getItem(Save.R),
+              root = raw === null ? {} : JSON.parse(raw);
+            if (!record(root)) throw Error("Invalid save");
+            return root;
+          }
+          report(ok) {
+            let node = $("saveWarning");
+            if (!node) {
+              node = document.createElement("div");
+              node.id = "saveWarning";
+              node.setAttribute("role", "status");
+              node.textContent =
+                "Saving is unavailable. Keep this tab open; progress will be retried.";
+              document.body.append(node);
+            }
+            node.hidden = ok;
+            if (ok) {
+              clearTimeout(this.retry);
+              this.retry = null;
+            } else if (!this.retry)
+              this.retry = setTimeout(() => {
+                this.retry = null;
+                if (this.data) this.persist();
+              }, 5000);
+          }
+          syncCredits() {
+            try {
+              const latest = this.read()[Save.K];
+              if (record(latest)) {
+                const balance = number(latest.credits);
+                this.data.credits = number(
+                  balance + this.data.credits - this.baseline,
+                );
+                this.baseline = balance;
+              }
+            } catch {
+              this.report(false);
+            }
+          }
+          persist(refresh = true) {
+            try {
+              const root = this.read(),
+                latest = root[Save.K],
+                balance = record(latest)
+                  ? number(
+                      number(latest.credits) +
+                        this.data.credits -
+                        this.baseline,
+                    )
+                  : this.data.credits;
+              root[Save.K] = { ...this.data, credits: balance };
+              localStorage.setItem(Save.R, JSON.stringify(root));
+              this.data.credits = balance;
+              this.baseline = balance;
+              this.report(true);
+            } catch {
+              this.report(false);
+            }
+            if (refresh) updateUI();
+          }
+        }
+        const save = new Save(),
+          board = $("board"),
+          toast = $("toast");
+        let state = null,
+          touch = null,
+          hintCell = null;
+        const rnd = (n) => Math.floor(Math.random() * n),
+          K = (x, y) => x + "," + y;
+
+        let pendingAction = null,
+          focusBefore = null;
+        function playing() {
+          return !!(
+            state &&
+            !state.done &&
+            $("game").classList.contains("active") &&
+            $("shop").classList.contains("hidden") &&
+            $("win").classList.contains("hidden") &&
+            !$("actionDialog").open
+          );
+        }
+        function persistRun() {
+          if (state && !state.done) {
+            save.data.current = copy(state);
+            save.persist();
+          }
+        }
+        function ask(message, action) {
+          focusBefore = document.activeElement;
+          pendingAction = action;
+          $("actionText").textContent = message;
+          $("actionYes").textContent = "CONFIRM";
+          $("actionNo").hidden = false;
+          $("actionDialog").showModal();
+          $("actionNo").focus();
+        }
+        function pause() {
+          if (!playing()) return;
+          persistRun();
+          focusBefore = document.activeElement;
+          pendingAction = null;
+          $("actionText").textContent = "Game paused. Your progress is saved.";
+          $("actionYes").textContent = "RESUME";
+          $("actionNo").hidden = true;
+          $("actionDialog").showModal();
+          $("actionYes").focus();
+        }
+        function dismissAction() {
+          pendingAction = null;
+          $("actionDialog").close();
+          focusBefore?.focus();
+        }
+        $("actionNo").onclick = dismissAction;
+        $("actionYes").onclick = () => {
+          const action = pendingAction;
+          dismissAction();
+          if (action) action();
+        };
+        $("actionDialog").addEventListener("cancel", () => {
+          pendingAction = null;
+        });
+        $("pauseBtn").onclick = pause;
+        window.addEventListener("pagehide", persistRun);
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) {
+            persistRun();
+            if (playing()) pause();
+          }
+        });
+        document.addEventListener(
+          "keydown",
+          (e) => {
+            if ($("actionDialog").open) {
+              if (e.key !== "Escape") e.stopPropagation();
+              return;
+            }
+            const modal = !$("shop").classList.contains("hidden")
+              ? $("shop")
+              : !$("win").classList.contains("hidden")
+                ? $("win")
+                : null;
+            if (modal && e.key === "Tab") {
+              const bs = [...modal.querySelectorAll("button:not(:disabled)")];
+              if (
+                bs.length &&
+                (!modal.contains(document.activeElement) ||
+                  (!e.shiftKey && document.activeElement === bs.at(-1)) ||
+                  (e.shiftKey && document.activeElement === bs[0]))
+              ) {
+                e.preventDefault();
+                (e.shiftKey ? bs.at(-1) : bs[0]).focus();
+              }
+            }
+          },
+          true,
+        );
+        function sh(a) {
+          for (let i = a.length - 1; i; i--) {
+            const j = rnd(i + 1);
+            [a[i], a[j]] = [a[j], a[i]];
+          }
+          return a;
+        }
+        function msg(m) {
+          toast.textContent = m;
+          toast.classList.add("show");
+          clearTimeout(toast.t);
+          toast.t = setTimeout(() => toast.classList.remove("show"), 1300);
+        }
+        function inside(x, y, n) {
+          return x >= 0 && y >= 0 && x < n && y < n;
+        }
+        function isWall(x, y, w) {
+          return w.has(K(x, y));
+        }
+        function boxAt(x, y, boxes) {
+          return boxes.findIndex((b) => b.x === x && b.y === y);
+        }
+        function connected(n, walls) {
+          let start = null;
+          for (let y = 1; y < n - 1 && !start; y++)
+            for (let x = 1; x < n - 1; x++)
+              if (!walls.has(K(x, y))) {
+                start = [x, y];
+                break;
+              }
+          if (!start) return false;
+          let q = [start],
+            seen = new Set([K(...start)]);
+          for (let i = 0; i < q.length; i++) {
+            let [x, y] = q[i];
+            for (const [dX, dY] of DIR) {
+              let nx = x + dX,
+                ny = y + dY,
+                k = K(nx, ny);
+              if (
+                nx > 0 &&
+                ny > 0 &&
+                nx < n - 1 &&
+                ny < n - 1 &&
+                !walls.has(k) &&
+                !seen.has(k)
+              ) {
+                seen.add(k);
+                q.push([nx, ny]);
+              }
+            }
+          }
+          let floor = 0;
+          for (let y = 1; y < n - 1; y++)
+            for (let x = 1; x < n - 1; x++) if (!walls.has(K(x, y))) floor++;
+          return seen.size === floor;
+        }
+        function reachable(player, target, walls, boxes, n) {
+          let block = new Set(boxes.map((b) => K(b.x, b.y))),
+            q = [[player.x, player.y]],
+            seen = new Set([K(player.x, player.y)]);
+          for (let i = 0; i < q.length; i++) {
+            let [x, y] = q[i];
+            if (x === target.x && y === target.y) return true;
+            for (const [dx, dy] of DIR) {
+              let nx = x + dx,
+                ny = y + dy,
+                k = K(nx, ny);
+              if (
+                nx <= 0 ||
+                ny <= 0 ||
+                nx >= n - 1 ||
+                ny >= n - 1 ||
+                walls.has(k) ||
+                block.has(k) ||
+                seen.has(k)
+              )
+                continue;
+              seen.add(k);
+              q.push([nx, ny]);
+            }
+          }
+          return false;
+        }
+        function generate(diff) {
+          const c = DIFF[diff],
+            n = c.n;
+          for (let A = 0; A < 120; A++) {
+            let walls = new Set();
+            for (let x = 0; x < n; x++) {
+              walls.add(K(x, 0));
+              walls.add(K(x, n - 1));
+            }
+            for (let y = 0; y < n; y++) {
+              walls.add(K(0, y));
+              walls.add(K(n - 1, y));
+            }
+            for (let i = 0; i < c.w; i++) {
+              let x = 1 + rnd(n - 2),
+                y = 1 + rnd(n - 2);
+              walls.add(K(x, y));
+            }
+            if (!connected(n, walls)) continue;
+            let floor = [];
+            for (let y = 1; y < n - 1; y++)
+              for (let x = 1; x < n - 1; x++)
+                if (!walls.has(K(x, y))) floor.push({ x, y });
+            sh(floor);
+            if (floor.length < c.b * 3 + 2) continue;
+            let goals = floor.slice(0, c.b).map((v) => ({ ...v })),
+              boxes = goals.map((v) => ({ ...v })),
+              player = { ...floor[c.b] },
+              history = [];
+            for (let step = 0; step < c.s; step++) {
+              let opts = [];
+              for (let bi = 0; bi < boxes.length; bi++) {
+                let b = boxes[bi];
+                for (const [dx, dy] of DIR) {
+                  let pb = { x: b.x - dx, y: b.y - dy },
+                    pp = { x: b.x - 2 * dx, y: b.y - 2 * dy };
+                  if (
+                    !inside(pp.x, pp.y, n) ||
+                    walls.has(K(pb.x, pb.y)) ||
+                    walls.has(K(pp.x, pp.y)) ||
+                    boxAt(pb.x, pb.y, boxes) >= 0 ||
+                    boxAt(pp.x, pp.y, boxes) >= 0
+                  )
+                    continue;
+                  if (reachable(player, pb, walls, boxes, n))
+                    opts.push({ bi, dx, dy, pb, pp });
+                }
+              }
+              if (!opts.length) break;
+              let o = opts[rnd(opts.length)],
+                old = { ...boxes[o.bi] };
+              boxes[o.bi] = { ...o.pb };
+              player = { ...o.pp };
+              history.push({
+                boxFrom: { ...o.pb },
+                boxTo: old,
+                dir: { x: o.dx, y: o.dy },
+              });
+            }
+            if (history.length < Math.max(3, Math.floor(c.s * 0.45))) continue;
+            if (
+              boxes.every((b) => goals.some((g) => g.x === b.x && g.y === b.y))
+            )
+              continue;
+            return {
+              diff,
+              n,
+              walls: [...walls],
+              goals,
+              boxes,
+              player,
+              moves: 0,
+              pushes: 0,
+              seed: String(Date.now()).slice(-6),
+              solution: history.reverse(),
+              initial: null,
+              undo: [],
+            };
+          }
+          return fallbackPuzzle(diff);
+        }
+        function start(d = save.data.difficulty, force = false) {
+          if (!Object.hasOwn(DIFF, d)) return;
+          if (save.data.current && !force) {
+            ask("Replace your saved puzzle with a new one?", () =>
+              start(d, true),
+            );
+            return;
+          }
+          hintRequest++;
+          hintCell = null;
+          state = generate(d);
+          state.initial = copy({ boxes: state.boxes, player: state.player });
+          save.data.difficulty = d;
+          persistRun();
+          $("playNote").textContent = "";
+          showGame();
+          render();
+          board.focus();
+        }
+        function cleanState(s) {
+          return copy({ ...s, undo: (s.undo || []).slice(-80) });
+        }
+        function cont() {
+          if (!save.data.current) return start();
+          state = copy(save.data.current);
+          showGame();
+          render();
+          if (solved()) win();
+        }
+        function showGame() {
+          $("menu").classList.remove("active");
+          $("game").classList.add("active");
+        }
+        function menu() {
+          persistRun();
+          $("win").classList.add("hidden");
+          if ($("actionDialog").open) dismissAction();
+          $("game").classList.remove("active");
+          $("menu").classList.add("active");
+          updateUI();
+          $("newBtn").focus();
+        }
+        function wallSet() {
+          return new Set(state.walls);
+        }
+        function move(dx, dy) {
+          if (
+            !playing() ||
+            !Number.isInteger(dx) ||
+            !Number.isInteger(dy) ||
+            Math.abs(dx) + Math.abs(dy) !== 1
+          )
+            return false;
+          hintRequest++;
+          hintCell = null;
+          $("playNote").textContent = "";
+          const nx = state.player.x + dx,
+            ny = state.player.y + dy,
+            w = wallSet();
+          if (!inside(nx, ny, state.n) || w.has(K(nx, ny))) return false;
+          const bi = boxAt(nx, ny, state.boxes),
+            snap = copy({
+              player: state.player,
+              boxes: state.boxes,
+              moves: state.moves,
+              pushes: state.pushes,
+            });
+          if (bi >= 0) {
+            const bx = nx + dx,
+              by = ny + dy;
+            if (
+              !inside(bx, by, state.n) ||
+              w.has(K(bx, by)) ||
+              boxAt(bx, by, state.boxes) >= 0
+            )
+              return false;
+            state.boxes[bi] = { x: bx, y: by };
+            state.pushes++;
+            save.data.stats.pushes++;
+          }
+          state.undo.push(snap);
+          if (state.undo.length > 80) state.undo.shift();
+          state.player = { x: nx, y: ny };
+          state.moves++;
+          render();
+          if (solved()) win();
+          else {
+            persistRun();
+            if (
+              bi >= 0 &&
+              !safeCells(state).has(K(state.boxes[bi].x, state.boxes[bi].y))
+            )
+              $("playNote").textContent =
+                "This crate cannot reach a target from here. Undo the last push.";
+          }
+          return true;
+        }
+        function solved() {
+          let g = new Set(state.goals.map((v) => K(v.x, v.y)));
+          return state.boxes.every((b) => g.has(K(b.x, b.y)));
+        }
+        function undo() {
+          if (!playing()) return;
+          hintRequest++;
+          hintCell = null;
+          $("playNote").textContent = "";
+          let s = state.undo.pop();
+          if (!s) return;
+          state.player = s.player;
+          state.boxes = s.boxes;
+          state.moves = s.moves;
+          state.pushes = s.pushes;
+          save.data.current = cleanState(state);
+          save.persist();
+          render();
+        }
+        function reset(force = false) {
+          if (!playing()) return;
+          if (!force) {
+            ask("Restart this puzzle? Moves and undo history will reset.", () =>
+              reset(true),
+            );
+            return;
+          }
+          $("playNote").textContent = "";
+          hintRequest++;
+          hintCell = null;
+          state.boxes = JSON.parse(JSON.stringify(state.initial.boxes));
+          state.player = { ...state.initial.player };
+          state.moves = 0;
+          state.pushes = 0;
+          state.undo = [];
+          save.data.current = cleanState(state);
+          save.persist();
+          render();
+        }
+        function walkingPath(player, target, walls, boxes, n) {
+          const blocked = new Set([...walls, ...boxes.map((b) => K(b.x, b.y))]);
+          if (
+            !inside(target.x, target.y, n) ||
+            blocked.has(K(target.x, target.y))
+          )
+            return null;
+          const q = [{ x: player.x, y: player.y, path: [] }],
+            seen = new Set([K(player.x, player.y)]);
+          for (let i = 0; i < q.length; i++) {
+            const p = q[i];
+            if (p.x === target.x && p.y === target.y) return p.path;
+            for (const [dx, dy] of DIR) {
+              const x = p.x + dx,
+                y = p.y + dy,
+                k = K(x, y);
+              if (inside(x, y, n) && !blocked.has(k) && !seen.has(k)) {
+                seen.add(k);
+                q.push({ x, y, path: [...p.path, [dx, dy]] });
+              }
+            }
+          }
+          return null;
+        }
+        function fallbackPuzzle(diff) {
+          const { n, b } = DIFF[diff],
+            walls = [];
+          for (let y = 0; y < n; y++)
+            for (let x = 0; x < n; x++)
+              if (x === 0 || y === 0 || x === n - 1 || y === n - 1)
+                walls.push(K(x, y));
+          const boxes = Array.from({ length: b }, (_, i) => ({
+              x: 2,
+              y: i + 1,
+            })),
+            goals = boxes.map((p) => ({ x: n - 3, y: p.y })),
+            solution = [];
+          for (const box of boxes)
+            for (let x = box.x; x < n - 3; x++)
+              solution.push({ boxFrom: { x, y: box.y }, dir: { x: 1, y: 0 } });
+          return {
+            diff,
+            n,
+            walls,
+            goals,
+            boxes,
+            player: { x: 1, y: 1 },
+            solution,
+            moves: 0,
+            pushes: 0,
+            seed: String(Date.now()).slice(-6),
+            initial: null,
+            undo: [],
+          };
+        }
+        function safeCells(s) {
+          const walls = new Set(s.walls),
+            seen = new Set(s.goals.map((p) => K(p.x, p.y))),
+            q = s.goals.slice();
+          for (let i = 0; i < q.length; i++)
+            for (const [dx, dy] of DIR) {
+              const x = q[i].x - dx,
+                y = q[i].y - dy,
+                px = x - dx,
+                py = y - dy,
+                k = K(x, y);
+              if (
+                inside(px, py, s.n) &&
+                inside(x, y, s.n) &&
+                !walls.has(k) &&
+                !walls.has(K(px, py)) &&
+                !seen.has(k)
+              ) {
+                seen.add(k);
+                q.push({ x, y });
+              }
+            }
+          return seen;
+        }
+        function provenRoute(s) {
+          if (!s.solution?.length) return null;
+          const boxes = copy(s.initial.boxes),
+            walls = new Set(s.walls);
+          let player = copy(s.initial.player),
+            match = -1;
+          const same = () =>
+            boxes.every((b, i) => b.x === s.boxes[i].x && b.y === s.boxes[i].y);
+          for (let i = 0; i < s.solution.length; i++) {
+            const a = s.solution[i],
+              bi = boxAt(a.boxFrom.x, a.boxFrom.y, boxes),
+              stand = { x: a.boxFrom.x - a.dir.x, y: a.boxFrom.y - a.dir.y },
+              dest = { x: a.boxFrom.x + a.dir.x, y: a.boxFrom.y + a.dir.y };
+            if (
+              bi < 0 ||
+              !inside(dest.x, dest.y, s.n) ||
+              walls.has(K(dest.x, dest.y)) ||
+              boxAt(dest.x, dest.y, boxes) >= 0 ||
+              walkingPath(player, stand, walls, boxes, s.n) === null
+            )
+              return null;
+            if (
+              same() &&
+              walkingPath(s.player, stand, walls, boxes, s.n) !== null
+            )
+              match = i;
+            boxes[bi] = dest;
+            player = copy(a.boxFrom);
+          }
+          const goals = new Set(s.goals.map((p) => K(p.x, p.y)));
+          return match >= 0 && boxes.every((b) => goals.has(K(b.x, b.y)))
+            ? s.solution.slice(match)
+            : null;
+        }
+        let hintRequest = 0;
+        async function solvePushes(s, token) {
+          const walls = new Set(s.walls),
+            safe = safeCells(s),
+            goal = new Set(s.goals.map((p) => K(p.x, p.y))),
+            encode = (b) =>
+              b
+                .map((p) => p.y * s.n + p.x)
+                .sort((a, b) => a - b)
+                .join(","),
+            deadline = performance.now() + 1600;
+          const q = [
+              {
+                boxes: copy(s.boxes),
+                player: copy(s.player),
+                parent: -1,
+                action: null,
+              },
+            ],
+            seen = new Set();
+          function flood(player, boxes) {
+            const blocked = new Set([
+                ...walls,
+                ...boxes.map((p) => K(p.x, p.y)),
+              ]),
+              cells = [player],
+              set = new Set([K(player.x, player.y)]);
+            let min = player.y * s.n + player.x;
+            for (let i = 0; i < cells.length; i++)
+              for (const [dx, dy] of DIR) {
+                const p = { x: cells[i].x + dx, y: cells[i].y + dy },
+                  k = K(p.x, p.y);
+                if (inside(p.x, p.y, s.n) && !blocked.has(k) && !set.has(k)) {
+                  set.add(k);
+                  cells.push(p);
+                  min = Math.min(min, p.y * s.n + p.x);
+                }
+              }
+            return { set, min };
+          }
+          for (let head = 0; head < q.length && q.length < 12000; head++) {
+            if (head % 48 === 0) {
+              await new Promise((r) => setTimeout(r, 0));
+              if (token !== hintRequest || state !== s || !playing())
+                return null;
+              if (performance.now() > deadline) return null;
+            }
+            const node = q[head];
+            if (node.boxes.every((b) => goal.has(K(b.x, b.y)))) {
+              const route = [];
+              for (let i = head; q[i].parent >= 0; i = q[i].parent)
+                route.unshift(q[i].action);
+              return route;
+            }
+            const reach = flood(node.player, node.boxes),
+              sig = encode(node.boxes) + "|" + reach.min;
+            if (seen.has(sig)) continue;
+            seen.add(sig);
+            for (let bi = 0; bi < node.boxes.length; bi++)
+              for (const [dx, dy] of DIR) {
+                const b = node.boxes[bi],
+                  dest = { x: b.x + dx, y: b.y + dy };
+                if (
+                  !safe.has(K(dest.x, dest.y)) ||
+                  boxAt(dest.x, dest.y, node.boxes) >= 0 ||
+                  !reach.set.has(K(b.x - dx, b.y - dy))
+                )
+                  continue;
+                const boxes = copy(node.boxes);
+                boxes[bi] = dest;
+                q.push({
+                  boxes,
+                  player: b,
+                  parent: head,
+                  action: { boxFrom: copy(b), dir: { x: dx, y: dy } },
+                });
+              }
+          }
+          return null;
+        }
+        async function hint() {
+          if (!playing()) return;
+          const s = state,
+            token = ++hintRequest,
+            snapshot = JSON.stringify([s.boxes, s.player]);
+          $("playNote").textContent = "Finding a route to every target…";
+          const route = provenRoute(s) || (await solvePushes(s, token));
+          if (
+            state !== s ||
+            token !== hintRequest ||
+            snapshot !== JSON.stringify([s.boxes, s.player]) ||
+            !playing()
+          )
+            return;
+          if (!route?.length) {
+            $("playNote").textContent =
+              "No complete route found within the hint limit. Try undo or reset.";
+            return;
+          }
+          const a = route[0],
+            stand = { x: a.boxFrom.x - a.dir.x, y: a.boxFrom.y - a.dir.y };
+          hintCell = {
+            ...a.boxFrom,
+            dir: a.dir,
+            walk: walkingPath(s.player, stand, wallSet(), s.boxes, s.n) || [],
+          };
+          render();
+          const direction =
+            a.dir.x === 1
+              ? "right"
+              : a.dir.x === -1
+                ? "left"
+                : a.dir.y === 1
+                  ? "down"
+                  : "up";
+          $("playNote").textContent =
+            `Follow the dots, then push the highlighted crate ${direction}.`;
+        }
+
+        function win() {
+          if (!playing() || !solved()) return;
+          state.done = true;
+          const base = DIFF[state.diff].r,
+            bonus = Math.max(0, 12 - Math.floor(state.pushes / 4)),
+            rew = base + bonus;
+          save.data.credits += rew;
+          save.data.stats.earned += rew;
+          save.data.stats.solved++;
+          if (
+            save.data.stats.best == null ||
+            state.pushes < save.data.stats.best
+          )
+            save.data.stats.best = state.pushes;
+          save.data.current = null;
+          save.persist();
+          $("fMoves").textContent = state.moves;
+          $("fPushes").textContent = state.pushes;
+          $("fCredits").textContent = "+" + rew;
+          $("win").classList.remove("hidden");
+          $("winNext").focus();
+        }
+        function fit() {
+          const r = document.querySelector(".bw").getBoundingClientRect(),
+            s = Math.max(
+              120,
+              Math.floor(Math.min(r.width - 8, r.height - 8, 650)),
+            );
+          board.style.width = s + "px";
+          board.style.height = s + "px";
+          board.style.gridTemplateColumns = `repeat(${state.n},1fr)`;
+          board.style.gridTemplateRows = `repeat(${state.n},1fr)`;
+        }
+        function render() {
+          fit();
+          board.innerHTML = "";
+          let w = wallSet(),
+            g = new Set(state.goals.map((v) => K(v.x, v.y))),
+            sk = SKINS.find((s) => s.id === save.data.equipped) || SKINS[0];
+          const hintPath = new Set();
+          if (hintCell) {
+            let p = { ...state.player };
+            for (const [dx, dy] of hintCell.walk) {
+              p = { x: p.x + dx, y: p.y + dy };
+              hintPath.add(K(p.x, p.y));
+            }
+          }
+          for (let y = 0; y < state.n; y++)
+            for (let x = 0; x < state.n; x++) {
+              let e = document.createElement("div"),
+                k = K(x, y);
+              e.className = "cell";
+              if (w.has(k)) e.classList.add("wall");
+              else {
+                if (g.has(k)) {
+                  e.classList.add("goal");
+                  e.style.setProperty("--goal", sk.goal);
+                }
+                let bi = boxAt(x, y, state.boxes);
+                if (bi >= 0) {
+                  e.classList.add("box");
+                  e.style.setProperty("--box", sk.box);
+                  e.style.setProperty("--edge", sk.edge);
+                  if (g.has(k)) e.classList.add("ongoal");
+                }
+                if (state.player.x === x && state.player.y === y) {
+                  e.classList.add("player");
+                  e.style.setProperty("--player", sk.player);
+                }
+                if (hintCell && hintCell.x === x && hintCell.y === y) {
+                  e.classList.add("hintCell");
+                  e.dataset.arrow =
+                    hintCell.dir.x === 1
+                      ? "→"
+                      : hintCell.dir.x === -1
+                        ? "←"
+                        : hintCell.dir.y === 1
+                          ? "↓"
+                          : "↑";
+                }
+                if (hintPath.has(k)) e.classList.add("walkHint");
+              }
+              board.append(e);
+            }
+          $("undoBtn").disabled = !state.undo.length || state.done;
+          $("moves").textContent = state.moves;
+          $("pushes").textContent = state.pushes;
+          let done = state.boxes.filter((b) => g.has(K(b.x, b.y))).length;
+          $("crates").textContent = done + "/" + state.boxes.length;
+          $("gdiff").textContent = DIFF[state.diff].label;
+          $("skinName").textContent = sk.name;
+          $("seed").textContent = "#" + state.seed;
+        }
+        function updateUI() {
+          $("credits").textContent = save.data.credits;
+          $("shopCredits").textContent = save.data.credits;
+          $("stSolved").textContent = save.data.stats.solved;
+          $("stBest").textContent = save.data.stats.best ?? "—";
+          $("stPushes").textContent = save.data.stats.pushes;
+          $("stEarned").textContent = save.data.stats.earned;
+          $("continueBtn").classList.toggle("hidden", !save.data.current);
+          document
+            .querySelectorAll(".diff")
+            .forEach((b) =>
+              b.classList.toggle(
+                "active",
+                b.dataset.d === save.data.difficulty,
+              ),
+            );
+          $("desc").textContent = DIFF[save.data.difficulty].desc;
+          shopRender();
+        }
+        function shopRender() {
+          let g = $("shopGrid");
+          if (!g) return;
+          g.innerHTML = "";
+          for (const s of SKINS) {
+            let d = document.createElement("div");
+            d.className =
+              "shopitem" + (save.data.equipped === s.id ? " active" : "");
+            d.innerHTML = `<div class="preview"><div class="pb" style="--box:${s.box};--edge:${s.edge}"></div></div><strong>${s.name}</strong><small>${s.desc}</small>`;
+            let b = document.createElement("button"),
+              owned = save.data.owned.includes(s.id);
+            if (save.data.equipped === s.id) {
+              b.textContent = "EQUIPPED";
+              b.disabled = true;
+            } else if (owned) b.textContent = "EQUIP";
+            else {
+              b.textContent = `BUY · ${s.cost} C`;
+              b.className = "buy";
+            }
+            b.onclick = () => {
+              save.syncCredits();
+              if (!save.data.owned.includes(s.id)) {
+                if (save.data.credits < s.cost) {
+                  msg("Not enough credits.");
+                  return;
+                }
+                save.data.credits -= s.cost;
+                save.data.owned.push(s.id);
+              }
+              save.data.equipped = s.id;
+              save.persist();
+              shopRender();
+              if (state) render();
+            };
+            d.append(b);
+            g.append(d);
+          }
+        }
+        function openShop() {
+          persistRun();
+          $("shop").classList.remove("hidden");
+          $("closeShop").focus();
+          shopRender();
+        }
+        function closeShop() {
+          $("shop").classList.add("hidden");
+          ($("game").classList.contains("active")
+            ? $("gameShop")
+            : $("shopBtn")
+          ).focus();
+        }
+        function art() {
+          let a = $("floorArt");
+          for (let i = 0; i < 25; i++) {
+            let d = document.createElement("div");
+            d.className = "fa";
+            if ([6, 13, 17].includes(i)) d.classList.add("box");
+            if ([8, 13, 18].includes(i)) d.classList.add("goal");
+            if (i === 21) d.classList.add("player");
+            a.append(d);
+          }
+        }
+        $("newBtn").onclick = () => start(save.data.difficulty);
+        $("continueBtn").onclick = cont;
+        $("menuBtn").onclick = menu;
+        $("undoBtn").onclick = undo;
+        $("resetBtn").onclick = () => reset();
+        $("hintBtn").onclick = hint;
+        $("shopBtn").onclick = openShop;
+        $("shopLineBtn").onclick = openShop;
+        $("gameShop").onclick = openShop;
+        $("closeShop").onclick = closeShop;
+        $("winMenu").onclick = () => {
+          $("win").classList.add("hidden");
+          menu();
+        };
+        $("winNext").onclick = () => {
+          $("win").classList.add("hidden");
+          start(save.data.difficulty);
+        };
+        document.querySelectorAll(".diff").forEach(
+          (b) =>
+            (b.onclick = () => {
+              save.data.difficulty = b.dataset.d;
+              save.persist();
+            }),
+        );
+        document.querySelectorAll("[data-m]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              let [dx, dy] = b.dataset.m.split(",").map(Number);
+              move(dx, dy);
+            }),
+        );
+        window.addEventListener("keydown", (e) => {
+          if ($("actionDialog").open || e.defaultPrevented) return;
+          let m = {
+            ArrowUp: [0, -1],
+            w: [0, -1],
+            W: [0, -1],
+            ArrowDown: [0, 1],
+            s: [0, 1],
+            S: [0, 1],
+            ArrowLeft: [-1, 0],
+            a: [-1, 0],
+            A: [-1, 0],
+            ArrowRight: [1, 0],
+            d: [1, 0],
+            D: [1, 0],
+          }[e.key];
+          if (m && playing()) {
+            e.preventDefault();
+            move(...m);
+          } else if (e.key === "Escape") {
+            if (!$("shop").classList.contains("hidden")) closeShop();
+            else if ($("game").classList.contains("active")) menu();
+          }
+        });
+        board.addEventListener("pointerdown", (e) => {
+          if (!playing() || !e.isPrimary) return;
+          touch = { id: e.pointerId, x: e.clientX, y: e.clientY };
+          board.setPointerCapture(e.pointerId);
+        });
+        board.addEventListener("pointerup", (e) => {
+          if (!touch || touch.id !== e.pointerId) return;
+          const dx = e.clientX - touch.x,
+            dy = e.clientY - touch.y;
+          touch = null;
+          if (board.hasPointerCapture(e.pointerId))
+            board.releasePointerCapture(e.pointerId);
+          if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+          if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1, 0);
+          else move(0, dy > 0 ? 1 : -1);
+        });
+        board.addEventListener("pointercancel", () => (touch = null));
+        board.addEventListener("lostpointercapture", () => (touch = null));
+        document.querySelectorAll("[data-m]").forEach((b) =>
+          b.setAttribute(
+            "aria-label",
+            {
+              "0,-1": "Move up",
+              "0,1": "Move down",
+              "-1,0": "Move left",
+              "1,0": "Move right",
+            }[b.dataset.m],
+          ),
+        );
+        new ResizeObserver(
+          () => state && $("game").classList.contains("active") && render(),
+        ).observe(document.querySelector(".bw"));
+        art();
+        updateUI();
+      })();
+    </script>
+  </body>
+</html>

@@ -423,12 +423,30 @@
 		"path": "/api/proxy?game=mahjong"
 	},
 	{
-		"id": "sliding-puzzle",
-		"name": "Sliding Puzzle",
-		"description": "Arrange the Tiles in the Correct Order",
-		"features": ["Multiple grid sizes", "Move counter", "Undo moves", "Best-time tracking"],
+		"id": "laser-mirrors",
+		"name": "Laser Mirrors",
+		"description": "Reflect Laser Beams to Solve Puzzles",
+		"features": ["Infinite levels", "Move counter", "Undo moves", "Best-time tracking"],
 		"cost": 1500,
-		"icon": "Images/sliding-puzzle.png",
-		"path": "/api/proxy?game=sliding-puzzle"
+		"icon": "Images/laser-mirrors.png",
+		"path": "/api/proxy?game=laser-mirrors"
+	},
+	{
+		"id": "hex-puzzle",
+		"name": "Hex Puzzle",
+		"description": "Fit Hexagonal Pieces and Clear Lines",
+		"features": ["Endless puzzle mode", "Combo scoring", "Hexagonal board", "Best-score tracking"],
+		"cost": 1900,
+		"icon": "Images/hex-puzzle.png",
+		"path": "/api/proxy?game=hex-puzzle"
+	},
+	{
+		"id": "hex-puzzle",
+		"name": "Hex Puzzle",
+		"description": "Fit Hexagonal Pieces and Clear Lines",
+		"features": ["Endless puzzle mode", "Combo scoring", "Hexagonal board", "Best-score tracking"],
+		"cost": 1900,
+		"icon": "Images/hex-puzzle.png",
+		"path": "/api/proxy?game=hex-puzzle"
 	}
 ]
