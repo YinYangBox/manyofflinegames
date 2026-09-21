@@ -430,23 +430,5 @@
 		"cost": 1500,
 		"icon": "Images/laser-mirrors.png",
 		"path": "/api/proxy?game=laser-mirrors"
-	},
-	{
-		"id": "hex-puzzle",
-		"name": "Hex Puzzle",
-		"description": "Fit Hexagonal Pieces and Clear Lines",
-		"features": ["Endless puzzle mode", "Combo scoring", "Hexagonal board", "Best-score tracking"],
-		"cost": 1900,
-		"icon": "Images/hex-puzzle.png",
-		"path": "/api/proxy?game=hex-puzzle"
-	},
-	{
-		"id": "hex-puzzle",
-		"name": "Hex Puzzle",
-		"description": "Fit Hexagonal Pieces and Clear Lines",
-		"features": ["Endless puzzle mode", "Combo scoring", "Hexagonal board", "Best-score tracking"],
-		"cost": 1900,
-		"icon": "Images/hex-puzzle.png",
-		"path": "/api/proxy?game=hex-puzzle"
 	}
 ]

@@ -2708,7 +2708,7 @@ body.install-cta-visible {
                 </div>
 
                 <p class="reward-footnote">
-                    Missing a day resets only the 7-day coin streak. Mega Spin and yearly progress never reset when you miss a day.
+                    Missing a day resets your streak. Mega Spin and yearly progress never reset when you miss a day.
                 </p>
             </div>
         </div>
@@ -2734,22 +2734,17 @@ body.install-cta-visible {
                 </div>
 
                 <div class="year-summary-grid">
-                    <div class="year-summary-card"><span>Daily coins</span><strong>14,570 🪙</strong></div>
+                    <div class="year-summary-card"><span>Daily coins</span><strong>7,300 🪙</strong></div>
                     <div class="year-summary-card"><span>Mega Spins</span><strong>12 🎡</strong></div>
-                    <div class="year-summary-card"><span>Free-game drops</span><strong>4 🎮</strong></div>
                     <div class="year-summary-card"><span>Daily claims</span><strong>365 🎁</strong></div>
                 </div>
 
                 <div class="year-milestones">
                     <div class="year-milestone"><span>Every 30 daily claims</span><span>+1 Mega Spin</span></div>
-                    <div class="year-milestone"><span>Day 90</span><span>Free game</span></div>
-                    <div class="year-milestone"><span>Day 180</span><span>Free game</span></div>
-                    <div class="year-milestone"><span>Day 270</span><span>Free game</span></div>
-                    <div class="year-milestone"><span>Day 365</span><span>Free game</span></div>
                 </div>
 
                 <p class="reward-footnote">
-                    The 14,570 coins come from the normal 7-day daily-reward cycle if you claim every day for 365 days. Mega Spin prizes are extra. If a free-game reward selects a game you already own, you receive 50% of that game's coin price instead.
+                    The 7,300 coins come from 20 coins per daily claim for 365 days. You also earn 1 Mega Spin every 30 daily claims, for 12 Mega Spins in 365 claims. Mega Spin prizes are extra.
                 </p>
             </div>
         </div>
@@ -3604,11 +3599,10 @@ const LOCAL_LEDGER_SLOTS = Object.freeze([
 ]);
 const LOCAL_LEDGER_VERSION = 2;
 
-const DAILY_REWARDS = [10, 20, 30, 40, 50, 60, 70];
+const DAILY_REWARDS = [20, 20, 20, 20, 20, 20, 20];
 const YEAR_TRACK_DAYS = 365;
 const MEGA_SPIN_EVERY = 30;
-const YEAR_FREE_GAME_DAYS = Object.freeze([90, 180, 270, 365]);
-const YEAR_DAILY_COIN_TOTAL = 14570;
+const YEAR_DAILY_COIN_TOTAL = 7300;
 const MEGA_SPIN_PRIZES = Object.freeze([
     { id: "c200", type: "coins", amount: 200, weight: 25, label: "200 coins", color: "#173f4e" },
     { id: "c300", type: "coins", amount: 300, weight: 20, label: "300 coins", color: "#185348" },
@@ -4553,13 +4547,12 @@ function renderYearRewards() {
     if (bar) bar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
 
     if (next) {
-        const upcoming = YEAR_FREE_GAME_DAYS.find((milestone) => milestone > day);
         if (day === YEAR_TRACK_DAYS) {
             next.textContent = "Year track complete — the next claim starts a new track";
-        } else if (upcoming) {
-            next.textContent = `${upcoming - day} claims to the next free-game drop`;
         } else {
-            next.textContent = "Keep claiming daily rewards";
+            const megaProgress = getMegaSpinProgress();
+            const claimsToSpin = megaProgress === 0 ? MEGA_SPIN_EVERY : MEGA_SPIN_EVERY - megaProgress;
+            next.textContent = `${claimsToSpin} claim${claimsToSpin === 1 ? "" : "s"} to the next Mega Spin`;
         }
     }
 }
@@ -4753,7 +4746,7 @@ function renderRewardList() {
                                 </span>
 
                                 <strong>
-                                    ${day === 7 ? "Big reward" : "Daily reward"}${repeatDay}
+                                    Daily reward${repeatDay}
                                 </strong>
                             </div>
 
@@ -4837,13 +4830,7 @@ async function claimDailyReward() {
 
     const reward = getNextRewardForToday();
     const nextClaimsTotal = appState.dailyClaimsTotal + 1;
-    const yearDay = getYearTrackDay(nextClaimsTotal);
     const unlocksMegaSpin = nextClaimsTotal % MEGA_SPIN_EVERY === 0;
-    const freeGameMilestone = YEAR_FREE_GAME_DAYS.includes(yearDay);
-
-    if (freeGameMilestone && !defaultGames.length) {
-        await loadGamesList();
-    }
 
     appState.coins += reward;
     appState.lastDailyClaim = status.today;
@@ -4854,17 +4841,7 @@ async function claimDailyReward() {
         appState.megaSpins += 1;
     }
 
-    let bonusText = "";
-    let libraryChanged = false;
-
-    if (freeGameMilestone && defaultGames.length) {
-        const gameReward = awardGameReward(1);
-        libraryChanged = gameReward.unlockedNames.length > 0;
-        bonusText = formatGameRewardResult(gameReward);
-    }
-
     renderCoins();
-    if (libraryChanged) renderLibraries();
     renderRewardList();
     renderYearRewards();
     renderMegaSpin();
@@ -4873,7 +4850,6 @@ async function claimDailyReward() {
 
     const extras = [];
     if (unlocksMegaSpin) extras.push("Mega Spin unlocked!");
-    if (bonusText) extras.push(bonusText);
 
     showToast(
         `Daily reward: +${reward} coins${extras.length ? ` • ${extras.join(" • ")}` : ""}`,
